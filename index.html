@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Jajo</title>
+<meta name="description" content="Interaktywny przewodnik po jajku: minutnik liczący czas gotowania ze wzoru fizycznego, przekrój jajka, porównanie jaj różnych ptaków i dekoder kodu ze skorupki.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 26'%3E%3Cpath d='M10 1C15 1 18 9 18 16c0 5.5-3.5 9-8 9s-8-3.5-8-9C2 9 5 1 10 1z' fill='%23F4A300'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;800&family=Onest:wght@400;500;600;700&family=Unbounded:wght@600;700;800;900&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="skip-link" href="#minutnik">Przejdź do minutnika</a>
+
+<nav class="nav" aria-label="Sekcje strony">
+  <div class="wrap nav-row">
+    <a class="brand" href="#top">
+      <svg viewBox="0 0 20 26" aria-hidden="true"><path d="M10 1C15 1 18 9 18 16c0 5.5-3.5 9-8 9s-8-3.5-8-9C2 9 5 1 10 1z"/></svg>
+      Jajo
+    </a>
+    <ul class="nav-links">
+      <li><a href="#minutnik">Minutnik</a></li>
+      <li><a href="#wnetrze">Wnętrze</a></li>
+      <li><a href="#skala">Skala</a></li>
+      <li><a href="#kod">Kod</a></li>
+      <li><a href="#swiezosc">Świeżość</a></li>
+    </ul>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Przełącz motyw">
+      <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
+      <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
+    </button>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap hero-grid">
+    <div class="hero-main">
+      <p class="eyebrow">Przewodnik po jajku kurzym</p>
+      <h1 class="hero-title"><span>Jaj</span><span class="sr-only">o</span><button type="button" class="egg-btn" id="heroEgg" data-stage="0" aria-label="Stuknij jajko" aria-describedby="eggHint">
+        <svg viewBox="0 0 200 260" aria-hidden="true" focusable="false">
+          <defs>
+            <radialGradient id="eggShell" cx="36%" cy="30%" r="80%">
+              <stop offset="0" class="stop-hi"/>
+              <stop offset=".55" class="stop-mid"/>
+              <stop offset="1" class="stop-lo"/>
+            </radialGradient>
+            <path id="eggPath" d="M100,10 C150,10 180,90 180,160 C180,215 145,250 100,250 C55,250 20,215 20,160 C20,90 50,10 100,10 Z"/>
+            <clipPath id="eggClip"><use href="#eggPath"/></clipPath>
+            <clipPath id="clipTop"><polygon points="-40,-40 240,-40 240,138 190,138 165,121 145,140 125,118 100,142 75,120 55,145 35,122 10,140 -40,140"/></clipPath>
+            <clipPath id="clipBottom"><polygon points="-40,140 10,140 35,122 55,145 75,120 100,142 125,118 145,140 165,121 190,138 240,138 240,300 -40,300"/></clipPath>
+          </defs>
+          <ellipse class="egg-shadow" cx="100" cy="253" rx="64" ry="7"/>
+          <g class="egg-body">
+            <g class="chick">
+              <ellipse class="chick-body" cx="100" cy="158" rx="50" ry="48"/>
+              <path class="chick-body" d="M92,113 C90,99 100,95 101,109 C104,97 114,100 108,114 Z"/>
+              <g class="chick-eyes">
+                <circle cx="82" cy="140" r="6.5"/>
+                <circle cx="118" cy="140" r="6.5"/>
+              </g>
+              <circle class="chick-glint" cx="84.5" cy="137.5" r="2"/>
+              <circle class="chick-glint" cx="120.5" cy="137.5" r="2"/>
+              <ellipse class="chick-cheek" cx="70" cy="156" rx="8" ry="4.5"/>
+              <ellipse class="chick-cheek" cx="130" cy="156" rx="8" ry="4.5"/>
+              <path class="chick-beak" d="M91,151 L109,151 L100,163 Z"/>
+            </g>
+            <g clip-path="url(#clipBottom)"><use href="#eggPath" class="shell"/></g>
+            <g class="egg-top">
+              <g clip-path="url(#clipTop)">
+                <use href="#eggPath" class="shell"/>
+                <ellipse class="shell-gloss" cx="70" cy="66" rx="14" ry="26" transform="rotate(-22 70 66)"/>
+              </g>
+            </g>
+            <g class="cracks" clip-path="url(#eggClip)">
+              <path class="crack crack-l" pathLength="1" d="M100,142 L75,120 L55,145 L35,122 L10,140"/>
+              <path class="crack crack-r" pathLength="1" d="M100,142 L125,118 L145,140 L165,121 L190,138"/>
+            </g>
+          </g>
+        </svg>
+      </button></h1>
+      <p class="egg-hint" id="eggHint" aria-live="polite">Stuknij w&nbsp;„o”. Coś tam siedzi.</p>
+      <p class="lead">Najdoskonalsze opakowanie w&nbsp;przyrodzie. Ugotuj je co do sekundy, zajrzyj do środka i&nbsp;rozszyfruj kod ze skorupki.</p>
+      <div class="cta">
+        <a class="btn btn-primary" href="#minutnik">Ugotuj jajko</a>
+        <a class="btn btn-ghost" href="#kod">Sprawdź kod ze skorupki</a>
+      </div>
+    </div>
+
+    <aside class="spec" aria-labelledby="specTitle">
+      <h2 class="spec-title" id="specTitle">Karta techniczna</h2>
+      <p class="spec-sub">Jajo kurze, rozmiar M, ok. 50&nbsp;g bez skorupki</p>
+      <dl class="spec-list">
+        <div><dt>Grubość skorupki</dt><dd>0,3–0,4 mm</dd></div>
+        <div><dt>Pory w&nbsp;skorupce</dt><dd>7–17 tys.</dd></div>
+        <div><dt>Powstaje w&nbsp;kurze</dt><dd>24–26 h</dd></div>
+        <div><dt>Energia</dt><dd>72 kcal</dd></div>
+        <div><dt>Białko</dt><dd>6,3 g</dd></div>
+        <div><dt>Tłuszcz</dt><dd>4,8 g</dd></div>
+      </dl>
+    </aside>
+  </div>
+</header>
+
+<main>
+
+<section class="band band-alt" id="minutnik" aria-labelledby="minutnikTitle">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Minutnik</p>
+      <h2 id="minutnikTitle">Jajko idealne, co do sekundy</h2>
+      <p class="section-lede">Czas gotowania zależy od wielkości jajka, jego temperatury i&nbsp;wysokości, na której gotujesz. W&nbsp;górach woda wrze w&nbsp;niższej temperaturze, więc jajko potrzebuje więcej czasu.</p>
+    </div>
+
+    <div class="timer">
+      <form class="timer-form" id="timerForm" novalidate>
+        <fieldset class="timer-fields" id="timerFields">
+          <legend class="sr-only">Ustawienia gotowania</legend>
+
+          <fieldset class="field">
+            <legend>Rozmiar jajka</legend>
+            <div class="seg seg-4">
+              <input type="radio" name="size" id="sizeS" value="S"><label for="sizeS"><b>S</b><small>do 53 g</small></label>
+              <input type="radio" name="size" id="sizeM" value="M" checked><label for="sizeM"><b>M</b><small>53–63 g</small></label>
+              <input type="radio" name="size" id="sizeL" value="L"><label for="sizeL"><b>L</b><small>63–73 g</small></label>
+              <input type="radio" name="size" id="sizeXL" value="XL"><label for="sizeXL"><b>XL</b><small>od 73 g</small></label>
+            </div>
+          </fieldset>
+
+          <fieldset class="field">
+            <legend>Skąd bierzesz jajko</legend>
+            <div class="seg seg-2">
+              <input type="radio" name="start" id="startFridge" value="4" checked><label for="startFridge"><b>Z&nbsp;lodówki</b><small>4 °C</small></label>
+              <input type="radio" name="start" id="startRoom" value="20"><label for="startRoom"><b>Z&nbsp;blatu</b><small>20 °C</small></label>
+            </div>
+          </fieldset>
+
+          <div class="field">
+            <div class="field-top">
+              <label for="altitude">Wysokość nad poziomem morza</label>
+              <output id="altOut" for="altitude">100 m · Warszawa</output>
+            </div>
+            <input type="range" id="altitude" min="0" max="2500" step="10" value="100">
+            <p class="field-note" id="boilOut">Woda wrze tu w&nbsp;99,7&nbsp;°C</p>
+          </div>
+
+          <div class="field">
+            <div class="field-top">
+              <label for="yolk">Temperatura żółtka</label>
+              <output id="yolkOut" for="yolk">70 °C · kremowe</output>
+            </div>
+            <input type="range" id="yolk" min="60" max="84" step="1" value="70">
+            <div class="presets" role="group" aria-label="Gotowe ustawienia">
+              <button type="button" class="chip" data-yolk="64" aria-pressed="false">Na miękko</button>
+              <button type="button" class="chip" data-yolk="70" aria-pressed="true">Mollet</button>
+              <button type="button" class="chip" data-yolk="80" aria-pressed="false">Na twardo</button>
+            </div>
+          </div>
+        </fieldset>
+      </form>
+
+      <div class="timer-card" id="timerCard" data-state="idle">
+        <svg class="xsection" viewBox="0 0 240 170" aria-hidden="true">
+          <path class="xs-white" transform="translate(120 85) scale(2.7)" d="M-40,0 C-40,-20 -24,-29 -4,-29 C18,-29 40,-16 40,0 C40,16 18,29 -4,29 C-24,29 -40,20 -40,0 Z"/>
+          <circle class="xs-yolk" cx="108" cy="85" r="44"/>
+          <circle class="xs-core" id="xsCore" cx="108" cy="85" r="42"/>
+          <ellipse class="xs-gloss" id="xsGloss" cx="94" cy="68" rx="11" ry="6" transform="rotate(-20 94 68)"/>
+        </svg>
+        <p class="doneness" id="doneness">Kremowe żółtko, ścięte białko</p>
+        <div class="clock" id="clock">6:03</div>
+        <div class="progress" aria-hidden="true"><span id="progressBar"></span></div>
+        <p class="timer-msg" id="timerMsg" role="status">Włóż jajko do wrzącej wody i&nbsp;naciśnij Start.</p>
+        <div class="timer-actions">
+          <button class="btn btn-primary" id="startBtn" type="button">Start</button>
+          <button class="btn btn-ghost" id="resetBtn" type="button">Reset</button>
+        </div>
+        <div class="formula">
+          <code>t = M<sup>2/3</sup>·c·ρ<sup>1/3</sup> / (K·π²·(4π/3)<sup>2/3</sup>) · ln[0,76·(T₀−T<sub>w</sub>) / (T<sub>ż</sub>−T<sub>w</sub>)]</code>
+          <p>Wzór fizyka Charlesa Williamsa z&nbsp;Uniwersytetu w&nbsp;Exeter. M&nbsp;to masa jajka, c, ρ i&nbsp;K to jego ciepło właściwe, gęstość i&nbsp;przewodność cieplna. T₀ to temperatura jajka na starcie, T<sub>w</sub> temperatura wrzenia wody, a&nbsp;T<sub>ż</sub> temperatura na granicy żółtka i&nbsp;białka.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="wnetrze" aria-labelledby="wnetrzeTitle">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Wnętrze</p>
+      <h2 id="wnetrzeTitle">Co jest w&nbsp;środku</h2>
+      <p class="section-lede">Jajo to kompletny inkubator: ma pancerz, zapas wody, jedzenie i&nbsp;powietrze. Najedź na część albo stuknij w&nbsp;nią, żeby ją podświetlić.</p>
+    </div>
+
+    <div class="anatomy">
+      <figure class="anatomy-fig">
+        <svg id="anatomySvg" viewBox="0 0 400 280" role="img" aria-labelledby="anaTitle">
+          <title id="anaTitle">Przekrój jajka kurzego z&nbsp;ośmioma oznaczonymi częściami</title>
+          <defs>
+            <path id="anaEgg" d="M30,140 C30,55 120,30 190,30 C282,30 370,92 370,140 C370,188 282,250 190,250 C120,250 30,225 30,140 Z"/>
+            <clipPath id="anaClip"><use href="#anaEgg"/></clipPath>
+          </defs>
+          <g data-part="thin"><use href="#anaEgg" class="a-thin"/></g>
+          <g data-part="thick"><ellipse class="a-thick" cx="192" cy="140" rx="122" ry="84"/></g>
+          <g data-part="air" clip-path="url(#anaClip)"><ellipse class="a-air" cx="18" cy="140" rx="46" ry="92"/></g>
+          <g data-part="chalaza" class="a-chalaza">
+            <path d="M136,140 c-6,-7 -12,7 -18,0 s-12,7 -18,0 s-12,7 -16,0"/>
+            <path d="M244,140 c6,-7 12,7 18,0 s12,7 18,0 s12,7 16,0"/>
+          </g>
+          <g data-part="yolk"><circle class="a-yolk" cx="190" cy="140" r="52"/></g>
+          <g data-part="disc"><ellipse class="a-disc" cx="190" cy="93" rx="11" ry="4.5"/></g>
+          <g data-part="membrane"><use href="#anaEgg" class="a-membrane" transform="translate(200 140) scale(.955) translate(-200 -140)"/></g>
+          <g data-part="shell">
+            <use href="#anaEgg" class="a-shell-edge"/>
+            <use href="#anaEgg" class="a-shell"/>
+          </g>
+          <g class="badge" data-for="shell" transform="translate(190 30)"><circle r="11"/><text>1</text></g>
+          <g class="badge" data-for="membrane" transform="translate(305 74)"><circle r="11"/><text>2</text></g>
+          <g class="badge" data-for="air" transform="translate(47 140)"><circle r="11"/><text>3</text></g>
+          <g class="badge" data-for="thin" transform="translate(340 140)"><circle r="11"/><text>4</text></g>
+          <g class="badge" data-for="thick" transform="translate(262 196)"><circle r="11"/><text>5</text></g>
+          <g class="badge" data-for="chalaza" transform="translate(104 116)"><circle r="11"/><text>6</text></g>
+          <g class="badge" data-for="yolk" transform="translate(190 152)"><circle r="11"/><text>7</text></g>
+          <g class="badge" data-for="disc" transform="translate(218 80)"><circle r="11"/><text>8</text></g>
+        </svg>
+      </figure>
+
+      <ol class="parts" id="parts">
+        <li><button type="button" data-part="shell" aria-pressed="false"><span class="num">1</span><span class="part-text"><b>Skorupka</b><span>W&nbsp;95% węglan wapnia. Ma od 7 do 17 tysięcy porów, przez które zarodek oddycha.</span></span></button></li>
+        <li><button type="button" data-part="membrane" aria-pressed="false"><span class="num">2</span><span class="part-text"><b>Błony podskorupowe</b><span>Dwie cienkie błony zatrzymujące bakterie. To przez nie obieranie czasem idzie tak opornie.</span></span></button></li>
+        <li><button type="button" data-part="air" aria-pressed="false"><span class="num">3</span><span class="part-text"><b>Komora powietrzna</b><span>Tworzy się na tępym końcu, gdy jajo stygnie po zniesieniu. Rośnie z&nbsp;każdym dniem.</span></span></button></li>
+        <li><button type="button" data-part="thin" aria-pressed="false"><span class="num">4</span><span class="part-text"><b>Białko rzadkie</b><span>Zewnętrzna, płynna warstwa. Białko jaja to w&nbsp;prawie 90% woda.</span></span></button></li>
+        <li><button type="button" data-part="thick" aria-pressed="false"><span class="num">5</span><span class="part-text"><b>Białko gęste</b><span>Otacza żółtko. W&nbsp;świeżym jajku trzyma się zwarcie, w&nbsp;starym rozlewa się po patelni.</span></span></button></li>
+        <li><button type="button" data-part="chalaza" aria-pressed="false"><span class="num">6</span><span class="part-text"><b>Skrętki (chalazy)</b><span>Skręcone sznureczki białka. Utrzymują żółtko na środku jak na hamaku.</span></span></button></li>
+        <li><button type="button" data-part="yolk" aria-pressed="false"><span class="num">7</span><span class="part-text"><b>Żółtko</b><span>Zapas tłuszczu oraz witamin A, D i&nbsp;E. Jego kolor zależy głównie od paszy kury.</span></span></button></li>
+        <li><button type="button" data-part="disc" aria-pressed="false"><span class="num">8</span><span class="part-text"><b>Tarczka zarodkowa</b><span>Jasna plamka na żółtku. Tu zaczyna się rozwój zarodka, jeśli jajo jest zapłodnione.</span></span></button></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section class="band band-alt" id="skala" aria-labelledby="skalaTitle">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Skala</p>
+      <h2 id="skalaTitle">Od kolibra do strusia</h2>
+      <p class="section-lede">Jaja siedmiu ptaków narysowane w&nbsp;tej samej skali. Linijka po lewej pokazuje centymetry, a&nbsp;pod każdym jajem widać, ile waży w&nbsp;porównaniu z&nbsp;kurzym.</p>
+    </div>
+    <div class="scale-top">
+      <label class="switch" for="elephantToggle">
+        <input type="checkbox" id="elephantToggle" role="switch">
+        <span class="switch-track" aria-hidden="true"></span>
+        <span>Dodaj jajo mamutaka, wymarłego ptaka z&nbsp;Madagaskaru</span>
+      </label>
+    </div>
+    <div class="scale-scroll">
+      <svg id="scaleSvg" viewBox="0 0 960 380" role="img" aria-label="Porównanie długości jaj: koliber 1,3 cm, przepiórka 3,4 cm, kura 5,8 cm, kaczka 6,3 cm, gęś 8,4 cm, emu 13 cm, struś 15 cm."></svg>
+    </div>
+    <p class="note">Wymiary i&nbsp;masy to przybliżone średnie. Porównanie z&nbsp;jajem kurzym (58&nbsp;g) liczone jest według masy.</p>
+  </div>
+</section>
+
+<section class="band" id="kod" aria-labelledby="kodTitle">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Kod na skorupce</p>
+      <h2 id="kodTitle">Co mówi pieczątka na jajku</h2>
+      <p class="section-lede">Każde jajo w&nbsp;sklepie ma nadrukowany kod. Pierwsza cyfra mówi, jak żyła kura, litery wskazują kraj, a&nbsp;reszta to numer fermy. Przepisz kod ze swojego jajka.</p>
+    </div>
+
+    <div class="decoder">
+      <div class="decoder-input">
+        <label class="input-label" for="codeInput">Kod z&nbsp;jajka</label>
+        <input id="codeInput" class="code-input" type="text" value="1-PL-30241301" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="24" aria-describedby="codeError">
+        <div class="chips">
+          <span>Przykłady:</span>
+          <button type="button" class="chip chip-mono" data-code="0-PL-12061301">0-PL-12061301</button>
+          <button type="button" class="chip chip-mono" data-code="2-PL-22151302">2-PL-22151302</button>
+          <button type="button" class="chip chip-mono" data-code="3-PL-14651305">3-PL-14651305</button>
+        </div>
+        <p class="code-error" id="codeError" role="status"></p>
+      </div>
+
+      <div class="decoded" id="decoded">
+        <div class="stamp" aria-hidden="true">
+          <div class="stamp-ink">
+            <span class="st"><b id="stA">1</b><i>chów</i></span>
+            <span class="st"><b id="stB">PL</b><i>kraj</i></span>
+            <span class="st"><b id="stC">3024</b><i id="stCLabel">woj. i&nbsp;powiat</i></span>
+            <span class="st" id="stDWrap"><b id="stD">1301</b><i>ferma</i></span>
+          </div>
+        </div>
+        <div class="dcards">
+          <article class="dcard">
+            <h3>Sposób chowu</h3>
+            <p class="dcard-val" id="decMethod">Chów na wolnym wybiegu</p>
+            <p class="dcard-info" id="decMethodInfo">Kury w&nbsp;ciągu dnia wychodzą na zewnątrz. Na każdą przypadają co najmniej 4&nbsp;m² wybiegu.</p>
+          </article>
+          <article class="dcard">
+            <h3>Kraj</h3>
+            <p class="dcard-val" id="decCountry">Polska</p>
+            <p class="dcard-info" id="decCountryInfo">Kraj, w&nbsp;którym jajo zostało zniesione.</p>
+          </article>
+          <article class="dcard">
+            <h3>Producent</h3>
+            <p class="dcard-val" id="decProducer">woj. wielkopolskie</p>
+            <p class="dcard-info" id="decProducerInfo">Powiat o&nbsp;kodzie 24. Kod działalności 13 oznacza fermę kur niosek, a&nbsp;01 to numer fermy.</p>
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <ol class="welfare" aria-label="Cztery sposoby chowu kur niosek">
+      <li class="wf" data-method="0"><b>0</b><strong>Ekologiczny</strong><span>Wybieg i&nbsp;pasza ekologiczna. W&nbsp;kurniku do 6 kur na&nbsp;m².</span></li>
+      <li class="wf is-current" data-method="1"><b>1</b><strong>Wolny wybieg</strong><span>Co najmniej 4&nbsp;m² wybiegu na każdą kurę.</span></li>
+      <li class="wf" data-method="2"><b>2</b><strong>Ściółkowy</strong><span>Zamknięty kurnik bez klatek, do 9 kur na&nbsp;m².</span></li>
+      <li class="wf" data-method="3"><b>3</b><strong>Klatkowy</strong><span>Ok. 750&nbsp;cm² na kurę, niewiele więcej niż kartka A4.</span></li>
+    </ol>
+  </div>
+</section>
+
+<section class="band band-alt" id="swiezosc" aria-labelledby="swiezoscTitle">
+  <div class="wrap fresh">
+    <div class="fresh-text">
+      <div class="section-head">
+        <p class="eyebrow">Świeżość</p>
+        <h2 id="swiezoscTitle">Test szklanki wody</h2>
+        <p class="section-lede">Przez pory w&nbsp;skorupce jajo powoli traci wodę, a&nbsp;komora powietrzna rośnie. Dlatego starsze jajo w&nbsp;wodzie się unosi. Przesuń suwak i&nbsp;postarz jajko.</p>
+      </div>
+      <div class="field">
+        <div class="field-top">
+          <label for="age">Wiek jajka</label>
+          <output id="ageOut" for="age">3 dni</output>
+        </div>
+        <input type="range" id="age" min="0" max="35" step="1" value="3">
+        <div class="age-marks" aria-hidden="true">
+          <span style="--v: 9">9 · koniec „extra”</span>
+          <span style="--v: 28">28 · data trwałości</span>
+        </div>
+      </div>
+      <p class="verdict" id="freshVerdict" data-level="ok" role="status">Świeże. Leży płasko na dnie.</p>
+      <p class="note">W&nbsp;Unii Europejskiej jajo można oznaczyć jako „extra” do 9.&nbsp;dnia od zniesienia, a&nbsp;data minimalnej trwałości to najwyżej 28&nbsp;dni. Test jest orientacyjny: w&nbsp;lodówce jajo starzeje się wolniej.</p>
+    </div>
+
+    <figure class="glass-fig">
+      <svg class="glass" viewBox="0 0 220 280" role="img" aria-label="Jajko zanurzone w szklance wody">
+        <defs>
+          <clipPath id="freshClip"><path d="M-40,0 C-40,-20 -24,-29 -4,-29 C18,-29 40,-16 40,0 C40,16 18,29 -4,29 C-24,29 -40,20 -40,0 Z"/></clipPath>
+        </defs>
+        <path class="glass-fill" d="M30,20 L40,256 Q41,267 52,267 L168,267 Q179,267 180,256 L190,20 Z"/>
+        <g class="fresh-egg" id="freshEgg" transform="translate(110 231)">
+          <g class="fresh-bob">
+            <g transform="scale(1.1)">
+              <path class="fe-shell" d="M-40,0 C-40,-20 -24,-29 -4,-29 C18,-29 40,-16 40,0 C40,16 18,29 -4,29 C-24,29 -40,20 -40,0 Z"/>
+              <ellipse class="fe-air" id="airCell" clip-path="url(#freshClip)" cx="-40" cy="0" rx="4" ry="11"/>
+              <path class="fe-edge" d="M-40,0 C-40,-20 -24,-29 -4,-29 C18,-29 40,-16 40,0 C40,16 18,29 -4,29 C-24,29 -40,20 -40,0 Z"/>
+            </g>
+          </g>
+        </g>
+        <path class="water" d="M32.2,72 L41.3,254 Q42.5,263 52,263 L168,263 Q177.5,263 178.7,254 L187.8,72 Z"/>
+        <path class="water-top" d="M32.2,72 L187.8,72"/>
+        <path class="glass-line" d="M30,20 L40,256 Q41,267 52,267 L168,267 Q179,267 180,256 L190,20"/>
+        <path class="glass-gloss" d="M46,44 L54,236"/>
+      </svg>
+    </figure>
+  </div>
+</section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-grid">
+    <h2 class="footer-q">Kura czy jajo?</h2>
+    <div class="footer-a">
+      <p><strong>Jajo.</strong> Zwierzęta składały jaja na lądzie już ponad 300 milionów lat temu, a&nbsp;kury udomowiono kilka tysięcy lat temu. Pierwsza kura wykluła się z&nbsp;jaja złożonego przez ptaka, który kurą jeszcze nie był.</p>
+      <p class="note">Jajo, 2026. Liczby na tej stronie to przybliżone średnie. Minutnik liczy czas ze wzoru, więc pierwsze jajko sprawdź łyżeczką.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="script.js" defer></script>
+</body>
+</html>
