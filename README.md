@@ -1,6 +1,8 @@
 # Jajo
 
-Interaktywny przewodnik po jajku kurzym. Statyczna strona bez żadnego procesu budowania: sam HTML, CSS i JavaScript.
+**Strona: [snipergames.github.io/Jajo](https://snipergames.github.io/Jajo/)**
+
+Interaktywny przewodnik po jajku kurzym: ile gotować jajko na miękko i na twardo, co oznacza kod na jajku i jak sprawdzić, czy jajko jest świeże. Statyczna strona bez żadnego procesu budowania: sam HTML, CSS i JavaScript.
 
 ## Co jest na stronie
 
@@ -34,5 +36,8 @@ W ustawieniach repozytorium: **Settings → Pages → Build and deployment**, ź
 | `index.html` | Treść i ilustracje SVG                      |
 | `style.css`  | Wygląd, motywy jasny i ciemny, układ        |
 | `script.js`  | Minutnik, dekoder, wykres skali, animacje   |
+| `sitemap.xml`, `og-image.png`, `favicon.*` | Mapa strony dla wyszukiwarek, obrazek podglądu linku, ikony |
+
+Strona na GitHub Pages jest serwowana z gałęzi `gh-pages`.
 
 Liczby na stronie to przybliżone średnie. Czas gotowania to wynik modelu fizycznego, więc pierwsze jajko warto sprawdzić łyżeczką.
