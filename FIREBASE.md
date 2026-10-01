@@ -145,6 +145,23 @@ Kto co może:
 
 Moderator (ten sam co od przepisów, z kolekcji `admins`) widzi w każdym wątku przyciski **Przypnij na górze**, **Zamknij wątek** i **Usuń wątek** (razem z odpowiedziami), a przy każdej odpowiedzi **Usuń**. Wątki są w kolekcji `watki`, a odpowiedzi w podkolekcji `odpowiedzi` każdego wątku.
 
+## 12. Gry i tablice wyników
+
+Wystarczy jeszcze raz wkleić reguły: **Firestore Database → Reguły**, usuń wszystko, wklej aktualną zawartość pliku [`firestore.rules`](firestore.rules) i kliknij **Opublikuj**. Gry na stronie `gry.html` działają też bez tego, ale wtedy rekordy zapisują się tylko na danym urządzeniu, a zamiast tablic wyników jest napis „Tablice wyników ruszą wkrótce”.
+
+Jak to działa:
+- grać może każdy, także bez logowania. Rekord zapisuje się wtedy w przeglądarce,
+- zalogowany (kontem Google albo e-mailem z potwierdzonym adresem) trafia na tablicę danej gry ze swoim najlepszym wynikiem i widzi swoje miejsce,
+- tablica pokazuje 10 najlepszych, a w profilu każdej osoby widać jej rekordy.
+
+Jak reguły utrudniają oszukiwanie (gra działa w przeglądarce, więc w 100% się nie da, ale wpisanie wyniku z konsoli nic nie da):
+- na początku każdej gry serwer zapisuje godzinę startu (kolekcja `sesje_gier`). Wynik musi przyjść razem z zamknięciem tej sesji, więc jedna gra daje jeden wpis,
+- wynik nie może przyjść szybciej, niż da się go zdobyć: w Łap jajka najwyżej 10 punktów na sekundę, w Locie kurczaka 2 punkty na sekundę, w Jajo 2048 około 330 punktów na sekundę, a Pary pisanek trwają co najmniej 8 sekund,
+- każda gra ma górny limit punktów (Łap jajka 5000, Lot kurczaka 2000, Jajo 2048 1 000 000, Pary pisanek 3000),
+- zapisuje się tylko wynik lepszy od poprzedniego.
+
+Moderator widzi przy każdym wyniku na tablicy przycisk **×**, którym usuwa podejrzane wyniki. Tablice są w kolekcji `wyniki`, osobno dla każdej gry (`wyniki/{gra}/gracze`).
+
 ## Koszty i limity
 
 Darmowy plan Spark wystarcza z dużym zapasem: 1 GiB danych, 50 000 odczytów i 20 000 zapisów dziennie. Jedno wejście na stronę z przepisami to kilkadziesiąt odczytów (liczniki polubień i przepisy czytelników). Zdjęcia są zmniejszane w przeglądarce i zapisywane w bazie, więc płatny Cloud Storage nie jest potrzebny. Jeśli limit kiedyś się skończy, strona nie przestanie działać: do północy (czasu USA) nie wczytają się tylko przepisy od czytelników.

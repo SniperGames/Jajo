@@ -13,6 +13,7 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '
 const CAT = { sniadania: 'Śniadanie', obiady: 'Obiad', przekaski: 'Przekąska', desery: 'Deser' };
 const DIFF = ['', 'łatwe', 'średnie', 'wymagające'];
 const OFFICIAL = Object.fromEntries((window.JAJO_PRZEPISY || []).map((r) => [r.id, r.name]));
+const GAME_NAMES = [['lap-jajka', 'Łap jajka'], ['lot-kurczaka', 'Lot kurczaka'], ['jajo-2048', 'Jajo 2048'], ['pary', 'Pary pisanek']];
 const EGG_SVG = '<svg class="ei ei-whole" viewBox="0 0 20 26" aria-hidden="true"><path d="M10 1C15 1 18 9 18 16c0 5.5-3.5 9-8 9s-8-3.5-8-9C2 9 5 1 10 1z"/></svg>';
 
 let fb = null;
@@ -78,6 +79,10 @@ async function render() {
       // Bez reguł forum w bazie sekcji wątków po prostu nie pokazujemy.
       F.getDocs(F.query(F.collection(db, 'watki'), F.where('authorUid', '==', uid), F.limit(50))).catch(() => null),
     ]);
+    // Rekordy z tablic wyników gier (bez reguł gier w bazie sekcja się nie pokazuje).
+    const gameScores = await Promise.all(GAME_NAMES.map(([id]) => F.getDoc(F.doc(db, 'wyniki', id, 'gracze', uid))
+      .then((d) => (d.exists() ? d.data().score : 0))
+      .catch(() => null)));
     const ms = (t) => (t && t.toMillis ? t.toMillis() : Date.now());
     const threads = threadSnap
       ? threadSnap.docs.map((d) => ({ id: d.id, ...d.data(), last: ms(d.data().lastAt) })).sort((a, b) => b.last - a.last)
@@ -120,7 +125,9 @@ async function render() {
         profile.banner === 'custom' ? custom('banery') : presetSrc('banner', profile.banner),
       ]);
     }
-    data = { profile, avatarSrc, bannerSrc, recipes, likes, commentsTotal: commCount.data().count, comments, names, threads };
+    const games = gameScores.every((v) => v === null) ? null
+      : GAME_NAMES.map(([id, name], i) => ({ id, name, score: gameScores[i] || 0 })).filter((g) => g.score > 0);
+    data = { profile, avatarSrc, bannerSrc, recipes, likes, commentsTotal: commCount.data().count, comments, names, threads, games };
   } catch (err) {
     console.error(err);
     if (token === renderToken) app.innerHTML = '<p class="note profile-loading">Nie udało się wczytać profilu. Odśwież stronę za chwilę.</p>';
@@ -196,6 +203,15 @@ async function render() {
               </div>
             </li>`).join('')}</ul>${data.threads.length > 5 ? `<p class="note">I jeszcze ${data.threads.length - 5} na <a href="forum.html">forum</a>.</p>` : ''}`
         : `<p class="note">${own ? 'Nie masz jeszcze wątków. <a href="forum.html">Załóż pierwszy na forum</a>.' : 'Ten kucharz nie założył jeszcze wątku na forum.'}</p>`}
+    </section>` : ''}
+
+    ${data.games && (data.games.length || own) ? `
+    <section class="profile-section" aria-labelledby="pGames">
+      <h2 id="pGames">Rekordy w grach</h2>
+      ${data.games.length
+        ? `<ul class="profile-games">${data.games.map((g) => `
+            <li><a href="gry.html#${g.id}">${esc(g.name)}</a><b>${g.score.toLocaleString('pl-PL')}</b></li>`).join('')}</ul>`
+        : '<p class="note">Nie masz jeszcze wyników na tablicach. <a href="gry.html">Zagraj w gry z jajem</a>.</p>'}
     </section>` : ''}
 
     <section class="profile-section" aria-labelledby="pComments">

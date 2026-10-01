@@ -3,20 +3,33 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Profil kucharza – Jajo</title>
-<meta name="description" content="Profil czytelnika strony Jajo: jego przepisy z jajkami, polubienia i komentarze.">
-<meta name="robots" content="noindex, follow">
+<title>Gry z jajem: minigry z jajkami – Jajo</title>
+<meta name="description" content="Darmowe minigry z jajkami na komputer i telefon: Łap jajka, Lot kurczaka, Jajo 2048 i Pary pisanek. Zdobywaj punkty i walcz o miejsce na tablicy wyników.">
+<link rel="canonical" href="https://snipergames.github.io/Jajo/gry.html">
+<meta name="robots" content="index, follow">
 <meta name="theme-color" content="#EEF3EF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0C1412" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="icon" href="favicon-96.png" type="image/png" sizes="96x96">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pl_PL">
+<meta property="og:site_name" content="Jajo">
+<meta property="og:title" content="Gry z jajem – Jajo">
+<meta property="og:description" content="Cztery minigry z jajkami na komputer i telefon, z tablicami wyników.">
+<meta property="og:url" content="https://snipergames.github.io/Jajo/gry.html">
+<meta property="og:image" content="https://snipergames.github.io/Jajo/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;800&family=Onest:wght@400;500;600;700&family=Unbounded:wght@600;700;800;900&display=swap">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
+<a class="skip-link" href="#gryApp">Przejdź do gier</a>
 
 <nav class="nav" aria-label="Sekcje strony">
   <div class="wrap nav-row">
@@ -29,7 +42,7 @@
       <li><a href="index.html#kod">Kod</a></li>
       <li><a class="nav-recipes" href="przepisy.html">Przepisy</a></li>
       <li><a class="nav-forum" href="forum.html">Forum</a></li>
-      <li><a class="nav-games" href="gry.html">Gry</a></li>
+      <li><a class="nav-games" href="gry.html" aria-current="page">Gry</a></li>
     </ul>
     <button class="theme-btn" id="themeBtn" type="button" aria-label="Przełącz motyw">
       <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
@@ -38,25 +51,33 @@
   </div>
 </nav>
 
-<main class="profile-page">
-  <div class="wrap" id="profileApp" aria-live="polite">
-    <p class="note profile-loading">Wczytuję profil…</p>
+<main class="games-page" id="gryApp" tabindex="-1">
+  <div class="wrap">
+    <section class="games-hub" id="gamesHub" aria-labelledby="gamesTitle">
+      <div class="section-head games-head">
+        <p class="eyebrow">Minigry</p>
+        <h1 class="page-title games-title" id="gamesTitle">Gry z&nbsp;jajem</h1>
+        <p class="section-lede">Cztery minigry na przerwę, na komputerze i&nbsp;na telefonie. Grać może każdy. Zalogowani trafiają ze swoim najlepszym wynikiem na tablicę.</p>
+      </div>
+      <div class="games-grid" id="gamesGrid"></div>
+    </section>
+
+    <section class="game-view" id="gameView" hidden></section>
   </div>
 </main>
 
 <footer class="footer">
   <div class="wrap footer-grid">
-    <h2 class="footer-q">Masz swój przepis?</h2>
+    <h2 class="footer-q">Czas na przekąskę?</h2>
     <div class="footer-a">
-      <p>Dodaj go na stronie z&nbsp;przepisami. Po akceptacji pojawi się też na Twoim profilu.</p>
-      <p><a class="btn btn-ghost" href="przepisy.html#od-czytelnikow">Przepisy od czytelników</a></p>
+      <p>Prawdziwe jajka smakują jeszcze lepiej. Zajrzyj do przepisów albo pogadaj o&nbsp;nich na forum.</p>
+      <p><a class="btn btn-ghost" href="przepisy.html">Przepisy</a> <a class="btn btn-ghost" href="forum.html">Forum</a></p>
     </div>
   </div>
 </footer>
 
 <script src="script.js" defer></script>
 <script type="module" src="konto.js"></script>
-<script src="przepisy-dane.js" defer></script>
-<script type="module" src="profil.js"></script>
+<script type="module" src="gry.js"></script>
 </body>
 </html>

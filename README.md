@@ -17,6 +17,7 @@ Interaktywny przewodnik po jajku kurzym: ile gotować jajko na miękko i na twar
 - **Polubienia, komentarze i profile**: przycisk „Smakuje mi” przy każdym przepisie i komentarze pod nim, także bez logowania (jako „Niezalogowany użytkownik”). Każdy zalogowany ma publiczny profil (`profil.html`) ze swoimi przepisami, liczbą polubień i komentarzy oraz ulubionym jajkiem.
 - **Ulubione**: serduszko na każdym przepisie i filtr „Ulubione” nad listą (adres `przepisy.html#ulubione`). Bez logowania ulubione zostają w przeglądarce, po zalogowaniu są na koncie.
 - **Forum** (`forum.html`): wątki z tagami, wyszukiwarka, odpowiedzi na żywo, zamykanie wątków przez autora i moderacja. Czytać może każdy, a pisać zalogowani. Wątki autora widać też w jego profilu.
+- **Gry z jajem** (`gry.html`): Łap jajka, Lot kurczaka, Jajo 2048 i Pary pisanek. Działają myszą, klawiaturą i palcem. Zalogowani trafiają na tablice wyników z miejscami, a reguły bazy sprawdzają, czy wynik dało się zdobyć w takim czasie.
 - **Zdjęcie profilowe i baner**: osiem gotowych zdjęć i sześć banerów do wyboru albo własne zdjęcia. Zdjęcie widać w profilu, przy komentarzach i w ikonie konta.
 
 Strona ma jasny i ciemny motyw, działa na telefonie i szanuje ustawienie „ogranicz ruch”.
@@ -50,6 +51,7 @@ W ustawieniach repozytorium: **Settings → Pages → Build and deployment**, ź
 | `logowanie.js` | Okno logowania: Google albo e-mail i hasło, zakładanie konta, nowe hasło |
 | `ulubione.js` | Ulubione przepisy na koncie zalogowanego |
 | `forum.html`, `forum.js` | Forum: wątki, tagi, odpowiedzi i moderacja |
+| `gry.html`, `gry.js`, `gry/` | Gry z jajem i tablice wyników (każda gra w osobnym pliku w `gry/`) |
 | `firebase-config.js`, `firestore.rules` | Konfiguracja Firebase i reguły bezpieczeństwa bazy |
 | `img/przepisy/` | Zdjęcia potraw (Wikimedia Commons, autorzy podani na stronie) |
 | `img/awatary/`, `img/banery/` | Gotowe zdjęcia profilowe i banery |

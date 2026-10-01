@@ -1,6 +1,6 @@
 rules_version = '2';
 
-// Reguły bazy strony Jajo: przepisy od czytelników, polubienia, komentarze, profile i forum.
+// Reguły bazy strony Jajo: przepisy od czytelników, polubienia, komentarze, profile, forum i gry.
 // Wklej całość w Firebase: Firestore Database → Reguły → Opublikuj.
 //
 // Kto co może:
@@ -11,6 +11,7 @@ rules_version = '2';
 //    do moderacji), ma profil, widzi i usuwa swoje rzeczy,
 //  - listę ulubionych przepisów widzi i zmienia tylko jej właściciel,
 //  - na forum każdy czyta, a zalogowani zakładają wątki i odpisują; autor zamyka i poprawia swój wątek,
+//  - w grach każdy gra, a zalogowani wpisują swój najlepszy wynik na tablicę (z kontrolą czasu gry),
 //  - moderator (dokument w kolekcji „admins” o ID równym jego UID) zatwierdza, odrzuca i usuwa.
 
 service cloud.firestore {
@@ -359,6 +360,60 @@ service cloud.firestore {
         // Całkowicie usuwa tylko moderator, np. razem z całym wątkiem.
         allow delete: if isAdmin();
       }
+    }
+
+    /* ---------- Gry ---------- */
+
+    function gameIds() {
+      return ['lap-jajka', 'lot-kurczaka', 'jajo-2048', 'pary'];
+    }
+
+    // Najwyższy możliwy wynik w grze, żeby nikt nie wpisał dowolnej liczby.
+    function maxScore(game) {
+      return game == 'jajo-2048' ? 1000000
+        : game == 'lap-jajka' ? 5000
+        : game == 'lot-kurczaka' ? 2000
+        : 3000;
+    }
+
+    // Najkrótszy możliwy czas gry (w milisekundach) potrzebny na dany wynik.
+    function minMillis(game, score) {
+      return game == 'lap-jajka' ? score * 100
+        : game == 'lot-kurczaka' ? score * 500
+        : game == 'jajo-2048' ? score * 3
+        : 8000;
+    }
+
+    function sessionDoc() {
+      return /databases/$(database)/documents/sesje_gier/$(request.auth.uid);
+    }
+
+    // Początek gry: serwer zapisuje godzinę startu. Wynik nie może przyjść szybciej, niż da się go zdobyć.
+    match /sesje_gier/{uid} {
+      allow read, delete: if isMember() && request.auth.uid == uid;
+      allow create, update: if isMember() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['game', 'startedAt'])
+        && request.resource.data.game in gameIds()
+        && request.resource.data.startedAt == request.time;
+    }
+
+    // Tablice wyników: najlepszy wynik każdej osoby w danej grze. Zapis tylko lepszego wyniku,
+    // tylko razem z usunięciem sesji tej gry (jedna gra, jeden wynik). Moderator usuwa oszustów.
+    match /wyniki/{game}/gracze/{uid} {
+      allow read: if true;
+      allow create, update: if isMember() && request.auth.uid == uid
+        && game in gameIds()
+        && request.resource.data.keys().hasOnly(['score', 'name', 'at'])
+        && request.resource.data.score is int
+        && request.resource.data.score > 0
+        && request.resource.data.score <= maxScore(game)
+        && (resource == null || request.resource.data.score > resource.data.score)
+        && validName(request.resource.data.name)
+        && request.resource.data.at == request.time
+        && get(sessionDoc()).data.game == game
+        && request.time.toMillis() - get(sessionDoc()).data.startedAt.toMillis() >= minMillis(game, request.resource.data.score)
+        && !existsAfter(sessionDoc());
+      allow delete: if isAdmin();
     }
 
     /* ---------- Ulubione przepisy ---------- */
