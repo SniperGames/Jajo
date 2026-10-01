@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Przepisy z jajkiem: szakszuka, carbonara, pavlova i inne – Jajo</title>
+<meta name="description" content="Dwanaście przepisów, w których jajko gra główną rolę: od jajecznicy i pasty jajecznej po carbonarę, żurek i tiramisu. Powiedz, ile masz jajek, a strona pokaże, co z nich zrobisz.">
+<link rel="canonical" href="https://snipergames.github.io/Jajo/przepisy.html">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#EEF3EF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0C1412" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-96.png" type="image/png" sizes="96x96">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pl_PL">
+<meta property="og:site_name" content="Jajo">
+<meta property="og:title" content="Przepisy z jajkiem – Jajo">
+<meta property="og:description" content="Dwanaście przepisów z jajkiem w roli głównej, z minutnikami w krokach i przelicznikiem porcji.">
+<meta property="og:url" content="https://snipergames.github.io/Jajo/przepisy.html">
+<meta property="og:image" content="https://snipergames.github.io/Jajo/img/przepisy/szakszuka.jpg">
+<meta property="og:image:alt" content="Szakszuka na patelni">
+<meta name="twitter:card" content="summary_large_image">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;800&family=Onest:wght@400;500;600;700&family=Unbounded:wght@600;700;800;900&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="skip-link" href="#przepisy">Przejdź do przepisów</a>
+
+<nav class="nav" aria-label="Sekcje strony">
+  <div class="wrap nav-row">
+    <a class="brand" href="index.html">
+      <svg viewBox="0 0 20 26" aria-hidden="true"><path d="M10 1C15 1 18 9 18 16c0 5.5-3.5 9-8 9s-8-3.5-8-9C2 9 5 1 10 1z"/></svg>
+      Jajo
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html#minutnik">Minutnik</a></li>
+      <li><a href="index.html#wnetrze">Wnętrze</a></li>
+      <li><a href="index.html#skala">Skala</a></li>
+      <li><a href="index.html#kod">Kod</a></li>
+      <li><a href="index.html#swiezosc">Świeżość</a></li>
+      <li><a class="nav-recipes" href="przepisy.html" aria-current="page">Przepisy</a></li>
+    </ul>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Przełącz motyw">
+      <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
+      <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
+    </button>
+  </div>
+</nav>
+
+<header class="hero hero-recipes" id="top">
+  <div class="wrap recipes-hero-grid">
+    <div class="recipes-hero-text">
+      <p class="eyebrow">Przepisy z&nbsp;jajkiem</p>
+      <h1 class="page-title">Co dziś zrobisz z&nbsp;jajek?</h1>
+      <p class="lead">Dwanaście przepisów, w&nbsp;których jajko gra główną rolę. Powiedz, ile jajek masz w&nbsp;lodówce, a&nbsp;przy każdym przepisie zobaczysz, na ile porcji wystarczą.</p>
+    </div>
+
+    <div class="carton-card">
+      <div class="carton-head">
+        <h2 class="carton-title" id="cartonTitle">Ile masz jajek?</h2>
+        <p class="carton-count" aria-live="polite"><b id="eggCount">10</b> <span id="eggWord">jajek</span></p>
+      </div>
+      <div class="carton" id="carton" role="group" aria-labelledby="cartonTitle"></div>
+      <div class="carton-foot">
+        <p class="carton-note">Stuknij przegródkę, żeby dodać albo zabrać jajko.</p>
+        <button type="button" class="chip" id="cartonFill">Pełna wytłaczanka</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="band band-alt" id="przepisy" aria-labelledby="przepisyTitle">
+    <div class="wrap">
+      <h2 class="sr-only" id="przepisyTitle">Lista przepisów</h2>
+      <div class="rfilters">
+        <div class="rfilter-chips" role="radiogroup" aria-label="Rodzaj dania" id="catFilter"></div>
+        <p class="egg-legend" aria-hidden="true">
+          <span><span class="ei-slot" data-egg="whole"></span>całe jajko</span>
+          <span><span class="ei-slot" data-egg="yolk"></span>żółtko</span>
+          <span><span class="ei-slot" data-egg="white"></span>białko</span>
+        </p>
+      </div>
+      <p class="rstatus" id="recipeStatus" aria-live="polite"></p>
+      <div class="rgrid" id="recipeGrid"></div>
+    </div>
+  </section>
+
+  <section class="band" id="zdjecia" aria-labelledby="zdjeciaTitle">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Zdjęcia</p>
+        <h2 id="zdjeciaTitle">Autorzy zdjęć</h2>
+        <p class="section-lede">Wszystkie zdjęcia pochodzą z&nbsp;Wikimedia Commons i&nbsp;są na wolnych licencjach. Dziękujemy autorom.</p>
+      </div>
+      <ul class="credits" id="credits"></ul>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-grid">
+    <h2 class="footer-q">Brakuje jajek?</h2>
+    <div class="footer-a">
+      <p>Zanim kupisz nowe, sprawdź, czy te z&nbsp;lodówki są jeszcze świeże, i&nbsp;rozszyfruj kod na skorupce.</p>
+      <p><a class="btn btn-ghost" href="index.html#swiezosc">Test świeżości</a></p>
+      <p class="note">Jajo, 2026. Czasy w&nbsp;przepisach są orientacyjne i&nbsp;zależą od kuchenki oraz wielkości jajek.</p>
+    </div>
+  </div>
+</footer>
+
+<dialog class="rdialog" id="recipeDialog" aria-labelledby="rdTitle"></dialog>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="script.js" defer></script>
+<script src="przepisy-dane.js" defer></script>
+<script src="przepisy.js" defer></script>
+</body>
+</html>

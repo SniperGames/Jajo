@@ -67,6 +67,7 @@
   /* ---------- Jajko w nagłówku ---------- */
   (function heroEgg() {
     const egg = $('#heroEgg');
+    if (!egg) return;
     const hint = $('#eggHint');
     const HINTS = [
       'Stuknij w' + NBSP + '„o”. Coś tam siedzi.',
@@ -96,6 +97,7 @@
   /* ---------- Minutnik ---------- */
   (function timer() {
     const form = $('#timerForm');
+    if (!form) return;
     const fields = $('#timerFields');
     const altitude = $('#altitude');
     const yolk = $('#yolk');
@@ -306,6 +308,7 @@
   /* ---------- Przekrój jajka ---------- */
   (function anatomy() {
     const svg = $('#anatomySvg');
+    if (!svg) return;
     const list = $('#parts');
     const buttons = $$('button[data-part]', list);
     const groups = $$('[data-part]', svg);
@@ -350,6 +353,7 @@
   /* ---------- Porównanie jaj w skali ---------- */
   (function scaleChart() {
     const svg = $('#scaleSvg');
+    if (!svg) return;
     const toggle = $('#elephantToggle');
     const NS = 'http://www.w3.org/2000/svg';
     // Jajo stojące na czubku, dół w (0,0), szerokość 1, wysokość 1.
@@ -480,6 +484,7 @@
   /* ---------- Dekoder kodu ze skorupki ---------- */
   (function decoder() {
     const input = $('#codeInput');
+    if (!input) return;
     const error = $('#codeError');
     const decoded = $('#decoded');
     const out = {
@@ -586,6 +591,7 @@
   /* ---------- Test świeżości ---------- */
   (function freshness() {
     const age = $('#age');
+    if (!age) return;
     const out = $('#ageOut');
     const verdict = $('#freshVerdict');
     const egg = $('#freshEgg');
@@ -629,7 +635,7 @@
   /* ---------- Aktywny link w nawigacji ---------- */
   (function navSpy() {
     if (!('IntersectionObserver' in window)) return;
-    const links = $$('.nav-links a');
+    const links = $$('.nav-links a[href^="#"]');
     const byId = new Map(links.map((a) => [a.getAttribute('href').slice(1), a]));
     const io = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
