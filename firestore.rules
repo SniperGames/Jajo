@@ -1,6 +1,6 @@
 rules_version = '2';
 
-// Reguły bazy strony Jajo: przepisy od czytelników, polubienia, komentarze i profile.
+// Reguły bazy strony Jajo: przepisy od czytelników, polubienia, komentarze, profile i forum.
 // Wklej całość w Firebase: Firestore Database → Reguły → Opublikuj.
 //
 // Kto co może:
@@ -10,6 +10,7 @@ rules_version = '2';
 //  - zalogowany (kontem Google albo e-mailem z potwierdzonym adresem) dodaje przepisy (trafiają
 //    do moderacji), ma profil, widzi i usuwa swoje rzeczy,
 //  - listę ulubionych przepisów widzi i zmienia tylko jej właściciel,
+//  - na forum każdy czyta, a zalogowani zakładają wątki i odpisują; autor zamyka i poprawia swój wątek,
 //  - moderator (dokument w kolekcji „admins” o ID równym jego UID) zatwierdza, odrzuca i usuwa.
 
 service cloud.firestore {
@@ -235,6 +236,131 @@ service cloud.firestore {
       allow delete: if (isMember() && request.auth.uid == uid) || isAdmin();
     }
 
+    /* ---------- Forum ---------- */
+
+    function threadDoc(id) {
+      return /databases/$(database)/documents/watki/$(id);
+    }
+
+    function replyDoc(id, rid) {
+      return /databases/$(database)/documents/watki/$(id)/odpowiedzi/$(rid);
+    }
+
+    function changedKeys() {
+      return request.resource.data.diff(resource.data).affectedKeys();
+    }
+
+    function validName(n) {
+      return n is string && n.size() >= 2 && n.size() <= 40;
+    }
+
+    // Tagi wybiera się z listy (od 1 do 3 różnych), żeby wątki łatwo było filtrować.
+    function validTags(tags) {
+      return tags is list && tags.size() >= 1 && tags.size() <= 3
+        && tags.toSet().size() == tags.size()
+        && tags.toSet().hasOnly(['pytanie', 'gotowanie', 'przepisy', 'wypieki', 'zdrowie', 'kury', 'zakupy', 'pokaz', 'inne']);
+    }
+
+    function validThread(d) {
+      return d.title is string && d.title.size() >= 5 && d.title.size() <= 120
+        && d.text is string && d.text.size() >= 10 && d.text.size() <= 5000
+        && validTags(d.tags);
+    }
+
+    function validReplyText(t) {
+      return t is string && t.size() >= 2 && t.size() <= 3000;
+    }
+
+    function isAuthor() {
+      return isMember() && resource.data.authorUid == request.auth.uid;
+    }
+
+    match /watki/{id} {
+      allow read: if true;
+
+      // Nowy wątek: tylko zalogowani, najwyżej jeden na 2 minuty na osobę.
+      allow create: if isMember()
+        && request.resource.data.keys().hasOnly(['title', 'text', 'tags', 'authorUid', 'authorName', 'createdAt',
+                                                 'lastAt', 'lastName', 'lastReply', 'replies', 'closed', 'pinned'])
+        && validThread(request.resource.data)
+        && request.resource.data.authorUid == request.auth.uid
+        && validName(request.resource.data.authorName)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.lastAt == request.time
+        && request.resource.data.lastName == ''
+        && request.resource.data.lastReply == ''
+        && request.resource.data.replies == 0
+        && request.resource.data.closed == false
+        && request.resource.data.pinned == false
+        && getAfter(userDoc()).data.watek == request.time
+        && (!exists(userDoc())
+            || !('watek' in get(userDoc()).data)
+            || get(userDoc()).data.watek < request.time - duration.value(2, 'm'));
+
+      allow update: if
+        // Autor poprawia tytuł, treść albo tagi.
+        (isAuthor()
+          && changedKeys().hasOnly(['title', 'text', 'tags', 'editedAt'])
+          && validThread(request.resource.data)
+          && request.resource.data.editedAt == request.time)
+        // Autor albo moderator zamyka wątek i otwiera go ponownie.
+        || ((isAuthor() || isAdmin())
+          && changedKeys().hasOnly(['closed'])
+          && request.resource.data.closed is bool)
+        // Moderator przypina wątek na górze listy.
+        || (isAdmin()
+          && changedKeys().hasOnly(['pinned'])
+          && request.resource.data.pinned is bool)
+        // Nowa odpowiedź: licznik rośnie o 1 tylko razem z nowym dokumentem odpowiedzi tej osoby.
+        || (isMember()
+          && resource.data.closed == false
+          && changedKeys().hasOnly(['replies', 'lastAt', 'lastName', 'lastReply'])
+          && request.resource.data.replies == resource.data.replies + 1
+          && request.resource.data.lastAt == request.time
+          && validName(request.resource.data.lastName)
+          && request.resource.data.lastReply is string
+          && request.resource.data.lastReply.matches('^[A-Za-z0-9]{10,40}$')
+          && !exists(replyDoc(id, request.resource.data.lastReply))
+          && getAfter(replyDoc(id, request.resource.data.lastReply)).data.authorUid == request.auth.uid);
+
+      // Autor usuwa wątek, dopóki nikt nie odpisał. Moderator usuwa każdy (najpierw odpowiedzi).
+      allow delete: if (isAuthor() && resource.data.replies == 0) || isAdmin();
+
+      match /odpowiedzi/{rid} {
+        allow read: if true;
+
+        // Odpowiedź tylko w otwartym wątku i razem z licznikiem. Najwyżej jedna na 15 sekund na osobę.
+        allow create: if isMember()
+          && request.resource.data.keys().hasOnly(['text', 'authorUid', 'authorName', 'createdAt'])
+          && validReplyText(request.resource.data.text)
+          && request.resource.data.authorUid == request.auth.uid
+          && validName(request.resource.data.authorName)
+          && request.resource.data.createdAt == request.time
+          && get(threadDoc(id)).data.closed == false
+          && getAfter(threadDoc(id)).data.lastReply == rid
+          && getAfter(threadDoc(id)).data.replies == get(threadDoc(id)).data.replies + 1
+          && getAfter(userDoc()).data.odpowiedz == request.time
+          && (!exists(userDoc())
+              || !('odpowiedz' in get(userDoc()).data)
+              || get(userDoc()).data.odpowiedz < request.time - duration.value(15, 's'));
+
+        // Autor poprawia odpowiedź. Usunięcie (przez autora albo moderatora) zostawia napis „Odpowiedź usunięta”,
+        // dzięki czemu licznik odpowiedzi się zgadza.
+        allow update: if resource.data.get('deleted', false) == false
+          && ((isAuthor()
+                && changedKeys().hasOnly(['text', 'editedAt'])
+                && validReplyText(request.resource.data.text)
+                && request.resource.data.editedAt == request.time)
+            || ((isAuthor() || isAdmin())
+                && changedKeys().hasOnly(['text', 'deleted'])
+                && request.resource.data.text == ''
+                && request.resource.data.deleted == true));
+
+        // Całkowicie usuwa tylko moderator, np. razem z całym wątkiem.
+        allow delete: if isAdmin();
+      }
+    }
+
     /* ---------- Ulubione przepisy ---------- */
 
     // Prywatna lista ulubionych przepisów: widzi i zmienia ją tylko właściciel konta.
@@ -253,14 +379,18 @@ service cloud.firestore {
       allow read: if signedIn() && request.auth.uid == uid;
       allow create: if signedIn()
         && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['ostatni', 'komentarz'])
+        && request.resource.data.keys().hasOnly(['ostatni', 'komentarz', 'watek', 'odpowiedz'])
         && (!('ostatni' in request.resource.data) || request.resource.data.ostatni == request.time)
-        && (!('komentarz' in request.resource.data) || request.resource.data.komentarz == request.time);
+        && (!('komentarz' in request.resource.data) || request.resource.data.komentarz == request.time)
+        && (!('watek' in request.resource.data) || request.resource.data.watek == request.time)
+        && (!('odpowiedz' in request.resource.data) || request.resource.data.odpowiedz == request.time);
       allow update: if signedIn()
         && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['ostatni', 'komentarz'])
-        && (!('ostatni' in request.resource.data.diff(resource.data).affectedKeys()) || request.resource.data.ostatni == request.time)
-        && (!('komentarz' in request.resource.data.diff(resource.data).affectedKeys()) || request.resource.data.komentarz == request.time);
+        && request.resource.data.keys().hasOnly(['ostatni', 'komentarz', 'watek', 'odpowiedz'])
+        && (!('ostatni' in changedKeys()) || request.resource.data.ostatni == request.time)
+        && (!('komentarz' in changedKeys()) || request.resource.data.komentarz == request.time)
+        && (!('watek' in changedKeys()) || request.resource.data.watek == request.time)
+        && (!('odpowiedz' in changedKeys()) || request.resource.data.odpowiedz == request.time);
     }
 
     // Lista moderatorów. Dodaje się ją ręcznie w konsoli Firebase.

@@ -131,6 +131,20 @@ Serduszko „Ulubione” działa od razu, także bez logowania. Ulubione niezalo
 
 Listę ulubionych widzi i zmienia tylko jej właściciel, a jedna osoba może mieć najwyżej 300 ulubionych przepisów.
 
+## 11. Forum
+
+Wystarczy jeszcze raz wkleić reguły: **Firestore Database → Reguły**, usuń wszystko, wklej aktualną zawartość pliku [`firestore.rules`](firestore.rules) i kliknij **Opublikuj**. Dopóki tego nie zrobisz, strona `forum.html` pokazuje napis „Forum ruszy wkrótce”. Żadnych indeksów nie trzeba zakładać.
+
+Kto co może:
+- czytać forum może każdy, także bez logowania,
+- wątki zakładają i odpisują zalogowani (kontem Google albo e-mailem z potwierdzonym adresem),
+- przy zakładaniu wątku wybiera się od 1 do 3 tagów z listy (Pytanie, Gotowanie jajek, Przepisy, Wypieki i desery, Zdrowie i dieta, Kury i hodowla, Zakupy i przechowywanie, Pochwal się, Inne). Po tagach i słowach z tytułu i treści można wątki filtrować i wyszukiwać,
+- autor poprawia swój wątek, zamyka go (wtedy nikt już nie odpisze) i otwiera ponownie. Usunąć wątek może, dopóki nikt nie odpisał,
+- każdy poprawia i usuwa swoje odpowiedzi. Po usuniętej zostaje napis „Odpowiedź usunięta”,
+- jeden wątek na 2 minuty i jedna odpowiedź na 15 sekund na osobę (ochrona przed spamem).
+
+Moderator (ten sam co od przepisów, z kolekcji `admins`) widzi w każdym wątku przyciski **Przypnij na górze**, **Zamknij wątek** i **Usuń wątek** (razem z odpowiedziami), a przy każdej odpowiedzi **Usuń**. Wątki są w kolekcji `watki`, a odpowiedzi w podkolekcji `odpowiedzi` każdego wątku.
+
 ## Koszty i limity
 
 Darmowy plan Spark wystarcza z dużym zapasem: 1 GiB danych, 50 000 odczytów i 20 000 zapisów dziennie. Jedno wejście na stronę z przepisami to kilkadziesiąt odczytów (liczniki polubień i przepisy czytelników). Zdjęcia są zmniejszane w przeglądarce i zapisywane w bazie, więc płatny Cloud Storage nie jest potrzebny. Jeśli limit kiedyś się skończy, strona nie przestanie działać: do północy (czasu USA) nie wczytają się tylko przepisy od czytelników.

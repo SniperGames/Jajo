@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Forum o jajkach – Jajo</title>
+<meta name="description" content="Forum strony Jajo: pytania o gotowanie jajek, przepisy, wypieki, przechowywanie i kury. Zadaj pytanie albo podziel się swoim sposobem.">
+<link rel="canonical" href="https://snipergames.github.io/Jajo/forum.html">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#EEF3EF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0C1412" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-96.png" type="image/png" sizes="96x96">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pl_PL">
+<meta property="og:site_name" content="Jajo">
+<meta property="og:title" content="Forum o jajkach – Jajo">
+<meta property="og:description" content="Pytania, sposoby i przepisy z jajkami. Czytać może każdy, a pisać zalogowani.">
+<meta property="og:url" content="https://snipergames.github.io/Jajo/forum.html">
+<meta property="og:image" content="https://snipergames.github.io/Jajo/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;800&family=Onest:wght@400;500;600;700&family=Unbounded:wght@600;700;800;900&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="skip-link" href="#forumApp">Przejdź do forum</a>
+
+<nav class="nav" aria-label="Sekcje strony">
+  <div class="wrap nav-row">
+    <a class="brand" href="index.html">
+      <svg viewBox="0 0 20 26" aria-hidden="true"><path d="M10 1C15 1 18 9 18 16c0 5.5-3.5 9-8 9s-8-3.5-8-9C2 9 5 1 10 1z"/></svg>
+      Jajo
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html#minutnik">Minutnik</a></li>
+      <li><a href="index.html#kod">Kod</a></li>
+      <li><a class="nav-recipes" href="przepisy.html">Przepisy</a></li>
+      <li><a class="nav-forum" href="forum.html" aria-current="page">Forum</a></li>
+    </ul>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Przełącz motyw">
+      <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
+      <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
+    </button>
+  </div>
+</nav>
+
+<main class="forum-page" id="forumApp" tabindex="-1">
+  <div class="wrap">
+    <section class="forum-list" id="forumList" aria-labelledby="forumTitle">
+      <div class="forum-head">
+        <div class="section-head">
+          <p class="eyebrow">Forum</p>
+          <h1 class="page-title forum-title" id="forumTitle">Rozmowy o&nbsp;jajkach</h1>
+          <p class="section-lede">Zadaj pytanie, podziel się sposobem albo pochwal się daniem. Czytać może każdy, a&nbsp;pisać zalogowani.</p>
+        </div>
+        <div class="forum-cta">
+          <button class="btn btn-primary" type="button" data-new disabled>Nowy wątek</button>
+          <p class="forum-stats" id="forumStats"></p>
+        </div>
+      </div>
+
+      <div class="forum-tools">
+        <label class="forum-search">
+          <span class="sr-only">Szukaj w wątkach</span>
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L20 20"/></svg>
+          <input type="search" id="forumQ" placeholder="Szukaj w wątkach…" autocomplete="off">
+        </label>
+        <label class="forum-sort">
+          <span>Kolejność</span>
+          <select id="forumSort">
+            <option value="aktywnosc">Ostatnia aktywność</option>
+            <option value="nowe">Najnowsze wątki</option>
+            <option value="odpowiedzi">Najwięcej odpowiedzi</option>
+          </select>
+        </label>
+      </div>
+      <div class="rfilter-chips forum-tags" id="forumTags" role="radiogroup" aria-label="Tagi"></div>
+
+      <p class="forum-state" id="forumState" aria-live="polite">Wczytuję wątki…</p>
+      <ul class="ft-list" id="forumThreads"></ul>
+    </section>
+
+    <section class="forum-thread" id="forumThread" hidden></section>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-grid">
+    <h2 class="footer-q">Głodny?</h2>
+    <div class="footer-a">
+      <p>Na stronie z&nbsp;przepisami jest dwanaście sprawdzonych dań z&nbsp;jajkiem w&nbsp;roli głównej i&nbsp;przepisy od czytelników.</p>
+      <p><a class="btn btn-ghost" href="przepisy.html">Zobacz przepisy</a></p>
+    </div>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="script.js" defer></script>
+<script type="module" src="konto.js"></script>
+<script type="module" src="forum.js"></script>
+</body>
+</html>

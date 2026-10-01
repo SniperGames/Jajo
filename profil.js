@@ -70,12 +70,18 @@ async function render() {
   const { F, db } = fb;
   let data;
   try {
-    const [pSnap, recSnap, commCount, commSnap] = await Promise.all([
+    const [pSnap, recSnap, commCount, commSnap, threadSnap] = await Promise.all([
       F.getDoc(F.doc(db, 'profile', uid)),
       F.getDocs(F.query(F.collection(db, 'przepisy'), F.where('authorUid', '==', uid), F.where('status', '==', 'approved'))),
       F.getCountFromServer(F.query(F.collection(db, 'komentarze'), F.where('authorUid', '==', uid))),
       F.getDocs(F.query(F.collection(db, 'komentarze'), F.where('authorUid', '==', uid), F.limit(60))),
+      // Bez reguł forum w bazie sekcji wątków po prostu nie pokazujemy.
+      F.getDocs(F.query(F.collection(db, 'watki'), F.where('authorUid', '==', uid), F.limit(50))).catch(() => null),
     ]);
+    const ms = (t) => (t && t.toMillis ? t.toMillis() : Date.now());
+    const threads = threadSnap
+      ? threadSnap.docs.map((d) => ({ id: d.id, ...d.data(), last: ms(d.data().lastAt) })).sort((a, b) => b.last - a.last)
+      : null;
     const recipes = recSnap.docs.map((d) => toRecipe(fb, d.id, d.data())).sort((a, b) => b.createdAt - a.createdAt);
     const likes = new Map();
     const keys = recipes.map((r) => r.id);
@@ -114,7 +120,7 @@ async function render() {
         profile.banner === 'custom' ? custom('banery') : presetSrc('banner', profile.banner),
       ]);
     }
-    data = { profile, avatarSrc, bannerSrc, recipes, likes, commentsTotal: commCount.data().count, comments, names };
+    data = { profile, avatarSrc, bannerSrc, recipes, likes, commentsTotal: commCount.data().count, comments, names, threads };
   } catch (err) {
     console.error(err);
     if (token === renderToken) app.innerHTML = '<p class="note profile-loading">Nie udało się wczytać profilu. Odśwież stronę za chwilę.</p>';
@@ -177,6 +183,20 @@ async function render() {
         ? `<div class="rgrid">${data.recipes.map((r) => cardHtml(r, data.likes.get(r.id) || 0)).join('')}</div>`
         : `<p class="note">${own ? 'Nie masz jeszcze opublikowanych przepisów. <a href="przepisy.html#od-czytelnikow">Dodaj pierwszy</a>.' : 'Ten kucharz nie ma jeszcze opublikowanych przepisów.'}</p>`}
     </section>
+
+    ${data.threads ? `
+    <section class="profile-section" aria-labelledby="pThreads">
+      <h2 id="pThreads">Wątki na forum</h2>
+      ${data.threads.length
+        ? `<ul class="ft-list">${data.threads.slice(0, 5).map((t) => `
+            <li class="ft-item ft-item-mini${t.closed ? ' is-closed' : ''}">
+              <div class="ft-main">
+                <h3 class="ft-title"><a href="forum.html#${esc(t.id)}">${esc(t.title)}</a></h3>
+                <p class="ft-meta">${relTime(t.last)} · ${t.replies || 0} ${t.replies === 1 ? 'odpowiedź' : 'odpowiedzi'}${t.closed ? ' · zamknięty' : ''}</p>
+              </div>
+            </li>`).join('')}</ul>${data.threads.length > 5 ? `<p class="note">I jeszcze ${data.threads.length - 5} na <a href="forum.html">forum</a>.</p>` : ''}`
+        : `<p class="note">${own ? 'Nie masz jeszcze wątków. <a href="forum.html">Załóż pierwszy na forum</a>.' : 'Ten kucharz nie założył jeszcze wątku na forum.'}</p>`}
+    </section>` : ''}
 
     <section class="profile-section" aria-labelledby="pComments">
       <h2 id="pComments">Ostatnie komentarze</h2>
