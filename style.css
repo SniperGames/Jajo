@@ -2272,3 +2272,57 @@ a.c-name:hover { text-decoration: underline; }
   .avatar-xl { width: 5rem; height: 6.3rem; font-size: 2.2rem; padding-top: .8rem; }
   .profile-stats div { padding: .9rem .8rem; }
 }
+
+/* Ikona konta w pasku nawigacji */
+.nav-account { position: relative; flex: none; }
+.account-btn {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+}
+.account-btn .ico { width: 20px; height: 20px; stroke-width: 1.8; }
+.account-btn.is-member { border-color: transparent; background: transparent; }
+.account-btn[aria-expanded="true"] { box-shadow: 0 0 0 3px color-mix(in srgb, var(--yolk) 35%, transparent); }
+.avatar-nav { width: 30px; height: 38px; font-size: .85rem; padding-top: .25rem; }
+.account-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 40;
+  display: grid;
+  gap: .75rem;
+  width: min(18.5rem, calc(100vw - 32px));
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: 0 24px 48px -20px var(--shadow);
+}
+.am-title { margin: 0; font-family: var(--f-display); font-size: 1rem; font-weight: 700; }
+.am-text { margin: 0; font-size: var(--t-sm); color: var(--ink-2); }
+.am-login { width: 100%; }
+.am-head { display: flex; align-items: center; gap: .75rem; padding-bottom: .75rem; border-bottom: 1px solid var(--line); }
+.am-head b { display: block; font-size: 1rem; overflow-wrap: anywhere; }
+.am-head small { display: block; font-size: var(--t-xs); color: var(--ink-2); }
+.am-list { display: grid; gap: .15rem; }
+.am-item {
+  display: block;
+  width: 100%;
+  padding: .6rem .7rem;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink);
+  font: 500 var(--t-base) var(--f-body);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.am-item:hover, .am-item:focus-visible { background: var(--bg-alt); }

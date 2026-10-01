@@ -43,6 +43,7 @@ W ustawieniach repozytorium: **Settings → Pages → Build and deployment**, ź
 | `przepisy-dane.js` | Treść przepisów |
 | `spolecznosc.js`, `moderacja.html`, `moderacja.js`, `jajo-firebase.js` | Przepisy od czytelników i panel moderacji |
 | `reakcje.js`, `profil.html`, `profil.js` | Polubienia, komentarze i profile |
+| `konto.js` | Ikona konta w prawym górnym rogu: logowanie, profil, wylogowanie |
 | `firebase-config.js`, `firestore.rules` | Konfiguracja Firebase i reguły bezpieczeństwa bazy |
 | `img/przepisy/` | Zdjęcia potraw (Wikimedia Commons, autorzy podani na stronie) |
 | `sitemap.xml`, `og-image.png`, `favicon.*` | Mapa strony dla wyszukiwarek, obrazek podglądu linku, ikony |
