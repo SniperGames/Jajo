@@ -149,13 +149,73 @@ export function relTime(ms) {
   return new Date(ms).toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
-/** Awatar w kształcie jajka z pierwszą literą imienia. */
-export function avatarHtml(name, uid, size = '') {
+/** Awatar w kształcie jajka: zdjęcie (src) albo pierwsza litera imienia. */
+export function avatarHtml(name, uid, size = '', src = '') {
+  const cls = 'avatar' + (size ? ' avatar-' + size : '');
+  if (src) {
+    return `<span class="${cls} avatar-photo" aria-hidden="true"><img src="${String(src).replace(/"/g, '&quot;')}" alt="" loading="lazy" decoding="async"></span>`;
+  }
   let hash = 0;
   for (const ch of uid || '?') hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
   const initial = (name || '?').trim().charAt(0).toUpperCase() || '?';
   const tone = uid ? 'av-' + (hash % 5) : 'av-guest';
-  return `<span class="avatar ${tone}${size ? ' avatar-' + size : ''}" aria-hidden="true">${initial.replace(/[<>&"']/g, '')}</span>`;
+  return `<span class="${cls} ${tone}" aria-hidden="true">${initial.replace(/[<>&"']/g, '')}</span>`;
+}
+
+export const AVATAR_PRESETS = [
+  ['sadzone', 'Jajko sadzone'], ['pisklak', 'Pisklę'], ['kieliszek', 'Jajko w kieliszku'], ['przekroj', 'Jajko mollet'],
+  ['pisanka', 'Pisanka'], ['kura', 'Kura'], ['wytlaczanka', 'Wytłaczanka'], ['patelnia', 'Patelnia'],
+];
+export const BANNER_PRESETS = [
+  ['jajka', 'Jajka'], ['wschod', 'Wschód żółtka'], ['wytlaczanka', 'Wytłaczanka'],
+  ['pisanki', 'Pisanki'], ['kratka', 'Obrus w kratkę'], ['noc', 'Jajko na niebie'],
+];
+
+/** Ścieżka gotowego obrazka dla oznaczenia „p:nazwa”. */
+export function presetSrc(kind, ref) {
+  if (typeof ref !== 'string' || !ref.startsWith('p:')) return '';
+  const id = ref.slice(2);
+  const list = kind === 'avatar' ? AVATAR_PRESETS : BANNER_PRESETS;
+  return list.some(([k]) => k === id) ? `img/${kind === 'avatar' ? 'awatary' : 'banery'}/${id}.svg` : '';
+}
+
+const avatarCache = new Map();
+
+/** Imię i zdjęcie profilowe użytkownika (z pamięci podręcznej, żeby komentarze nie czytały bazy wiele razy). */
+export function avatarFor(fb, uid) {
+  if (!avatarCache.has(uid)) {
+    const { F, db } = fb;
+    avatarCache.set(uid, F.getDoc(F.doc(db, 'profile', uid)).then(async (snap) => {
+      if (!snap.exists()) return { name: '', src: '' };
+      const p = snap.data();
+      let src = presetSrc('avatar', p.avatar);
+      if (p.avatar === 'custom') {
+        try {
+          const img = await F.getDoc(F.doc(db, 'awatary', uid));
+          src = img.exists() ? img.data().data : '';
+        } catch {
+          src = '';
+        }
+      }
+      return { name: p.name, src };
+    }).catch(() => ({ name: '', src: '' })));
+  }
+  return avatarCache.get(uid);
+}
+
+export function forgetAvatar(uid) {
+  avatarCache.delete(uid);
+}
+
+let imagesCheck = null;
+
+/** Czy w bazie są reguły dla zdjęć profilowych i banerów. */
+export function imagesReady(fb) {
+  if (!imagesCheck) {
+    const { F, db } = fb;
+    imagesCheck = F.getDocs(F.query(F.collection(db, 'awatary'), F.limit(1))).then(() => true).catch(() => false);
+  }
+  return imagesCheck;
 }
 
 export function signInError(err) {

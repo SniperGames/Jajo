@@ -1,6 +1,6 @@
 /* Jajo: ikona konta w prawym górnym rogu paska nawigacji (logowanie, profil, wylogowanie). */
 import {
-  connect, configured, signIn, signInError, isMember, watchUser, ensureProfile, isAdmin, avatarHtml,
+  connect, configured, signIn, signInError, isMember, watchUser, ensureProfile, isAdmin, avatarHtml, avatarFor,
 } from './jajo-firebase.js';
 
 const PERSON = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.6"/><path d="M4.8 20c.9-3.6 3.8-5.6 7.2-5.6s6.3 2 7.2 5.6"/></svg>';
@@ -21,6 +21,7 @@ if (configured && row) {
   let fb = null;
   let user = null;
   let name = '';
+  let photo = '';
   let admin = false;
   let loading = null;
 
@@ -36,11 +37,13 @@ if (configured && row) {
         watchUser(fb, async (u) => {
           user = isMember(u) ? u : null;
           name = '';
+          photo = '';
           admin = false;
           if (user) {
             const [profile, adm] = await Promise.all([ensureProfile(fb, user), isAdmin(fb, user.uid)]);
             name = (profile && profile.name) || (user.displayName || '').split(' ')[0] || 'Ty';
             admin = adm;
+            photo = (await avatarFor(fb, user.uid)).src;
           }
           paintButton();
           if (!menu.hidden) paintMenu();
@@ -55,7 +58,7 @@ if (configured && row) {
 
   function paintButton() {
     if (user) {
-      btn.innerHTML = avatarHtml(name, user.uid, 'nav');
+      btn.innerHTML = avatarHtml(name, user.uid, 'nav', photo);
       btn.classList.add('is-member');
       btn.setAttribute('aria-label', `Konto: ${name}. Otwórz menu`);
     } else {
@@ -80,7 +83,7 @@ if (configured && row) {
     }
     menu.innerHTML = `
       <div class="am-head">
-        ${avatarHtml(name, user.uid)}
+        ${avatarHtml(name, user.uid, '', photo)}
         <div><b>${esc(name)}</b><small>Konto Google</small></div>
       </div>
       <nav class="am-list" aria-label="Konto">
@@ -130,6 +133,14 @@ if (configured && row) {
 
   document.addEventListener('click', (e) => {
     if (!box.contains(e.target)) close(false);
+  });
+  // Po zmianie zdjęcia lub imienia na stronie profilu.
+  document.addEventListener('jajo:profil-zmieniony', async () => {
+    if (!user) return;
+    const av = await avatarFor(fb, user.uid);
+    photo = av.src;
+    name = av.name || name;
+    paintButton();
   });
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && !menu.hidden) close(true);

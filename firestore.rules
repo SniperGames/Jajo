@@ -182,8 +182,15 @@ service cloud.firestore {
 
     /* ---------- Profile ---------- */
 
+    // Zdjęcie profilowe i baner: '' (domyślne), 'custom' (własne) albo gotowe, np. 'p:pisanka'.
+    function validImageRef(v) {
+      return v is string && (v == '' || v == 'custom' || v.matches('^p:[a-z-]{2,30}$'));
+    }
+
     function validProfile(d) {
-      return d.keys().hasOnly(['name', 'bio', 'egg', 'joinedAt'])
+      return d.keys().hasOnly(['name', 'bio', 'egg', 'joinedAt', 'avatar', 'banner'])
+        && (!('avatar' in d) || validImageRef(d.avatar))
+        && (!('banner' in d) || validImageRef(d.banner))
         && d.name is string && d.name.size() >= 2 && d.name.size() <= 40
         && d.bio is string && d.bio.size() <= 300
         && d.egg in ['', 'na-miekko', 'mollet', 'na-twardo', 'sadzone', 'jajecznica', 'w-koszulce', 'omlet', 'faszerowane'];
@@ -198,7 +205,27 @@ service cloud.firestore {
       allow update: if isMember()
         && request.auth.uid == uid
         && validProfile(request.resource.data)
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'bio', 'egg']);
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'bio', 'egg', 'avatar', 'banner']);
+      allow delete: if (isMember() && request.auth.uid == uid) || isAdmin();
+    }
+
+    // Własne zdjęcie profilowe i baner, osobno od profilu, żeby komentarze ładowały tylko małe awatary.
+    function validImage(d, maxChars) {
+      return d.keys().hasOnly(['data'])
+        && d.data is string
+        && d.data.size() <= maxChars
+        && d.data.matches('data:image/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+');
+    }
+
+    match /awatary/{uid} {
+      allow read: if true;
+      allow create, update: if isMember() && request.auth.uid == uid && validImage(request.resource.data, 60000);
+      allow delete: if (isMember() && request.auth.uid == uid) || isAdmin();
+    }
+
+    match /banery/{uid} {
+      allow read: if true;
+      allow create, update: if isMember() && request.auth.uid == uid && validImage(request.resource.data, 350000);
       allow delete: if (isMember() && request.auth.uid == uid) || isAdmin();
     }
 

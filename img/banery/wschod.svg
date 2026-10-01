@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" width="1200" height="400"><defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FCE8B8"/><stop offset="1" stop-color="#F6C87A"/></linearGradient></defs>
+<rect width="1200" height="400" fill="url(#sky)"/>
+<g opacity=".35" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round">
+<line x1="600" y1="300" x2="1469" y2="67"/><line x1="600" y1="300" x2="1387" y2="-136"/><line x1="600" y1="300" x2="1258" y2="-314"/><line x1="600" y1="300" x2="1090" y2="-455"/><line x1="600" y1="300" x2="893" y2="-551"/><line x1="600" y1="300" x2="678" y2="-597"/><line x1="600" y1="300" x2="459" y2="-589"/><line x1="600" y1="300" x2="248" y2="-528"/><line x1="600" y1="300" x2="58" y2="-419"/><line x1="600" y1="300" x2="-99" y2="-266"/><line x1="600" y1="300" x2="-216" y2="-80"/><line x1="600" y1="300" x2="-283" y2="128"/>
+</g>
+<circle cx="600" cy="300" r="150" fill="#F39200"/>
+<circle cx="600" cy="300" r="150" fill="#F4A300" opacity=".8"/>
+<ellipse cx="555" cy="230" rx="48" ry="26" fill="#FFE3A1" opacity=".8" transform="rotate(-25 555 230)"/>
+<path d="M0,300 C120,250 230,330 360,300 C470,276 520,350 640,330 C760,310 830,262 960,296 C1060,322 1120,284 1200,300 L1200,400 L0,400 Z" fill="#FFF6E8"/>
+<path d="M0,340 C140,310 260,370 420,350 C560,332 700,380 860,356 C1000,336 1100,372 1200,350 L1200,400 L0,400 Z" fill="#FFFFFF"/></svg>

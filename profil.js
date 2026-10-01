@@ -1,7 +1,8 @@
 /* Jajo: profil kucharza (czytelnika, który dodaje przepisy i komentuje). */
 import {
-  connect, configured, signIn, signInError, isMember, watchUser, ensureProfile, forgetProfile,
-  socialReady, relTime, avatarHtml, EGG_PREFS, toRecipe,
+  connect, configured, signIn, signInError, isMember, isAdmin, watchUser, ensureProfile, forgetProfile,
+  socialReady, relTime, avatarHtml, EGG_PREFS, toRecipe, shrinkImage, forgetAvatar, imagesReady, presetSrc,
+  AVATAR_PRESETS, BANNER_PRESETS,
 } from './jajo-firebase.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -17,6 +18,10 @@ let fb = null;
 let me = null;
 let uid = location.hash.slice(1);
 let renderToken = 0;
+let admin = false;
+let images = false;
+let current = null; // { profile, avatarSrc, bannerSrc } wyświetlanego profilu
+const upload = { avatar: null, banner: null }; // nowo wybrane własne zdjęcia (data URL)
 
 (async function start() {
   fb = await connect();
@@ -28,8 +33,10 @@ let renderToken = 0;
     app.innerHTML = '<p class="note profile-loading">Profile ruszą wkrótce.</p>';
     return;
   }
+  images = await imagesReady(fb);
   watchUser(fb, async (u) => {
     me = isMember(u) ? u : null;
+    admin = me ? await isAdmin(fb, me.uid) : false;
     if (me) await ensureProfile(fb, me);
     if (!uid && me) {
       uid = me.uid;
@@ -89,7 +96,24 @@ async function render() {
         /* przepis niedostępny */
       }
     }));
-    data = { profile: pSnap.exists() ? pSnap.data() : null, recipes, likes, commentsTotal: commCount.data().count, comments, names };
+    const profile = pSnap.exists() ? pSnap.data() : null;
+    const custom = async (col) => {
+      try {
+        const d = await F.getDoc(F.doc(db, col, uid));
+        return d.exists() ? d.data().data : '';
+      } catch {
+        return '';
+      }
+    };
+    let avatarSrc = '';
+    let bannerSrc = '';
+    if (profile) {
+      [avatarSrc, bannerSrc] = await Promise.all([
+        profile.avatar === 'custom' ? custom('awatary') : presetSrc('avatar', profile.avatar),
+        profile.banner === 'custom' ? custom('banery') : presetSrc('banner', profile.banner),
+      ]);
+    }
+    data = { profile, avatarSrc, bannerSrc, recipes, likes, commentsTotal: commCount.data().count, comments, names };
   } catch (err) {
     console.error(err);
     if (token === renderToken) app.innerHTML = '<p class="note profile-loading">Nie udało się wczytać profilu. Odśwież stronę za chwilę.</p>';
@@ -108,10 +132,21 @@ async function render() {
     ? p.joinedAt.toDate().toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' })
     : 'dziś';
   document.title = `${p.name} – profil kucharza – Jajo`;
+  current = { profile: p, avatarSrc: data.avatarSrc, bannerSrc: data.bannerSrc };
+  upload.avatar = null;
+  upload.banner = null;
+  const adminTools = admin && !own && (p.avatar === 'custom' || p.banner === 'custom') ? `
+    <div class="profile-admin">
+      <span>Moderacja:</span>
+      ${p.avatar === 'custom' && data.avatarSrc ? '<button type="button" class="chip" data-admin-del="awatary">Usuń zdjęcie profilowe</button>' : ''}
+      ${p.banner === 'custom' && data.bannerSrc ? '<button type="button" class="chip" data-admin-del="banery">Usuń baner</button>' : ''}
+    </div>` : '';
 
   app.innerHTML = `
+    <div class="profile-banner${data.bannerSrc ? '' : ' is-default'}">${data.bannerSrc ? `<img src="${esc(data.bannerSrc)}" alt="">` : ''}</div>
+    ${adminTools}
     <header class="profile-head">
-      ${avatarHtml(p.name, uid, 'xl')}
+      ${avatarHtml(p.name, uid, 'xl', data.avatarSrc)}
       <div class="profile-id">
         <p class="eyebrow">${own ? 'Twój profil' : 'Profil kucharza'}</p>
         <h1 class="profile-name">${esc(p.name)}</h1>
@@ -126,7 +161,7 @@ async function render() {
       </div>
     </header>
 
-    ${own ? editFormHtml(p) : ''}
+    ${own ? editFormHtml(p, data) : ''}
 
     <dl class="profile-stats">
       <div><dt>Przepisy</dt><dd>${data.recipes.length}</dd></div>
@@ -174,7 +209,36 @@ function cardHtml(r, likes) {
     </article>`;
 }
 
-function editFormHtml(p) {
+function pickerHtml(kind, p, data) {
+  const isAvatar = kind === 'avatar';
+  const list = isAvatar ? AVATAR_PRESETS : BANNER_PRESETS;
+  const customSrc = p[kind] === 'custom' ? (isAvatar ? data.avatarSrc : data.bannerSrc) : '';
+  // Własne zdjęcie usunięte przez moderatora: zaznaczamy domyślną opcję.
+  const value = p[kind] === 'custom' && !customSrc ? '' : p[kind] || '';
+  const face = (inner) => `<span class="pick-face">${inner}</span>`;
+  const opt = (val, inner, label, extra = '') => `
+    <label class="pick-opt${extra}">
+      <input type="radio" name="p-${kind}" value="${esc(val)}"${val === value ? ' checked' : ''}${val === 'custom' && !customSrc ? ' disabled' : ''}>
+      ${face(inner)}<span class="pick-name">${esc(label)}</span>
+    </label>`;
+  const defaultInner = isAvatar ? avatarHtml(p.name, uid) : '<span class="pick-wide is-default"></span>';
+  const img = (src) => (isAvatar ? `<span class="avatar avatar-photo"><img src="${esc(src)}" alt=""></span>` : `<span class="pick-wide"><img src="${esc(src)}" alt=""></span>`);
+  return `
+    <fieldset class="pick pick-${kind}">
+      <legend>${isAvatar ? 'Zdjęcie profilowe' : 'Baner'}</legend>
+      <div class="pick-grid" role="radiogroup" aria-label="${isAvatar ? 'Zdjęcie profilowe' : 'Baner'}">
+        ${opt('', defaultInner, isAvatar ? 'Litera' : 'Bez banera')}
+        ${list.map(([id, label]) => opt('p:' + id, img(presetSrc(kind, 'p:' + id)), label)).join('')}
+        ${opt('custom', customSrc ? img(customSrc) : `<span class="pick-plus${isAvatar ? '' : ' pick-wide'}">+</span>`, isAvatar ? 'Twoje zdjęcie' : 'Twój baner', ' pick-custom')}
+      </div>
+      <div class="pick-actions">
+        <label class="btn btn-ghost pick-upload">${isAvatar ? 'Wgraj własne zdjęcie' : 'Wgraj własny baner'}<input type="file" accept="image/*" data-upload="${kind}" class="sr-only"></label>
+        <span class="fhint" data-upload-info="${kind}">${isAvatar ? 'Najlepiej zdjęcie twarzy albo ulubionego dania.' : 'Szeroki obrazek, przytniemy go do proporcji 3:1.'}</span>
+      </div>
+    </fieldset>`;
+}
+
+function editFormHtml(p, data) {
   return `
     <form class="profile-edit rform" id="profileEdit" hidden novalidate>
       <h2>Edytuj profil</h2>
@@ -188,7 +252,8 @@ function editFormHtml(p) {
         </label>
         <label class="ffield fwide"><span>O mnie <small>(najwyżej 300 znaków)</small></span><textarea id="pBio" rows="3" maxlength="300">${esc(p.bio)}</textarea></label>
       </div>
-      <p class="note">Profil jest publiczny. Imię widać też przy Twoich komentarzach i przepisach.</p>
+      ${images ? pickerHtml('avatar', p, data) + pickerHtml('banner', p, data) : ''}
+      <p class="note">Profil jest publiczny. Imię i zdjęcie widać też przy Twoich komentarzach i przepisach.</p>
       <p class="account-error" role="alert"></p>
       <div class="factions">
         <button type="submit" class="btn btn-primary">Zapisz</button>
@@ -196,6 +261,30 @@ function editFormHtml(p) {
       </div>
     </form>`;
 }
+
+app.addEventListener('change', async (e) => {
+  const input = e.target.closest('[data-upload]');
+  if (!input || !input.files[0]) return;
+  const kind = input.dataset.upload;
+  const info = $(`[data-upload-info="${kind}"]`, app);
+  info.textContent = 'Przygotowuję zdjęcie…';
+  try {
+    upload[kind] = kind === 'avatar'
+      ? await shrinkImage(input.files[0], { width: 320, crop: 4 / 5, maxChars: 58000 })
+      : await shrinkImage(input.files[0], { width: 1500, crop: 3, maxChars: 340000 });
+    const tile = $(`.pick-${kind} .pick-custom`, app);
+    const radio = $('input', tile);
+    $('.pick-face', tile).innerHTML = kind === 'avatar'
+      ? `<span class="avatar avatar-photo"><img src="${upload[kind]}" alt=""></span>`
+      : `<span class="pick-wide"><img src="${upload[kind]}" alt=""></span>`;
+    radio.disabled = false;
+    radio.checked = true;
+    info.textContent = 'Gotowe. Zapisz profil, żeby je ustawić.';
+  } catch {
+    info.textContent = 'Nie udało się odczytać zdjęcia. Wybierz plik JPG albo PNG.';
+  }
+  input.value = '';
+});
 
 app.addEventListener('click', async (e) => {
   if (e.target.closest('[data-login]')) {
@@ -214,6 +303,23 @@ app.addEventListener('click', async (e) => {
     $('#pName', form).focus();
   } else if (e.target.closest('[data-edit-cancel]')) {
     $('#profileEdit', app).hidden = true;
+  } else if (e.target.closest('[data-admin-del]')) {
+    const btn = e.target.closest('[data-admin-del]');
+    if (!btn.classList.contains('is-confirm')) {
+      btn.classList.add('is-confirm');
+      btn.textContent = 'Na pewno usunąć?';
+      return;
+    }
+    btn.disabled = true;
+    try {
+      await fb.F.deleteDoc(fb.F.doc(fb.db, btn.dataset.adminDel, uid));
+      forgetAvatar(uid);
+      await render();
+    } catch (err) {
+      console.error(err);
+      btn.disabled = false;
+      btn.textContent = 'Nie udało się';
+    }
   }
 });
 
@@ -233,9 +339,24 @@ app.addEventListener('submit', async (e) => {
   btn.disabled = true;
   try {
     const { F, db } = fb;
-    await F.updateDoc(F.doc(db, 'profile', uid), { name: name.slice(0, 40), bio: bio.slice(0, 300), egg });
+    const changes = { name: name.slice(0, 40), bio: bio.slice(0, 300), egg };
+    const batch = F.writeBatch(db);
+    if (images) {
+      for (const [kind, col] of [['avatar', 'awatary'], ['banner', 'banery']]) {
+        const choice = ($(`input[name="p-${kind}"]:checked`, form) || {}).value || '';
+        changes[kind] = choice;
+        if (choice === 'custom' && upload[kind]) batch.set(F.doc(db, col, uid), { data: upload[kind] });
+        if (choice !== 'custom' && current.profile[kind] === 'custom') batch.delete(F.doc(db, col, uid));
+      }
+    }
+    batch.update(F.doc(db, 'profile', uid), changes);
+    await batch.commit();
     forgetProfile(uid);
+    forgetAvatar(uid);
+    document.dispatchEvent(new CustomEvent('jajo:profil-zmieniony'));
     await render();
+    // Wracamy na górę, żeby od razu było widać nowy baner i zdjęcie.
+    window.scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
   } catch (err) {
     console.error(err);
     error.textContent = 'Nie udało się zapisać profilu. Spróbuj jeszcze raz.';

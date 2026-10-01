@@ -15,6 +15,7 @@ Interaktywny przewodnik po jajku kurzym: ile gotować jajko na miękko i na twar
 - **Przepisy z jajkiem** (`przepisy.html`): dwanaście przepisów ze zdjęciami. Wytłaczanka pokazuje, na ile porcji wystarczą Twoje jajka, a w każdym przepisie można przeliczyć porcje, odhaczać składniki i kroki oraz włączać minutniki.
 - **Przepisy od czytelników**: zalogowani kontem Google mogą dodawać własne przepisy z jajkami (ze zdjęciem). Przepis pojawia się po akceptacji w panelu `moderacja.html`. Działa na darmowym Firebase, instrukcja podłączenia w [FIREBASE.md](FIREBASE.md).
 - **Polubienia, komentarze i profile**: przycisk „Smakuje mi” przy każdym przepisie i komentarze pod nim, także bez logowania (jako „Niezalogowany użytkownik”). Każdy zalogowany ma publiczny profil (`profil.html`) ze swoimi przepisami, liczbą polubień i komentarzy oraz ulubionym jajkiem.
+- **Zdjęcie profilowe i baner**: osiem gotowych zdjęć i sześć banerów do wyboru albo własne zdjęcia. Zdjęcie widać w profilu, przy komentarzach i w ikonie konta.
 
 Strona ma jasny i ciemny motyw, działa na telefonie i szanuje ustawienie „ogranicz ruch”.
 
@@ -46,6 +47,7 @@ W ustawieniach repozytorium: **Settings → Pages → Build and deployment**, ź
 | `konto.js` | Ikona konta w prawym górnym rogu: logowanie, profil, wylogowanie |
 | `firebase-config.js`, `firestore.rules` | Konfiguracja Firebase i reguły bezpieczeństwa bazy |
 | `img/przepisy/` | Zdjęcia potraw (Wikimedia Commons, autorzy podani na stronie) |
+| `img/awatary/`, `img/banery/` | Gotowe zdjęcia profilowe i banery |
 | `sitemap.xml`, `og-image.png`, `favicon.*` | Mapa strony dla wyszukiwarek, obrazek podglądu linku, ikony |
 
 Strona na GitHub Pages jest serwowana z gałęzi `gh-pages`.

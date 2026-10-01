@@ -1,7 +1,7 @@
 /* Jajo: polubienia („Smakuje mi”) i komentarze pod przepisami. */
 import {
   connect, signIn, signInError, ensureGuest, ensureProfile, isMember, isAdmin,
-  watchUser, socialReady, relTime, avatarHtml,
+  watchUser, socialReady, relTime, avatarHtml, avatarFor,
 } from './jajo-firebase.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -215,6 +215,15 @@ async function loadComments(box) {
       ? items.map(commentHtml).join('')
       : '<li class="clist-empty">Jeszcze nikt nie skomentował. Napisz pierwszy komentarz!</li>';
     $$('.comment', list).forEach(syncDeleteButton);
+    // Zdjęcia profilowe autorów dociągamy po wyświetleniu listy.
+    [...new Set(items.filter((c) => !c.anon).map((c) => c.authorUid))].forEach(async (author) => {
+      const av = await avatarFor(fb, author);
+      if (!av.src) return;
+      $$('.comment', list).filter((li) => li.dataset.author === author).forEach((li) => {
+        const el = $('.avatar', li);
+        if (el) el.outerHTML = avatarHtml(av.name, author, '', av.src);
+      });
+    });
   } catch (err) {
     console.error(err);
     list.innerHTML = '<li class="clist-empty">Nie udało się wczytać komentarzy. Odśwież stronę za chwilę.</li>';

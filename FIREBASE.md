@@ -94,6 +94,19 @@ Co pilnują nowe reguły:
 
 Komentarze pojawiają się od razu. Niestosowne usuniesz w panelu moderacji, w zakładce **Komentarze**.
 
+## 8. Zdjęcia profilowe i banery
+
+Wystarczy jeszcze raz wkleić reguły: **Firestore Database → Reguły**, usuń wszystko, wklej aktualną zawartość pliku [`firestore.rules`](firestore.rules) i kliknij **Opublikuj**. Dopóki tego nie zrobisz, profile działają jak wcześniej, tylko bez wyboru zdjęcia i banera.
+
+W **Edytuj profil** każdy zalogowany wybiera jedno z gotowych zdjęć (folder `img/awatary/`) i banerów (`img/banery/`) albo wgrywa własne. Własne zdjęcie strona zmniejsza w przeglądarce: zdjęcie profilowe do 320 px, baner do 1500 px w proporcji 3:1. Trafiają one do kolekcji `awatary` i `banery`.
+
+Co pilnują reguły:
+- własne zdjęcie zapisuje i zmienia tylko jego właściciel, a usuwa właściciel albo moderator,
+- zapisać można tylko obrazek JPG, PNG albo WebP i nie większy niż ok. 45 KB (zdjęcie profilowe) albo 260 KB (baner),
+- w profilu można wskazać tylko gotowy obrazek ze strony albo własne zdjęcie, a nie dowolny adres z internetu.
+
+Niestosowne zdjęcie usuniesz, wchodząc jako moderator w profil tej osoby: nad profilem są przyciski **Usuń zdjęcie profilowe** i **Usuń baner**.
+
 ## Koszty i limity
 
 Darmowy plan Spark wystarcza z dużym zapasem: 1 GiB danych, 50 000 odczytów i 20 000 zapisów dziennie. Jedno wejście na stronę z przepisami to kilkadziesiąt odczytów (liczniki polubień i przepisy czytelników). Zdjęcia są zmniejszane w przeglądarce i zapisywane w bazie, więc płatny Cloud Storage nie jest potrzebny. Jeśli limit kiedyś się skończy, strona nie przestanie działać: do północy (czasu USA) nie wczytają się tylko przepisy od czytelników.
