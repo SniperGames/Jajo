@@ -1,5 +1,5 @@
 /* Jajo: przepisy od czytelników (dodawanie, lista, moje przepisy). */
-import { connect, signIn, signInError, toRecipe, isAdmin, shrinkImage } from './jajo-firebase.js';
+import { connect, configured, signIn, signInError, toRecipe, isAdmin, shrinkImage } from './jajo-firebase.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -39,7 +39,9 @@ const tidy = (s) => String(s || '').replace(/\s+/g, ' ').trim();
   fb = await connect();
   if (!fb) {
     renderAccount();
-    state.textContent = 'Dodawanie przepisów przez czytelników ruszy wkrótce.';
+    state.textContent = configured
+      ? 'Nie udało się połączyć z bazą przepisów od czytelników. Odśwież stronę za chwilę.'
+      : 'Dodawanie przepisów przez czytelników ruszy wkrótce.';
     return;
   }
   fb.A.onAuthStateChanged(fb.auth, async (u) => {
@@ -75,7 +77,7 @@ function renderAccount() {
   if (!fb) {
     account.innerHTML = `
       <button class="btn btn-primary" type="button" disabled>Dodaj swój przepis</button>
-      <p class="account-note">Wkrótce.</p>`;
+      <p class="account-note">${configured ? 'Chwilowo niedostępne.' : 'Wkrótce.'}</p>`;
     return;
   }
   if (!user) {

@@ -6,15 +6,19 @@ const CDN = `https://www.gstatic.com/firebasejs/${VERSION}`;
 
 let loading = null;
 
+export const configured = Boolean(config);
+const TIMEOUT_MS = 20000;
+
 /** Zwraca { auth, db, A, F } albo null, gdy Firebase nie jest skonfigurowany lub się nie wczytał. */
 export function connect() {
   if (!config) return Promise.resolve(null);
   if (!loading) {
-    loading = Promise.all([
+    const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), TIMEOUT_MS));
+    loading = Promise.race([Promise.all([
       import(`${CDN}/firebase-app.js`),
       import(`${CDN}/firebase-auth.js`),
       import(`${CDN}/firebase-firestore.js`),
-    ]).then(([appMod, A, F]) => {
+    ]), timeout]).then(([appMod, A, F]) => {
       const app = appMod.initializeApp(config);
       const auth = A.getAuth(app);
       auth.languageCode = 'pl';

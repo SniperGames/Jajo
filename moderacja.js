@@ -1,5 +1,5 @@
 /* Jajo: panel moderacji przepisów od czytelników. */
-import { connect, signIn, signInError, toRecipe, isAdmin } from './jajo-firebase.js';
+import { connect, configured, signIn, signInError, toRecipe, isAdmin } from './jajo-firebase.js';
 
 const app = document.getElementById('modApp');
 const NBSP = ' ';
@@ -27,7 +27,9 @@ const counts = {};
 (async function start() {
   fb = await connect();
   if (!fb) {
-    app.innerHTML = '<p class="note">Firebase nie jest jeszcze podłączony. Instrukcja jest w pliku FIREBASE.md w repozytorium.</p>';
+    app.innerHTML = configured
+      ? '<p class="note">Nie udało się połączyć z Firebase. Sprawdź internet i odśwież stronę.</p>'
+      : '<p class="note">Firebase nie jest jeszcze podłączony. Instrukcja jest w pliku FIREBASE.md w repozytorium.</p>';
     return;
   }
   fb.A.onAuthStateChanged(fb.auth, async (u) => {
