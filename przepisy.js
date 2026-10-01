@@ -264,9 +264,10 @@
       <div class="rcard-media">
         ${mediaHtml(r)}
         <span class="rcard-timer" hidden></span>
+        <span class="like-slot" data-like-key="${r.id}"></span>
       </div>
       <div class="rcard-body">
-        <p class="rcard-cat">${CATEGORY_ONE[r.category]}${r.community ? ` · od ${esc(r.authorName)}` : ''}</p>
+        <p class="rcard-cat">${CATEGORY_ONE[r.category]}${r.community ? ` · od <a class="rcard-author" href="profil.html#${esc(r.authorUid)}">${esc(r.authorName)}</a>` : ''}</p>
         <h3 class="rcard-title"><a class="rcard-link" href="#${r.id}">${esc(r.name)}</a></h3>
         <p class="rcard-intro">${esc(r.intro)}</p>
         <p class="rcard-meta">
@@ -351,7 +352,7 @@
         <div class="rd-content">
           <header class="rd-head">
             ${status}
-            <p class="eyebrow">${CATEGORY_ONE[r.category]}${r.community ? ` · przepis od ${esc(r.authorName)}` : ''}</p>
+            <p class="eyebrow">${CATEGORY_ONE[r.category]}${r.community ? ` · przepis od <a class="rd-author" href="profil.html#${esc(r.authorUid)}">${esc(r.authorName)}</a>` : ''}</p>
             <h2 class="rd-title" id="rdTitle" tabindex="-1">${esc(r.name)}</h2>
             <p class="rd-intro">${esc(r.intro)}</p>
             <dl class="rd-facts">
@@ -359,6 +360,7 @@
               ${r.wait ? `<div><dt>Czekanie</dt><dd>${esc(r.wait)}</dd></div>` : ''}
               <div><dt>Trudność</dt><dd>${DIFFICULTY[r.difficulty]}</dd></div>
             </dl>
+            <div class="rd-social" data-like-key="${r.id}" data-big="1"></div>
           </header>
           <div class="rd-body">
             <section class="rd-ing" aria-labelledby="rdIngTitle">
@@ -380,11 +382,13 @@
               ${tip}
             </section>
           </div>
+          <section class="rd-comments" id="rdComments" data-comments-key="${r.id}" aria-labelledby="rdCommentsTitle"></section>
         </div>
       </div>`;
     renderIngredients(r);
     syncSteps(r);
     syncTimers();
+    document.dispatchEvent(new CustomEvent('jajo:okno', { detail: { id: r.id } }));
     if (r.loadPhoto) {
       r.loadPhoto().then((src) => {
         const img = currentId === r.id && $('.rd-photo img', dialog);
@@ -749,6 +753,7 @@
       });
       syncChips();
       renderGrid();
+      document.dispatchEvent(new CustomEvent('jajo:karty'));
       const id = location.hash.slice(1);
       if (byId[id] && !dialog.open) openRecipe(id);
     },

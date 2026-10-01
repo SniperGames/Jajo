@@ -3,11 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Moderacja przepisów – Jajo</title>
-<meta name="robots" content="noindex, nofollow">
+<title>Profil kucharza – Jajo</title>
+<meta name="description" content="Profil czytelnika strony Jajo: jego przepisy z jajkami, polubienia i komentarze.">
+<meta name="robots" content="noindex, follow">
 <meta name="theme-color" content="#EEF3EF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0C1412" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-96.png" type="image/png" sizes="96x96">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;800&family=Onest:wght@400;500;600;700&family=Unbounded:wght@600;700;800;900&display=swap">
@@ -23,6 +26,7 @@
     </a>
     <ul class="nav-links">
       <li><a href="index.html#minutnik">Minutnik</a></li>
+      <li><a href="index.html#kod">Kod</a></li>
       <li><a class="nav-recipes" href="przepisy.html">Przepisy</a></li>
     </ul>
     <button class="theme-btn" id="themeBtn" type="button" aria-label="Przełącz motyw">
@@ -32,21 +36,24 @@
   </div>
 </nav>
 
-<main class="band mod-page">
-  <div class="wrap">
-    <div class="section-head">
-      <p class="eyebrow">Tylko dla moderatora</p>
-      <h1 class="page-title mod-title">Moderacja przepisów</h1>
-      <p class="section-lede">Tu zatwierdzasz przepisy od czytelników i&nbsp;usuwasz niestosowne komentarze. Przepisy pojawiają się na stronie dopiero po akceptacji.</p>
-    </div>
-    <div id="modApp" aria-live="polite">
-      <p class="note">Wczytuję…</p>
-    </div>
+<main class="profile-page">
+  <div class="wrap" id="profileApp" aria-live="polite">
+    <p class="note profile-loading">Wczytuję profil…</p>
   </div>
 </main>
 
+<footer class="footer">
+  <div class="wrap footer-grid">
+    <h2 class="footer-q">Masz swój przepis?</h2>
+    <div class="footer-a">
+      <p>Dodaj go na stronie z&nbsp;przepisami. Po akceptacji pojawi się też na Twoim profilu.</p>
+      <p><a class="btn btn-ghost" href="przepisy.html#od-czytelnikow">Przepisy od czytelników</a></p>
+    </div>
+  </div>
+</footer>
+
 <script src="script.js" defer></script>
 <script src="przepisy-dane.js" defer></script>
-<script type="module" src="moderacja.js"></script>
+<script type="module" src="profil.js"></script>
 </body>
 </html>

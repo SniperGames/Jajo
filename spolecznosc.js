@@ -1,5 +1,7 @@
 /* Jajo: przepisy od czytelników (dodawanie, lista, moje przepisy). */
-import { connect, configured, signIn, signInError, toRecipe, isAdmin, shrinkImage } from './jajo-firebase.js';
+import {
+  connect, configured, signIn, signInError, toRecipe, isAdmin, shrinkImage, isMember, watchUser, ensureProfile, socialReady,
+} from './jajo-firebase.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -21,6 +23,8 @@ let fb = null;
 let user = null;
 let admin = false;
 let mine = [];
+let profileName = '';
+let social = false;
 
 function whenRecipesReady() {
   if (window.JAJO_PRZEPISY_API) return Promise.resolve(window.JAJO_PRZEPISY_API);
@@ -44,9 +48,17 @@ const tidy = (s) => String(s || '').replace(/\s+/g, ' ').trim();
       : 'Dodawanie przepisów przez czytelników ruszy wkrótce.';
     return;
   }
-  fb.A.onAuthStateChanged(fb.auth, async (u) => {
-    user = u;
-    admin = u ? await isAdmin(fb, u.uid) : false;
+  // Gość (konto anonimowe od polubień) nie jest tu traktowany jak zalogowany.
+  watchUser(fb, async (u) => {
+    user = isMember(u) ? u : null;
+    profileName = '';
+    admin = false;
+    if (user) {
+      const [profile, adm] = await Promise.all([ensureProfile(fb, user), isAdmin(fb, user.uid)]);
+      profileName = (profile && profile.name) || '';
+      admin = adm;
+    }
+    social = await socialReady(fb);
     renderAccount();
     await loadMine();
   });
@@ -91,7 +103,8 @@ function renderAccount() {
   account.innerHTML = `
     <button class="btn btn-primary" type="button" data-act="add">Dodaj swój przepis</button>
     <p class="account-who">
-      <span>Zalogowano: <b>${esc(user.displayName || 'Ty')}</b></span>
+      <span>Zalogowano: <b>${esc(profileName || user.displayName || 'Ty')}</b></span>
+      ${social ? `<a class="linklike" href="profil.html#${esc(user.uid)}">Mój profil</a>` : ''}
       <button type="button" class="linklike" data-act="mine" aria-expanded="${!minePanel.hidden}">Moje przepisy (${mine.length})</button>
       ${admin ? '<a class="linklike" href="moderacja.html">Moderacja</a>' : ''}
       <button type="button" class="linklike" data-act="out">Wyloguj</button>
@@ -537,7 +550,7 @@ async function submit(e) {
       createdAt: F.serverTimestamp(),
     };
     const batch = F.writeBatch(db);
-    batch.set(F.doc(db, 'uzytkownicy', user.uid), { ostatni: F.serverTimestamp() });
+    batch.set(F.doc(db, 'uzytkownicy', user.uid), { ostatni: F.serverTimestamp() }, { merge: true });
     batch.set(ref, data);
     if (photo) batch.set(F.doc(db, 'zdjecia', ref.id), { data: photo.full, authorUid: user.uid });
     await batch.commit();
@@ -575,7 +588,7 @@ function openForm() {
     restoreDraft();
   }
   const author = $('#fAuthor', formDialog);
-  if (author && !author.value && user && user.displayName) author.value = user.displayName.split(' ')[0];
+  if (author && !author.value && user) author.value = profileName || (user.displayName || '').split(' ')[0];
   updateEggs();
   formDialog.showModal();
   formDialog.scrollTop = 0;

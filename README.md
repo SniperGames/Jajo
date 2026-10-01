@@ -14,6 +14,7 @@ Interaktywny przewodnik po jajku kurzym: ile gotować jajko na miękko i na twar
 - **Test szklanki wody**: suwak postarza jajko i pokazuje, jak zachowuje się w wodzie.
 - **Przepisy z jajkiem** (`przepisy.html`): dwanaście przepisów ze zdjęciami. Wytłaczanka pokazuje, na ile porcji wystarczą Twoje jajka, a w każdym przepisie można przeliczyć porcje, odhaczać składniki i kroki oraz włączać minutniki.
 - **Przepisy od czytelników**: zalogowani kontem Google mogą dodawać własne przepisy z jajkami (ze zdjęciem). Przepis pojawia się po akceptacji w panelu `moderacja.html`. Działa na darmowym Firebase, instrukcja podłączenia w [FIREBASE.md](FIREBASE.md).
+- **Polubienia, komentarze i profile**: przycisk „Smakuje mi” przy każdym przepisie i komentarze pod nim, także bez logowania (jako „Niezalogowany użytkownik”). Każdy zalogowany ma publiczny profil (`profil.html`) ze swoimi przepisami, liczbą polubień i komentarzy oraz ulubionym jajkiem.
 
 Strona ma jasny i ciemny motyw, działa na telefonie i szanuje ustawienie „ogranicz ruch”.
 
@@ -41,6 +42,7 @@ W ustawieniach repozytorium: **Settings → Pages → Build and deployment**, ź
 | `przepisy.html`, `przepisy.js` | Strona z przepisami i jej interakcje |
 | `przepisy-dane.js` | Treść przepisów |
 | `spolecznosc.js`, `moderacja.html`, `moderacja.js`, `jajo-firebase.js` | Przepisy od czytelników i panel moderacji |
+| `reakcje.js`, `profil.html`, `profil.js` | Polubienia, komentarze i profile |
 | `firebase-config.js`, `firestore.rules` | Konfiguracja Firebase i reguły bezpieczeństwa bazy |
 | `img/przepisy/` | Zdjęcia potraw (Wikimedia Commons, autorzy podani na stronie) |
 | `sitemap.xml`, `og-image.png`, `favicon.*` | Mapa strony dla wyszukiwarek, obrazek podglądu linku, ikony |

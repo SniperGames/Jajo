@@ -78,6 +78,22 @@ Reguły pilnują, żeby:
 
 Kolejnego moderatora dodasz tak samo: poproś go o identyfikator ze strony moderacji i dopisz dokument w kolekcji `admins`.
 
+## 7. Polubienia, komentarze i profile
+
+Te funkcje potrzebują dwóch dodatkowych ustawień. Dopóki ich nie ma, strona działa jak wcześniej, tylko bez przycisku „Smakuje mi”, komentarzy i profili.
+
+1. **Logowanie gości.** **Authentication → Sign-in method → Add new provider → Anonymous** → włącz → **Save**. Dzięki temu niezalogowani mogą polubić przepis i napisać komentarz. Strona nadaje im w tle niewidoczny identyfikator, więc jedna osoba polubi przepis tylko raz.
+2. **Nowe reguły.** **Firestore Database → Reguły**: usuń wszystko, wklej aktualną zawartość pliku [`firestore.rules`](firestore.rules) i kliknij **Opublikuj**.
+
+Co pilnują nowe reguły:
+- licznik polubień zmienia się zawsze o jeden i tylko razem z polubieniem, więc nie da się go podkręcić,
+- gość podpisuje komentarz jako „Niezalogowany użytkownik” i nie może wstawiać linków,
+- każdy może napisać najwyżej jeden komentarz na 30 sekund,
+- komentarz usuwa jego autor albo moderator, a nikt go nie edytuje,
+- profil zakłada i zmienia tylko jego właściciel (konto Google), a goście nie mają profili ani nie dodają przepisów.
+
+Komentarze pojawiają się od razu. Niestosowne usuniesz w panelu moderacji, w zakładce **Komentarze**.
+
 ## Koszty i limity
 
-Darmowy plan Spark wystarcza z dużym zapasem: 1 GiB danych, 50 000 odczytów i 20 000 zapisów dziennie. Zdjęcia są zmniejszane w przeglądarce i zapisywane w bazie, więc płatny Cloud Storage nie jest potrzebny. Jeśli limit kiedyś się skończy, strona nie przestanie działać: do północy (czasu USA) nie wczytają się tylko przepisy od czytelników.
+Darmowy plan Spark wystarcza z dużym zapasem: 1 GiB danych, 50 000 odczytów i 20 000 zapisów dziennie. Jedno wejście na stronę z przepisami to kilkadziesiąt odczytów (liczniki polubień i przepisy czytelników). Zdjęcia są zmniejszane w przeglądarce i zapisywane w bazie, więc płatny Cloud Storage nie jest potrzebny. Jeśli limit kiedyś się skończy, strona nie przestanie działać: do północy (czasu USA) nie wczytają się tylko przepisy od czytelników.

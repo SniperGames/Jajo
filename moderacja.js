@@ -1,12 +1,18 @@
 /* Jajo: panel moderacji przepisów od czytelników. */
-import { connect, configured, signIn, signInError, toRecipe, isAdmin } from './jajo-firebase.js';
+import {
+  connect, configured, signIn, signInError, toRecipe, isAdmin, isMember, watchUser, socialReady, relTime, avatarHtml,
+} from './jajo-firebase.js';
 
 const app = document.getElementById('modApp');
 const NBSP = ' ';
 const CAT = { sniadania: 'Śniadanie', obiady: 'Obiad', przekaski: 'Przekąska', desery: 'Deser' };
 const DIFF = ['', 'łatwe', 'średnie', 'wymagające'];
 const EGG = { whole: 'jajko', yolk: 'żółtko', white: 'białko' };
-const TABS = [['pending', 'Oczekujące'], ['approved', 'Opublikowane'], ['rejected', 'Odrzucone']];
+const RECIPE_TABS = [['pending', 'Oczekujące'], ['approved', 'Opublikowane'], ['rejected', 'Odrzucone']];
+let TABS = RECIPE_TABS;
+const OFFICIAL = Object.fromEntries((window.JAJO_PRZEPISY || []).map((r) => [r.id, r.name]));
+const recipeNames = { ...OFFICIAL };
+let comments = [];
 const REASONS = [
   'To nie jest przepis z jajkami.',
   'Przepis jest niepełny: brakuje składników albo kroków.',
@@ -32,9 +38,10 @@ const counts = {};
       : '<p class="note">Firebase nie jest jeszcze podłączony. Instrukcja jest w pliku FIREBASE.md w repozytorium.</p>';
     return;
   }
-  fb.A.onAuthStateChanged(fb.auth, async (u) => {
-    user = u;
-    admin = u ? await isAdmin(fb, u.uid) : false;
+  if (await socialReady(fb)) TABS = [...RECIPE_TABS, ['komentarze', 'Komentarze']];
+  watchUser(fb, async (u) => {
+    user = isMember(u) ? u : null;
+    admin = user ? await isAdmin(fb, user.uid) : false;
     if (admin) await load();
     render();
   });
@@ -43,13 +50,29 @@ const counts = {};
 async function load() {
   const { F, db } = fb;
   const col = F.collection(db, 'przepisy');
+  const countQuery = (key) => (key === 'komentarze'
+    ? F.getCountFromServer(F.collection(db, 'komentarze'))
+    : F.getCountFromServer(F.query(col, F.where('status', '==', key))));
   try {
-    const [snap, ...sizes] = await Promise.all([
-      F.getDocs(F.query(col, F.where('status', '==', tab))),
-      ...TABS.map(([key]) => F.getCountFromServer(F.query(col, F.where('status', '==', key)))),
-    ]);
-    items = snap.docs.map((d) => toRecipe(fb, d.id, d.data())).sort((a, b) => b.createdAt - a.createdAt);
+    const sizes = await Promise.all(TABS.map(([key]) => countQuery(key)));
     TABS.forEach(([key], i) => { counts[key] = sizes[i].data().count; });
+    if (tab === 'komentarze') {
+      const snap = await F.getDocs(F.query(F.collection(db, 'komentarze'), F.orderBy('createdAt', 'desc'), F.limit(60)));
+      comments = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+        .map((c) => ({ ...c, at: c.createdAt && c.createdAt.toMillis ? c.createdAt.toMillis() : Date.now() }));
+      await Promise.all([...new Set(comments.map((c) => c.recipe))].filter((k) => !recipeNames[k] && k.startsWith('c-')).map(async (k) => {
+        try {
+          const d = await F.getDoc(F.doc(db, 'przepisy', k.slice(2)));
+          recipeNames[k] = d.exists() ? d.data().name : 'Usunięty przepis';
+        } catch {
+          recipeNames[k] = 'Przepis';
+        }
+      }));
+      items = [];
+      return;
+    }
+    const snap = await F.getDocs(F.query(col, F.where('status', '==', tab)));
+    items = snap.docs.map((d) => toRecipe(fb, d.id, d.data())).sort((a, b) => b.createdAt - a.createdAt);
   } catch (err) {
     console.error(err);
     items = [];
@@ -92,7 +115,7 @@ function render() {
       <p class="account-who"><span>Moderator: <b>${esc(user.displayName || 'Ty')}</b></span><button type="button" class="linklike" data-act="out">Wyloguj</button></p>
     </div>
     ${app.dataset.error ? `<p class="account-error">${esc(app.dataset.error)}</p>` : ''}
-    ${items.length ? items.map(itemHtml).join('') : `<p class="note mod-empty">${{ pending: 'Nic nie czeka na moderację.', approved: 'Nie ma jeszcze opublikowanych przepisów od czytelników.', rejected: 'Nie ma odrzuconych przepisów.' }[tab]}</p>`}`;
+    ${tab === 'komentarze' ? commentsHtml() : items.length ? items.map(itemHtml).join('') : `<p class="note mod-empty">${{ pending: 'Nic nie czeka na moderację.', approved: 'Nie ma jeszcze opublikowanych przepisów od czytelników.', rejected: 'Nie ma odrzuconych przepisów.' }[tab]}</p>`}`;
   delete app.dataset.error;
   items.filter((r) => r.loadPhoto).forEach((r) => {
     r.loadPhoto().then((src) => {
@@ -100,6 +123,25 @@ function render() {
       if (img && src) img.src = src;
     }).catch(() => {});
   });
+}
+
+function commentsHtml() {
+  if (!comments.length) return '<p class="note mod-empty">Nie ma jeszcze komentarzy.</p>';
+  return `
+    <p class="fhint">Najnowsze komentarze ze wszystkich przepisów. Komentarze pojawiają się od razu, a${NBSP}tutaj możesz usunąć niestosowne.</p>
+    <ul class="clist mod-comments">${comments.map((c) => `
+      <li class="comment" data-cid="${esc(c.id)}">
+        ${avatarHtml(c.anon ? '?' : c.authorName, c.anon ? '' : c.authorUid)}
+        <div class="c-body">
+          <p class="c-meta">
+            ${c.anon ? '<span class="c-name is-guest">Niezalogowany użytkownik</span>' : `<a class="c-name" href="profil.html#${esc(c.authorUid)}">${esc(c.authorName)}</a>`}
+            <span class="c-time">${relTime(c.at)}</span>
+            <a class="c-time" href="przepisy.html#${esc(c.recipe)}">${esc(recipeNames[c.recipe] || c.recipe)}</a>
+          </p>
+          <p class="c-text">${esc(c.text)}</p>
+        </div>
+        <button type="button" class="c-del" data-cdel>Usuń</button>
+      </li>`).join('')}</ul>`;
 }
 
 function amount(it) {
@@ -200,6 +242,26 @@ app.addEventListener('click', async (e) => {
   const reason = e.target.closest('[data-reason]');
   if (reason) {
     reason.closest('.mod-reject').querySelector('.mod-reason').value = reason.dataset.reason;
+    return;
+  }
+
+  const cdel = e.target.closest('[data-cdel]');
+  if (cdel) {
+    if (!cdel.classList.contains('is-confirm')) {
+      cdel.classList.add('is-confirm');
+      cdel.textContent = 'Na pewno?';
+      return;
+    }
+    cdel.disabled = true;
+    try {
+      await fb.F.deleteDoc(fb.F.doc(fb.db, 'komentarze', cdel.closest('.comment').dataset.cid));
+      await load();
+      render();
+    } catch (err) {
+      console.error(err);
+      cdel.disabled = false;
+      cdel.textContent = 'Nie udało się';
+    }
     return;
   }
 

@@ -1,11 +1,12 @@
 rules_version = '2';
 
-// Reguły bazy dla przepisów od czytelników strony Jajo.
+// Reguły bazy strony Jajo: przepisy od czytelników, polubienia, komentarze i profile.
 // Wklej całość w Firebase: Firestore Database → Reguły → Opublikuj.
 //
 // Kto co może:
-//  - każdy czyta zatwierdzone przepisy i ich zdjęcia,
-//  - zalogowany użytkownik dodaje przepis (trafia do moderacji), widzi i usuwa swoje,
+//  - każdy czyta zatwierdzone przepisy, ich zdjęcia, liczniki polubień, komentarze i profile,
+//  - gość (konto anonimowe) może polubić przepis i napisać komentarz bez linków,
+//  - zalogowany kontem Google dodaje przepisy (trafiają do moderacji), ma profil, widzi i usuwa swoje rzeczy,
 //  - moderator (dokument w kolekcji „admins” o ID równym jego UID) zatwierdza, odrzuca i usuwa.
 
 service cloud.firestore {
@@ -15,12 +16,32 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function isAnon() {
+      return request.auth.token.firebase.sign_in_provider == 'anonymous';
+    }
+
+    function isMember() {
+      return signedIn() && !isAnon();
+    }
+
     function isAdmin() {
-      return signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      return isMember() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
     function userDoc() {
       return /databases/$(database)/documents/uzytkownicy/$(request.auth.uid);
+    }
+
+    function counterDoc(key) {
+      return /databases/$(database)/documents/reakcje/$(key);
+    }
+
+    function likeDoc(key) {
+      return /databases/$(database)/documents/polubienia/$(request.auth.uid + '_' + key);
+    }
+
+    function validKey(key) {
+      return key is string && key.matches('^[A-Za-z0-9-]{2,64}$');
     }
 
     function validRecipe(d) {
@@ -49,13 +70,15 @@ service cloud.firestore {
         && d.rejectReason is string && d.rejectReason.size() <= 300;
     }
 
+    /* ---------- Przepisy od czytelników ---------- */
+
     match /przepisy/{id} {
       allow read: if resource.data.status == 'approved'
         || (signedIn() && resource.data.authorUid == request.auth.uid)
         || isAdmin();
 
-      // Nowy przepis zawsze czeka na moderację. Jeden przepis na 2 minuty na osobę.
-      allow create: if signedIn()
+      // Nowy przepis zawsze czeka na moderację. Jeden przepis na 2 minuty na osobę. Goście nie dodają przepisów.
+      allow create: if isMember()
         && validRecipe(request.resource.data)
         && request.resource.data.authorUid == request.auth.uid
         && request.resource.data.status == 'pending'
@@ -63,7 +86,9 @@ service cloud.firestore {
         && request.resource.data.createdAt == request.time
         && !('reviewedAt' in request.resource.data)
         && getAfter(userDoc()).data.ostatni == request.time
-        && (!exists(userDoc()) || get(userDoc()).data.ostatni < request.time - duration.value(2, 'm'));
+        && (!exists(userDoc())
+            || !('ostatni' in get(userDoc()).data)
+            || get(userDoc()).data.ostatni < request.time - duration.value(2, 'm'));
 
       // Tylko moderator zmienia status. Treści przepisu nie zmienia nikt.
       allow update: if isAdmin()
@@ -82,7 +107,7 @@ service cloud.firestore {
         || get(/databases/$(database)/documents/przepisy/$(id)).data.status == 'approved';
 
       // Zdjęcie dodaje się tylko razem z nowym przepisem, więc nie da się go podmienić po akceptacji.
-      allow create: if signedIn()
+      allow create: if isMember()
         && request.resource.data.keys().hasOnly(['data', 'authorUid'])
         && request.resource.data.authorUid == request.auth.uid
         && request.resource.data.data is string
@@ -93,13 +118,105 @@ service cloud.firestore {
       allow delete: if (signedIn() && resource.data.authorUid == request.auth.uid) || isAdmin();
     }
 
-    // Znacznik czasu ostatniego dodanego przepisu (ochrona przed zalewem spamu).
+    /* ---------- Polubienia ---------- */
+
+    // Licznik polubień przepisu. Zmienia się tylko o 1 i tylko razem z dokumentem polubienia.
+    match /reakcje/{key} {
+      allow read: if true;
+      allow create: if signedIn()
+        && validKey(key)
+        && request.resource.data.keys().hasOnly(['likes'])
+        && request.resource.data.likes == 1
+        && !exists(likeDoc(key))
+        && existsAfter(likeDoc(key));
+      allow update: if signedIn()
+        && request.resource.data.keys().hasOnly(['likes'])
+        && ((request.resource.data.likes == resource.data.likes + 1 && !exists(likeDoc(key)) && existsAfter(likeDoc(key)))
+            || (request.resource.data.likes == resource.data.likes - 1 && exists(likeDoc(key)) && !existsAfter(likeDoc(key))));
+    }
+
+    // Jedno polubienie na osobę i przepis: ID dokumentu to „uid_przepis”.
+    match /polubienia/{likeId} {
+      // Własne polubienie można sprawdzić także wtedy, gdy jeszcze go nie ma (uid nie zawiera „_”).
+      allow get: if signedIn() && likeId.split('_')[0] == request.auth.uid;
+      allow list: if signedIn() && resource.data.uid == request.auth.uid;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['uid', 'key', 'at'])
+        && request.resource.data.uid == request.auth.uid
+        && validKey(request.resource.data.key)
+        && likeId == request.auth.uid + '_' + request.resource.data.key
+        && request.resource.data.at == request.time
+        && getAfter(counterDoc(request.resource.data.key)).data.likes
+           == (exists(counterDoc(request.resource.data.key)) ? get(counterDoc(request.resource.data.key)).data.likes : 0) + 1;
+      allow delete: if signedIn()
+        && resource.data.uid == request.auth.uid
+        && getAfter(counterDoc(resource.data.key)).data.likes == get(counterDoc(resource.data.key)).data.likes - 1;
+    }
+
+    /* ---------- Komentarze ---------- */
+
+    match /komentarze/{id} {
+      allow read: if true;
+
+      // Gość podpisuje się jako „Niezalogowany użytkownik” i nie może wstawiać linków.
+      // Każdy może napisać najwyżej jeden komentarz na 30 sekund.
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['recipe', 'text', 'authorUid', 'authorName', 'anon', 'createdAt'])
+        && validKey(request.resource.data.recipe)
+        && request.resource.data.authorUid == request.auth.uid
+        && request.resource.data.text is string
+        && request.resource.data.text.size() >= 2
+        && request.resource.data.text.size() <= 600
+        && request.resource.data.anon == isAnon()
+        && (isAnon()
+            ? request.resource.data.authorName == '' && !request.resource.data.text.matches('(?is).*(https?:|www[.]).*')
+            : request.resource.data.authorName is string && request.resource.data.authorName.size() >= 2 && request.resource.data.authorName.size() <= 40)
+        && request.resource.data.createdAt == request.time
+        && getAfter(userDoc()).data.komentarz == request.time
+        && (!exists(userDoc())
+            || !('komentarz' in get(userDoc()).data)
+            || get(userDoc()).data.komentarz < request.time - duration.value(30, 's'));
+
+      allow delete: if (signedIn() && resource.data.authorUid == request.auth.uid) || isAdmin();
+    }
+
+    /* ---------- Profile ---------- */
+
+    function validProfile(d) {
+      return d.keys().hasOnly(['name', 'bio', 'egg', 'joinedAt'])
+        && d.name is string && d.name.size() >= 2 && d.name.size() <= 40
+        && d.bio is string && d.bio.size() <= 300
+        && d.egg in ['', 'na-miekko', 'mollet', 'na-twardo', 'sadzone', 'jajecznica', 'w-koszulce', 'omlet', 'faszerowane'];
+    }
+
+    match /profile/{uid} {
+      allow read: if true;
+      allow create: if isMember()
+        && request.auth.uid == uid
+        && validProfile(request.resource.data)
+        && request.resource.data.joinedAt == request.time;
+      allow update: if isMember()
+        && request.auth.uid == uid
+        && validProfile(request.resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'bio', 'egg']);
+      allow delete: if (isMember() && request.auth.uid == uid) || isAdmin();
+    }
+
+    /* ---------- Pomocnicze ---------- */
+
+    // Znaczniki czasu ostatniego przepisu i komentarza (ochrona przed zalewem spamu).
     match /uzytkownicy/{uid} {
       allow read: if signedIn() && request.auth.uid == uid;
-      allow create, update: if signedIn()
+      allow create: if signedIn()
         && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['ostatni'])
-        && request.resource.data.ostatni == request.time;
+        && request.resource.data.keys().hasOnly(['ostatni', 'komentarz'])
+        && (!('ostatni' in request.resource.data) || request.resource.data.ostatni == request.time)
+        && (!('komentarz' in request.resource.data) || request.resource.data.komentarz == request.time);
+      allow update: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['ostatni', 'komentarz'])
+        && (!('ostatni' in request.resource.data.diff(resource.data).affectedKeys()) || request.resource.data.ostatni == request.time)
+        && (!('komentarz' in request.resource.data.diff(resource.data).affectedKeys()) || request.resource.data.komentarz == request.time);
     }
 
     // Lista moderatorów. Dodaje się ją ręcznie w konsoli Firebase.

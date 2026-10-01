@@ -36,10 +36,126 @@ export function connect() {
   return loading;
 }
 
+/** Konto Google (nie gość anonimowy). */
+export const isMember = (user) => Boolean(user && !user.isAnonymous);
+
+/**
+ * Logowanie przez Google. Jeśli ktoś był gościem (np. polubił przepis), jego konto gościa
+ * łączy się z Google, więc polubienia i komentarze zostają przy nim.
+ */
 export async function signIn(fb) {
-  const provider = new fb.A.GoogleAuthProvider();
+  const { A, auth } = fb;
+  const provider = new A.GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account' });
-  return fb.A.signInWithPopup(fb.auth, provider);
+  const current = auth.currentUser;
+  if (current && current.isAnonymous) {
+    try {
+      const result = await A.linkWithPopup(current, provider);
+      const cred = A.GoogleAuthProvider.credentialFromResult(result);
+      // Nowe logowanie odświeża token, żeby baza widziała konto Google, a nie gościa.
+      return cred ? await A.signInWithCredential(auth, cred) : result;
+    } catch (err) {
+      const cred = err && err.code === 'auth/credential-already-in-use' && A.GoogleAuthProvider.credentialFromError(err);
+      if (cred) return A.signInWithCredential(auth, cred);
+      throw err;
+    }
+  }
+  return A.signInWithPopup(auth, provider);
+}
+
+/** Konto gościa, żeby niezalogowani mogli polubić przepis i napisać komentarz. */
+export async function ensureGuest(fb) {
+  if (fb.auth.currentUser) return fb.auth.currentUser;
+  const result = await fb.A.signInAnonymously(fb.auth);
+  return result.user;
+}
+
+/** Wywołuje cb(user) przy zalogowaniu, wylogowaniu i zamianie gościa w konto Google. */
+export function watchUser(fb, cb) {
+  let last = null;
+  return fb.A.onIdTokenChanged(fb.auth, (user) => {
+    const key = user ? user.uid + (user.isAnonymous ? ':gosc' : ':konto') : '';
+    if (key === last) return;
+    last = key;
+    cb(user);
+  });
+}
+
+const profiles = new Map();
+
+/** Profil zalogowanego użytkownika. Przy pierwszym logowaniu zakłada go z imieniem z konta Google. */
+export function ensureProfile(fb, user) {
+  if (!isMember(user)) return Promise.resolve(null);
+  if (!profiles.has(user.uid)) {
+    const { F, db } = fb;
+    const ref = F.doc(db, 'profile', user.uid);
+    profiles.set(user.uid, F.getDoc(ref).then(async (snap) => {
+      if (snap.exists()) return snap.data();
+      // Po połączeniu konta gościa z Google imię bywa tylko w danych dostawcy.
+      const google = (user.providerData || []).find((p) => p.providerId === 'google.com');
+      let name = (user.displayName || (google && google.displayName) || '').trim().split(/\s+/)[0] || '';
+      if (name.length < 2) name = 'Kucharz';
+      const data = { name: name.slice(0, 40), bio: '', egg: '', joinedAt: F.serverTimestamp() };
+      await F.setDoc(ref, data);
+      return { ...data, joinedAt: null };
+    }).catch((err) => {
+      profiles.delete(user.uid);
+      console.error(err);
+      return null;
+    }));
+  }
+  return profiles.get(user.uid);
+}
+
+export function forgetProfile(uid) {
+  profiles.delete(uid);
+}
+
+let socialCheck = null;
+
+/** Czy w bazie są już reguły dla polubień, komentarzy i profili (właściciel musi je wkleić). */
+export function socialReady(fb) {
+  if (!socialCheck) {
+    const { F, db } = fb;
+    socialCheck = F.getDocs(F.query(F.collection(db, 'reakcje'), F.limit(1)))
+      .then(() => true)
+      .catch((err) => {
+        console.warn('Polubienia i komentarze są wyłączone: brak nowych reguł w Firestore.', err && err.code);
+        return false;
+      });
+  }
+  return socialCheck;
+}
+
+export const EGG_PREFS = {
+  'na-miekko': 'Na miękko',
+  mollet: 'Mollet',
+  'na-twardo': 'Na twardo',
+  sadzone: 'Sadzone',
+  jajecznica: 'Jajecznica',
+  'w-koszulce': 'W koszulce',
+  omlet: 'Omlet',
+  faszerowane: 'Faszerowane',
+};
+
+/** „przed chwilą”, „5 min temu”, „wczoraj”… */
+export function relTime(ms) {
+  const diff = Math.max(0, Date.now() - ms) / 1000;
+  if (diff < 60) return 'przed chwilą';
+  if (diff < 3600) return Math.floor(diff / 60) + ' min temu';
+  if (diff < 86400) return Math.floor(diff / 3600) + ' godz. temu';
+  if (diff < 172800) return 'wczoraj';
+  if (diff < 604800) return Math.floor(diff / 86400) + ' dni temu';
+  return new Date(ms).toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+/** Awatar w kształcie jajka z pierwszą literą imienia. */
+export function avatarHtml(name, uid, size = '') {
+  let hash = 0;
+  for (const ch of uid || '?') hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+  const initial = (name || '?').trim().charAt(0).toUpperCase() || '?';
+  const tone = uid ? 'av-' + (hash % 5) : 'av-guest';
+  return `<span class="avatar ${tone}${size ? ' avatar-' + size : ''}" aria-hidden="true">${initial.replace(/[<>&"']/g, '')}</span>`;
 }
 
 export function signInError(err) {
