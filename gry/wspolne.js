@@ -105,7 +105,35 @@ function tone(freq, start, length, { type = 'sine', volume = 0.12, slide = 0 } =
   o.stop(t + length + 0.02);
 }
 
+// Szum (wybuchy, pękanie) z filtrem, żeby brzmiał niżej albo wyżej.
+function noise(start, length, { volume = 0.2, freq = 800, q = 0.8, type = 'lowpass' } = {}) {
+  const n = Math.floor(audio.sampleRate * length);
+  const buf = audio.createBuffer(1, n, audio.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+  const src = audio.createBufferSource();
+  src.buffer = buf;
+  const f = audio.createBiquadFilter();
+  f.type = type;
+  f.frequency.value = freq;
+  f.Q.value = q;
+  const g = audio.createGain();
+  g.gain.value = volume;
+  src.connect(f).connect(g).connect(audio.destination);
+  src.start(audio.currentTime + start);
+}
+
 const SOUNDS = {
+  stretch: () => tone(220, 0, 0.25, { type: 'triangle', volume: 0.05, slide: 160 }),
+  launch: () => { noise(0, 0.18, { volume: 0.18, freq: 1800, type: 'bandpass' }); tone(330, 0, 0.18, { type: 'triangle', volume: 0.07, slide: 400 }); },
+  cluck: () => [700, 560].forEach((f, i) => tone(f, i * 0.09, 0.08, { type: 'square', volume: 0.05, slide: -200 })),
+  wood: () => { noise(0, 0.12, { volume: 0.25, freq: 500 }); tone(140, 0, 0.12, { type: 'triangle', volume: 0.08, slide: -40 }); },
+  glass: () => [1760, 2350, 1980].forEach((f, i) => tone(f, i * 0.03, 0.12, { type: 'triangle', volume: 0.05 })),
+  stone: () => { noise(0, 0.2, { volume: 0.3, freq: 260 }); tone(90, 0, 0.18, { type: 'sine', volume: 0.12 }); },
+  shell: () => { noise(0, 0.1, { volume: 0.2, freq: 1400, type: 'bandpass' }); tone(500, 0.02, 0.12, { type: 'triangle', volume: 0.06, slide: -250 }); },
+  boom: () => { noise(0, 0.7, { volume: 0.55, freq: 380 }); tone(70, 0, 0.5, { type: 'sine', volume: 0.25, slide: -30 }); },
+  poof: () => noise(0, 0.25, { volume: 0.08, freq: 2400, type: 'highpass' }),
+  star: () => tone(1320, 0, 0.18, { type: 'triangle', volume: 0.1, slide: 300 }),
   catch: () => tone(880, 0, 0.09, { type: 'triangle', slide: 300 }),
   gold: () => [988, 1319, 1760].forEach((f, i) => tone(f, i * 0.06, 0.12, { type: 'triangle', volume: 0.1 })),
   splat: () => tone(160, 0, 0.22, { type: 'sawtooth', volume: 0.07, slide: -100 }),

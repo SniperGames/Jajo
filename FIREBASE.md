@@ -162,6 +162,17 @@ Jak reguły utrudniają oszukiwanie (gra działa w przeglądarce, więc w 100% s
 
 Moderator widzi przy każdym wyniku na tablicy przycisk **×**, którym usuwa podejrzane wyniki. Tablice są w kolekcji `wyniki`, osobno dla każdej gry (`wyniki/{gra}/gracze`).
 
+## 13. Kury z procy (postęp poziomów)
+
+Znowu wystarczy wkleić reguły: **Firestore Database → Reguły**, usuń wszystko, wklej aktualną zawartość pliku [`firestore.rules`](firestore.rules) i kliknij **Opublikuj**. Gra `procy.html` działa też bez tego, ale postęp zapisuje się wtedy tylko w przeglądarce, a zamiast tablicy jest napis „Tablica wyników ruszy wkrótce”.
+
+Jak to działa:
+- przejście poziomu odblokowuje następny. Gwiazdki i najlepszy wynik każdego poziomu zapisują się od razu w przeglądarce, więc po powrocie gra się od miejsca, w którym się skończyło,
+- po zalogowaniu postęp z przeglądarki łączy się z kontem (z każdego poziomu brany jest lepszy wynik) i zapisuje w kolekcji `procy`, jeden dokument na osobę. Na innym urządzeniu po zalogowaniu poziomy są już odblokowane,
+- tablica wyników liczy sumę punktów ze wszystkich poziomów, a w profilu widać gwiazdki i punkty.
+
+Reguły pilnują, żeby zapis był rozsądny: najwyżej 3 gwiazdki i 150 000 punktów na poziom, suma nie może spaść, a kolejny zapis może przyjść najwcześniej po 5 sekundach. Moderator usuwa podejrzane wyniki przyciskiem **×** na tablicy.
+
 ## Koszty i limity
 
 Darmowy plan Spark wystarcza z dużym zapasem: 1 GiB danych, 50 000 odczytów i 20 000 zapisów dziennie. Jedno wejście na stronę z przepisami to kilkadziesiąt odczytów (liczniki polubień i przepisy czytelników). Zdjęcia są zmniejszane w przeglądarce i zapisywane w bazie, więc płatny Cloud Storage nie jest potrzebny. Jeśli limit kiedyś się skończy, strona nie przestanie działać: do północy (czasu USA) nie wczytają się tylko przepisy od czytelników.

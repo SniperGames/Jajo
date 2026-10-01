@@ -125,8 +125,10 @@ async function render() {
         profile.banner === 'custom' ? custom('banery') : presetSrc('banner', profile.banner),
       ]);
     }
+    const procy = await F.getDoc(F.doc(db, 'procy', uid)).then((d) => (d.exists() ? d.data() : null)).catch(() => null);
     const games = gameScores.every((v) => v === null) ? null
-      : GAME_NAMES.map(([id, name], i) => ({ id, name, score: gameScores[i] || 0 })).filter((g) => g.score > 0);
+      : GAME_NAMES.map(([id, name], i) => ({ id, name, score: gameScores[i] || 0, href: `gry.html#${id}` })).filter((g) => g.score > 0);
+    if (games && procy && procy.score > 0) games.unshift({ id: 'procy', name: 'Kury z procy', score: procy.score, stars: procy.stars, href: 'procy.html' });
     data = { profile, avatarSrc, bannerSrc, recipes, likes, commentsTotal: commCount.data().count, comments, names, threads, games };
   } catch (err) {
     console.error(err);
@@ -210,7 +212,7 @@ async function render() {
       <h2 id="pGames">Rekordy w grach</h2>
       ${data.games.length
         ? `<ul class="profile-games">${data.games.map((g) => `
-            <li><a href="gry.html#${g.id}">${esc(g.name)}</a><b>${g.score.toLocaleString('pl-PL')}</b></li>`).join('')}</ul>`
+            <li><a href="${g.href}">${esc(g.name)}</a><b>${g.stars ? `<span class="bstars">★ ${g.stars}</span> ` : ''}${g.score.toLocaleString('pl-PL')}</b></li>`).join('')}</ul>`
         : '<p class="note">Nie masz jeszcze wyników na tablicach. <a href="gry.html">Zagraj w gry z jajem</a>.</p>'}
     </section>` : ''}
 

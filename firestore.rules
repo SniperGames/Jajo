@@ -12,6 +12,7 @@ rules_version = '2';
 //  - listę ulubionych przepisów widzi i zmienia tylko jej właściciel,
 //  - na forum każdy czyta, a zalogowani zakładają wątki i odpisują; autor zamyka i poprawia swój wątek,
 //  - w grach każdy gra, a zalogowani wpisują swój najlepszy wynik na tablicę (z kontrolą czasu gry),
+//  - w Kurach z procy postęp zalogowanego zapisuje się na jego koncie i rośnie tylko w górę,
 //  - moderator (dokument w kolekcji „admins” o ID równym jego UID) zatwierdza, odrzuca i usuwa.
 
 service cloud.firestore {
@@ -413,6 +414,29 @@ service cloud.firestore {
         && get(sessionDoc()).data.game == game
         && request.time.toMillis() - get(sessionDoc()).data.startedAt.toMillis() >= minMillis(game, request.resource.data.score)
         && !existsAfter(sessionDoc());
+      allow delete: if isAdmin();
+    }
+
+    // Kury z procy: postęp na poziomach i suma punktów (ranking). Rośnie tylko w górę,
+    // zapis najwyżej co 5 sekund, najwyżej 3 gwiazdki i 150 000 punktów na poziom.
+    match /procy/{uid} {
+      allow read: if true;
+      allow create, update: if isMember() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['name', 'score', 'stars', 'levels', 'at'])
+        && validName(request.resource.data.name)
+        && request.resource.data.levels is map
+        && request.resource.data.levels.size() <= 30
+        && request.resource.data.stars is int
+        && request.resource.data.stars >= 0
+        && request.resource.data.stars <= 3 * request.resource.data.levels.size()
+        && request.resource.data.score is int
+        && request.resource.data.score >= 0
+        && request.resource.data.score <= 150000 * request.resource.data.levels.size()
+        && request.resource.data.at == request.time
+        && (resource == null
+            || (request.resource.data.score >= resource.data.score
+                && request.resource.data.stars >= resource.data.stars
+                && request.time > resource.data.at + duration.value(5, 's')));
       allow delete: if isAdmin();
     }
 

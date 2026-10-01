@@ -18,6 +18,21 @@ const plural = (n, one, few, many) => {
 const BASE_TITLE = document.title;
 
 const ART = {
+  'kury-z-procy': `
+    <svg viewBox="0 0 320 200" aria-hidden="true">
+      <defs><linearGradient id="thSky0" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8FD3F4"/><stop offset="1" stop-color="#E8F7FD"/></linearGradient></defs>
+      <rect width="320" height="200" fill="url(#thSky0)"/>
+      <ellipse cx="160" cy="196" rx="220" ry="40" fill="#A9D78E"/>
+      <rect y="180" width="320" height="20" fill="#7CBF5E"/>
+      <path d="M60 180V140M60 140l-10-26M60 140l12-26" stroke="#8A5A2B" stroke-width="9" stroke-linecap="round" fill="none"/>
+      <path d="M78 110c40-40 90-50 128-30" stroke="#fff" stroke-width="3" stroke-dasharray="2 9" stroke-linecap="round" fill="none" opacity=".9"/>
+      <g transform="translate(206 84) rotate(18)"><circle r="17" fill="#D7263D" stroke="#93182A" stroke-width="2.5"/><ellipse cx="4" cy="8" rx="10" ry="7" fill="#F7DDBB"/><circle cx="-4" cy="-17" r="5" fill="#FF7B7B"/><circle cx="3" cy="-19" r="6" fill="#FF7B7B"/><circle cx="5" cy="-6" r="4.5" fill="#fff"/><circle cx="7" cy="-6" r="2" fill="#15201C"/><path d="M1-12l9 3" stroke="#2A1206" stroke-width="3" stroke-linecap="round"/><path d="M14-2l11 3-11 4z" fill="#F4A300"/></g>
+      <g stroke="#7A4D24" stroke-width="2"><rect x="236" y="120" width="8" height="60" fill="#C98B4A"/><rect x="284" y="120" width="8" height="60" fill="#C98B4A"/><rect x="230" y="112" width="68" height="9" fill="#C98B4A"/></g>
+      <rect x="252" y="80" width="26" height="32" fill="rgba(186,228,250,.85)" stroke="#6FAFD3" stroke-width="2"/>
+      <path d="M264 150c9 0 14 12 14 20 0 7-6 11-14 11s-14-4-14-11c0-8 5-20 14-20z" fill="#BFD08C" stroke="#5C7434" stroke-width="2"/>
+      <circle cx="259" cy="164" r="3" fill="#fff"/><circle cx="269" cy="164" r="3" fill="#fff"/><circle cx="258" cy="164" r="1.4" fill="#1B2414"/><circle cx="268" cy="164" r="1.4" fill="#1B2414"/>
+      <path d="M260 174q4-3 8 0" stroke="#3E4F22" stroke-width="2" fill="none"/>
+    </svg>`,
   'lap-jajka': `
     <svg viewBox="0 0 320 200" aria-hidden="true">
       <defs><linearGradient id="thSky1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9FD8F2"/><stop offset="1" stop-color="#EAF7FC"/></linearGradient></defs>
@@ -72,6 +87,13 @@ const ART = {
 };
 
 const GAMES = [
+  {
+    id: 'kury-z-procy',
+    href: 'procy.html',
+    name: 'Kury z procy',
+    kind: 'Nowość · 15 poziomów',
+    blurb: 'Wystrzel kury z procy i rozbij twierdze zgniłych jajek. Każda kura ma swoją moc, a postęp się zapisuje.',
+  },
   {
     id: 'lap-jajka',
     maxw: '440px',
@@ -165,6 +187,17 @@ const store = {
   },
 };
 const bestOf = (id) => Math.max(store.best(id), mine[id] || 0);
+// Gwiazdki z Kur z procy: z przeglądarki albo z konta (większa liczba).
+function procyStars() {
+  let local = 0;
+  try {
+    const p = JSON.parse(localStorage.getItem('jajo:procy:postep'));
+    if (p && p.levels) local = Object.values(p.levels).reduce((a, l) => a + (Number(l.g) || 0), 0);
+  } catch {
+    /* pamięć przeglądarki niedostępna */
+  }
+  return Math.max(local, mine['kury-z-procy'] || 0);
+}
 
 /* ---------- Lista gier ---------- */
 
@@ -172,18 +205,22 @@ function renderHub() {
   $('#gamesGrid').innerHTML = GAMES.map((g) => {
     const best = bestOf(g.id);
     const lead = leaders[g.id];
+    const href = g.href || `#${g.id}`;
+    const stars = g.href ? procyStars() : 0;
     return `
-      <article class="game-card" data-game="${g.id}">
-        <a class="game-thumb" href="#${g.id}" tabindex="-1" aria-hidden="true">${ART[g.id]}</a>
+      <article class="game-card${g.href ? ' game-card-big' : ''}" data-game="${g.id}">
+        <a class="game-thumb" href="${href}" tabindex="-1" aria-hidden="true">${ART[g.id]}</a>
         <div class="game-card-body">
           <p class="eyebrow">${esc(g.kind)}</p>
-          <h2 class="game-card-title"><a href="#${g.id}">${esc(g.name)}</a></h2>
+          <h2 class="game-card-title"><a href="${href}">${esc(g.name)}</a></h2>
           <p class="game-card-text">${esc(g.blurb)}</p>
           <dl class="game-facts">
-            <div><dt>Twój rekord</dt><dd>${best ? fmt(best) : '–'}</dd></div>
+            ${g.href
+              ? `<div><dt>Twoje gwiazdki</dt><dd>★ ${stars} / 45</dd></div>`
+              : `<div><dt>Twój rekord</dt><dd>${best ? fmt(best) : '–'}</dd></div>`}
             <div><dt>Lider</dt><dd>${lead ? `${esc(lead.name)} · ${fmt(lead.score)}` : boards ? 'Wolne miejsce!' : '–'}</dd></div>
           </dl>
-          <a class="btn btn-primary game-card-play" href="#${g.id}">Graj</a>
+          <a class="btn btn-primary game-card-play" href="${href}">Graj</a>
         </div>
       </article>`;
   }).join('');
@@ -194,7 +231,8 @@ async function loadLeaders() {
   const { F, db } = fb;
   await Promise.all(GAMES.map(async (g) => {
     try {
-      const snap = await F.getDocs(F.query(F.collection(db, 'wyniki', g.id, 'gracze'), F.orderBy('score', 'desc'), F.limit(1)));
+      const col = g.href ? F.collection(db, 'procy') : F.collection(db, 'wyniki', g.id, 'gracze');
+      const snap = await F.getDocs(F.query(col, F.orderBy('score', 'desc'), F.limit(1)));
       leaders[g.id] = snap.empty ? null : snap.docs[0].data();
     } catch {
       leaders[g.id] = null;
@@ -209,8 +247,8 @@ async function loadMine() {
   const { F, db } = fb;
   await Promise.all(GAMES.map(async (g) => {
     try {
-      const snap = await F.getDoc(F.doc(db, 'wyniki', g.id, 'gracze', me.uid));
-      if (snap.exists()) mine[g.id] = snap.data().score;
+      const snap = await F.getDoc(g.href ? F.doc(db, 'procy', me.uid) : F.doc(db, 'wyniki', g.id, 'gracze', me.uid));
+      if (snap.exists()) mine[g.id] = g.href ? snap.data().stars : snap.data().score;
     } catch {
       /* brak dostępu */
     }
@@ -533,6 +571,10 @@ function goHub() {
 
 function route(viaHash) {
   const id = location.hash.slice(1);
+  if (byId[id] && byId[id].href) {
+    location.replace(byId[id].href);
+    return;
+  }
   if (byId[id]) {
     fromHub = viaHash && !hub.hidden;
     openGame(id);

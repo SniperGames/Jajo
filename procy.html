@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kury z procy: gra z poziomami – Jajo</title>
+<meta name="description" content="Kury z procy: wystrzel kury z procy i rozbij twierdze zgniłych jajek. 15 poziomów, sześć kur z mocami, gwiazdki i zapis postępu. Gra na komputer i telefon.">
+<link rel="canonical" href="https://snipergames.github.io/Jajo/procy.html">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#EEF3EF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0C1412" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-96.png" type="image/png" sizes="96x96">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pl_PL">
+<meta property="og:site_name" content="Jajo">
+<meta property="og:title" content="Kury z procy – Jajo">
+<meta property="og:description" content="Wystrzel kury z procy i rozbij twierdze zgniłych jajek. 15 poziomów i sześć kur z mocami.">
+<meta property="og:url" content="https://snipergames.github.io/Jajo/procy.html">
+<meta property="og:image" content="https://snipergames.github.io/Jajo/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;800&family=Onest:wght@400;500;600;700&family=Unbounded:wght@600;700;800;900&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="skip-link" href="#procyApp">Przejdź do gry</a>
+
+<nav class="nav" aria-label="Sekcje strony">
+  <div class="wrap nav-row">
+    <a class="brand" href="index.html">
+      <svg viewBox="0 0 20 26" aria-hidden="true"><path d="M10 1C15 1 18 9 18 16c0 5.5-3.5 9-8 9s-8-3.5-8-9C2 9 5 1 10 1z"/></svg>
+      Jajo
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html#minutnik">Minutnik</a></li>
+      <li><a href="index.html#kod">Kod</a></li>
+      <li><a class="nav-recipes" href="przepisy.html">Przepisy</a></li>
+      <li><a class="nav-forum" href="forum.html">Forum</a></li>
+      <li><a class="nav-games" href="gry.html" aria-current="page">Gry</a></li>
+    </ul>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Przełącz motyw">
+      <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
+      <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
+    </button>
+  </div>
+</nav>
+
+<main class="procy-page" id="procyApp" tabindex="-1">
+  <div class="wrap">
+    <section class="procy-menu" id="procyMenu" aria-labelledby="procyTitle">
+      <a class="ft-back" href="gry.html">← Wszystkie gry</a>
+      <header class="procy-head">
+        <div class="section-head">
+          <p class="eyebrow">Gra z poziomami</p>
+          <h1 class="page-title procy-title" id="procyTitle">Kury z&nbsp;procy</h1>
+          <p class="section-lede">Zgniłe jajka zabarykadowały się w&nbsp;twierdzach z&nbsp;drewna, lodu i&nbsp;kamienia, i&nbsp;straszą całe podwórko. Kury mają dość! Wystrzel je z&nbsp;procy i&nbsp;rozbij wszystkie zgniłki. Każda kura ma swoją moc.</p>
+        </div>
+        <div class="procy-summary" aria-live="polite">
+          <p class="procy-total"><span class="procy-star" aria-hidden="true">★</span><b id="procyStars">0</b><span>/ 45 gwiazdek</span></p>
+          <p class="procy-score"><b id="procyScore">0</b> punktów</p>
+          <p class="procy-sync" id="procySync"></p>
+        </div>
+      </header>
+      <div class="procy-chapters" id="procyLevels"></div>
+      <div class="procy-info">
+        <section class="board" aria-labelledby="procyBoardTitle">
+          <h2 id="procyBoardTitle">Tablica wyników</h2>
+          <div class="board-body" id="procyBoard"><p class="note">Wczytuję…</p></div>
+        </section>
+        <section class="howto" aria-labelledby="procyHensTitle">
+          <h2 id="procyHensTitle">Kury i&nbsp;ich moce</h2>
+          <ul class="procy-hens" id="procyHens"></ul>
+          <p class="note">Naciągnij procę (przeciągnij myszą albo palcem do tyłu) i&nbsp;puść. W&nbsp;locie stuknij, żeby użyć mocy kury. Na komputerze możesz też celować strzałkami i&nbsp;strzelać spacją.</p>
+        </section>
+      </div>
+    </section>
+
+    <section class="procy-play" id="procyPlay" hidden aria-label="Gra">
+      <div class="procy-stage-wrap">
+        <div class="procy-stage" id="procyStage">
+          <div class="procy-hud">
+            <button type="button" class="procy-btn" data-act="pause" aria-label="Pauza"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg></button>
+            <button type="button" class="procy-btn" data-act="restart" aria-label="Zacznij poziom od nowa"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4.5h4.5"/></svg></button>
+          </div>
+          <div class="procy-overlay" id="procyOverlay" hidden></div>
+          <div class="procy-rotate">
+            <svg viewBox="0 0 48 48" aria-hidden="true"><rect x="14" y="6" width="20" height="36" rx="4"/><path d="M40 30a12 12 0 0 1-12 12M36 42h-8v-8"/></svg>
+            <p>Obróć telefon poziomo, będzie wygodniej.</p>
+            <button type="button" class="btn btn-ghost" data-act="rotate">Graj tak</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-grid">
+    <h2 class="footer-q">Więcej gier?</h2>
+    <div class="footer-a">
+      <p>Na stronie z&nbsp;grami czekają też Łap jajka, Lot kurczaka, Jajo 2048 i&nbsp;Pary pisanek.</p>
+      <p><a class="btn btn-ghost" href="gry.html">Gry z&nbsp;jajem</a></p>
+    </div>
+  </div>
+</footer>
+
+<script src="script.js" defer></script>
+<script type="module" src="konto.js"></script>
+<script type="module" src="procy.js"></script>
+</body>
+</html>
