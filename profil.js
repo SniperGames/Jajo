@@ -1,9 +1,10 @@
 /* Jajo: profil kucharza (czytelnika, który dodaje przepisy i komentuje). */
 import {
-  connect, configured, signIn, signInError, isMember, isAdmin, watchUser, ensureProfile, forgetProfile,
+  connect, configured, signInError, isMember, isPasswordUser, sendPasswordReset, isAdmin, watchUser, ensureProfile, forgetProfile,
   socialReady, relTime, avatarHtml, EGG_PREFS, toRecipe, shrinkImage, forgetAvatar, imagesReady, presetSrc,
   AVATAR_PRESETS, BANNER_PRESETS,
 } from './jajo-firebase.js';
+import { openLogin } from './logowanie.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const NBSP = ' ';
@@ -56,7 +57,7 @@ async function render() {
     app.innerHTML = `
       <div class="mod-box profile-login">
         <h1 class="profile-name">Twój profil</h1>
-        <p>Zaloguj się kontem Google, żeby zobaczyć swój profil, przepisy i komentarze.</p>
+        <p>Zaloguj się, żeby zobaczyć swój profil, przepisy i komentarze.</p>
         <button type="button" class="btn btn-primary" data-login>Zaloguj się</button>
         <p class="account-error" role="alert"></p>
       </div>`;
@@ -156,6 +157,7 @@ async function render() {
         ${own ? `
           <div class="profile-actions">
             <button type="button" class="btn btn-ghost" data-edit>Edytuj profil</button>
+            ${isPasswordUser(me) ? '<button type="button" class="linklike" data-password>Zmień hasło</button>' : ''}
             <button type="button" class="linklike" data-out>Wyloguj</button>
           </div>` : ''}
       </div>
@@ -288,11 +290,16 @@ app.addEventListener('change', async (e) => {
 
 app.addEventListener('click', async (e) => {
   if (e.target.closest('[data-login]')) {
+    openLogin(fb);
+  } else if (e.target.closest('[data-password]')) {
+    const btn = e.target.closest('[data-password]');
+    btn.disabled = true;
     try {
-      await signIn(fb);
+      await sendPasswordReset(fb, me.email);
+      btn.outerHTML = `<span class="fhint">Link do zmiany hasła wysłaliśmy na ${esc(me.email)}.</span>`;
     } catch (err) {
-      const box = $('.account-error', app);
-      if (box) box.textContent = signInError(err);
+      btn.disabled = false;
+      btn.textContent = signInError(err) || 'Nie udało się wysłać linku';
     }
   } else if (e.target.closest('[data-out]')) {
     await fb.A.signOut(fb.auth);

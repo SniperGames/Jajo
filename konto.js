@@ -1,7 +1,8 @@
 /* Jajo: ikona konta w prawym górnym rogu paska nawigacji (logowanie, profil, wylogowanie). */
 import {
-  connect, configured, signIn, signInError, isMember, watchUser, ensureProfile, isAdmin, avatarHtml, avatarFor,
+  connect, configured, isMember, isUnverified, isPasswordUser, watchUser, ensureProfile, isAdmin, avatarHtml, avatarFor,
 } from './jajo-firebase.js';
+import { openLogin } from './logowanie.js';
 
 const PERSON = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.6"/><path d="M4.8 20c.9-3.6 3.8-5.6 7.2-5.6s6.3 2 7.2 5.6"/></svg>';
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -23,6 +24,7 @@ if (configured && row) {
   let name = '';
   let photo = '';
   let admin = false;
+  let pending = false; // konto e-mail czeka na potwierdzenie adresu
   let loading = null;
 
   // Firebase wczytujemy dopiero po załadowaniu strony, żeby nie spowalniać jej wyświetlenia.
@@ -36,6 +38,7 @@ if (configured && row) {
         }
         watchUser(fb, async (u) => {
           user = isMember(u) ? u : null;
+          pending = isUnverified(u);
           name = '';
           photo = '';
           admin = false;
@@ -46,7 +49,8 @@ if (configured && row) {
             photo = (await avatarFor(fb, user.uid)).src;
           }
           paintButton();
-          if (!menu.hidden) paintMenu();
+          if (!user) close(false);
+          else if (!menu.hidden) paintMenu();
         });
       });
     }
@@ -64,8 +68,10 @@ if (configured && row) {
     } else {
       btn.innerHTML = PERSON;
       btn.classList.remove('is-member');
-      btn.setAttribute('aria-label', 'Konto: zaloguj się');
+      btn.setAttribute('aria-label', pending ? 'Konto: potwierdź adres e-mail' : 'Konto: zaloguj się');
     }
+    btn.classList.toggle('is-pending', pending);
+    btn.setAttribute('aria-haspopup', user ? 'true' : 'dialog');
   }
 
   function paintMenu() {
@@ -73,18 +79,10 @@ if (configured && row) {
       menu.innerHTML = '<p class="am-text">Wczytuję…</p>';
       return;
     }
-    if (!user) {
-      menu.innerHTML = `
-        <p class="am-title">Nie jesteś zalogowany</p>
-        <p class="am-text">Zaloguj się kontem Google, żeby dodawać przepisy, podpisywać komentarze imieniem i mieć swój profil.</p>
-        <button type="button" class="btn btn-primary am-login" data-am="login">Zaloguj się przez Google</button>
-        <p class="account-error" role="alert"></p>`;
-      return;
-    }
     menu.innerHTML = `
       <div class="am-head">
         ${avatarHtml(name, user.uid, '', photo)}
-        <div><b>${esc(name)}</b><small>Konto Google</small></div>
+        <div><b>${esc(name)}</b><small>${isPasswordUser(user) ? esc(user.email) : 'Konto Google'}</small></div>
       </div>
       <nav class="am-list" aria-label="Konto">
         <a class="am-item" href="profil.html#${esc(user.uid)}">Mój profil</a>
@@ -110,20 +108,24 @@ if (configured && row) {
     if (focusButton) btn.focus({ preventScroll: true });
   }
 
-  btn.addEventListener('click', () => (menu.hidden ? open() : close(false)));
+  // Niezalogowany: ikona od razu otwiera okno logowania. Zalogowany: menu konta.
+  btn.addEventListener('click', async () => {
+    if (user) {
+      if (menu.hidden) open(); else close(false);
+      return;
+    }
+    if (!fb) {
+      btn.disabled = true;
+      await load();
+      btn.disabled = false;
+      if (!fb || user) return;
+    }
+    openLogin(fb);
+  });
 
   menu.addEventListener('click', async (e) => {
     const act = e.target.closest('[data-am]');
-    if (act && act.dataset.am === 'login') {
-      try {
-        await signIn(fb);
-        close(true);
-      } catch (err) {
-        const msg = signInError(err);
-        const out = menu.querySelector('.account-error');
-        if (out) out.textContent = msg;
-      }
-    } else if (act && act.dataset.am === 'out') {
+    if (act && act.dataset.am === 'out') {
       await fb.A.signOut(fb.auth);
       close(true);
     } else if (e.target.closest('a')) {

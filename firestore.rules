@@ -5,8 +5,10 @@ rules_version = '2';
 //
 // Kto co może:
 //  - każdy czyta zatwierdzone przepisy, ich zdjęcia, liczniki polubień, komentarze i profile,
-//  - gość (konto anonimowe) może polubić przepis i napisać komentarz bez linków,
-//  - zalogowany kontem Google dodaje przepisy (trafiają do moderacji), ma profil, widzi i usuwa swoje rzeczy,
+//  - gość (konto anonimowe albo konto e-mail z niepotwierdzonym adresem) może polubić przepis
+//    i napisać komentarz bez linków,
+//  - zalogowany (kontem Google albo e-mailem z potwierdzonym adresem) dodaje przepisy (trafiają
+//    do moderacji), ma profil, widzi i usuwa swoje rzeczy,
 //  - moderator (dokument w kolekcji „admins” o ID równym jego UID) zatwierdza, odrzuca i usuwa.
 
 service cloud.firestore {
@@ -16,8 +18,11 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // Gość: konto anonimowe albo konto e-mail, którego adres nie jest jeszcze potwierdzony.
     function isAnon() {
-      return request.auth.token.firebase.sign_in_provider == 'anonymous';
+      return request.auth.token.firebase.sign_in_provider == 'anonymous'
+        || (request.auth.token.firebase.sign_in_provider == 'password'
+          && request.auth.token.get('email_verified', false) != true);
     }
 
     function isMember() {

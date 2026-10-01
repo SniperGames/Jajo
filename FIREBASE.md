@@ -1,6 +1,6 @@
 # Przepisy od czytelników: podłączenie Firebase
 
-Strona stoi na GitHub Pages, które serwuje tylko gotowe pliki. Przepisy od czytelników muszą się gdzieś zapisywać, dlatego korzystamy z darmowego planu Firebase (Google): baza Firestore i logowanie kontem Google. Karta płatnicza nie jest potrzebna.
+Strona stoi na GitHub Pages, które serwuje tylko gotowe pliki. Przepisy od czytelników muszą się gdzieś zapisywać, dlatego korzystamy z darmowego planu Firebase (Google): baza Firestore i logowanie kontem Google albo e-mailem i hasłem. Karta płatnicza nie jest potrzebna.
 
 Całość zajmuje około 10 minut. Nazwy w konsoli Firebase mogą być po angielsku, dlatego w nawiasach podaję też angielskie odpowiedniki.
 
@@ -90,7 +90,7 @@ Co pilnują nowe reguły:
 - gość podpisuje komentarz jako „Niezalogowany użytkownik” i nie może wstawiać linków,
 - każdy może napisać najwyżej jeden komentarz na 30 sekund,
 - komentarz usuwa jego autor albo moderator, a nikt go nie edytuje,
-- profil zakłada i zmienia tylko jego właściciel (konto Google), a goście nie mają profili ani nie dodają przepisów.
+- profil zakłada i zmienia tylko jego właściciel (konto Google albo e-mail z potwierdzonym adresem), a goście nie mają profili ani nie dodają przepisów.
 
 Komentarze pojawiają się od razu. Niestosowne usuniesz w panelu moderacji, w zakładce **Komentarze**.
 
@@ -106,6 +106,22 @@ Co pilnują reguły:
 - w profilu można wskazać tylko gotowy obrazek ze strony albo własne zdjęcie, a nie dowolny adres z internetu.
 
 Niestosowne zdjęcie usuniesz, wchodząc jako moderator w profil tej osoby: nad profilem są przyciski **Usuń zdjęcie profilowe** i **Usuń baner**.
+
+## 9. Logowanie e-mailem i hasłem
+
+Kolejność ma znaczenie: najpierw reguły, potem włączenie logowania.
+
+1. **Nowe reguły.** **Firestore Database → Reguły**: usuń wszystko, wklej aktualną zawartość pliku [`firestore.rules`](firestore.rules) i kliknij **Opublikuj**. Nowe reguły traktują konto e-mail z niepotwierdzonym adresem jak gościa. Stare reguły uznałyby je za pełne konto.
+2. **Włącz logowanie.** **Authentication → Metoda logowania** (*Sign-in method*) → **Dodaj nowego dostawcę** (*Add new provider*) → **E-mail/hasło** (*Email/Password*). Włącz pierwszy przełącznik (*Email/Password*). Drugiego (*Email link (passwordless sign-in)*) nie włączaj. Kliknij **Zapisz**.
+3. **Nazwa w e-mailach** (warto sprawdzić). Wiadomości z linkami są podpisane nazwą projektu. Jeśli widać w nich coś w rodzaju „project-287547519251”, wejdź w **Ustawienia projektu** (koło zębate) → **Ogólne** (*General*) → **Nazwa publiczna** (*Public-facing name*) i wpisz „Jajo”.
+
+Jak to działa na stronie:
+- w oknie logowania jest przycisk Google, a pod nim zakładki **Mam konto** i **Nowe konto**,
+- przy zakładaniu konta podaje się imię lub pseudonim, e-mail i hasło (co najmniej 8 znaków), a strona wysyła link potwierdzający adres,
+- do czasu kliknięcia linku konto działa jak gość: może polubić przepis i komentować jako „Niezalogowany użytkownik”, ale nie doda przepisu i nie ma profilu. Po kliknięciu linku i powrocie na stronę konto samo staje się pełne,
+- „Nie pamiętam hasła” w oknie logowania i „Zmień hasło” w profilu wysyłają link do ustawienia nowego hasła.
+
+Wiadomości przychodzą z adresu `noreply@jajo-85b16.firebaseapp.com` i czasem trafiają do spamu. Strona prosi Firebase o polskie wersje wiadomości. Ich treść możesz zmienić w **Authentication → Szablony** (*Templates*).
 
 ## Koszty i limity
 

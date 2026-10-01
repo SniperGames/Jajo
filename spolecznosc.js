@@ -1,7 +1,8 @@
 /* Jajo: przepisy od czytelników (dodawanie, lista, moje przepisy). */
 import {
-  connect, configured, signIn, signInError, toRecipe, isAdmin, shrinkImage, isMember, watchUser, ensureProfile, socialReady,
+  connect, configured, toRecipe, isAdmin, shrinkImage, isMember, watchUser, ensureProfile, socialReady,
 } from './jajo-firebase.js';
+import { openLogin } from './logowanie.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -95,7 +96,7 @@ function renderAccount() {
   if (!user) {
     account.innerHTML = `
       <button class="btn btn-primary" type="button" data-act="add">Dodaj swój przepis</button>
-      <p class="account-note">Zalogujesz się kontem Google. Pod przepisem pokażemy tylko podpis, który wybierzesz.</p>
+      <p class="account-note">Zalogujesz się kontem Google albo e-mailem. Pod przepisem pokażemy tylko podpis, który wybierzesz.</p>
       <p class="account-error" role="alert"></p>`;
     return;
   }
@@ -118,16 +119,7 @@ account.addEventListener('click', async (e) => {
   if (!btn) return;
   const act = btn.dataset.act;
   if (act === 'add') {
-    if (!user) {
-      try {
-        await signIn(fb);
-      } catch (err) {
-        const msg = signInError(err);
-        const box = $('.account-error', account);
-        if (box) box.textContent = msg;
-        return;
-      }
-    }
+    if (!user && !(await openLogin(fb, { lede: 'Żeby dodać przepis, zaloguj się. Pod przepisem pokażemy tylko podpis, który wybierzesz.' }))) return;
     openForm();
   } else if (act === 'mine') {
     minePanel.hidden = !minePanel.hidden;
@@ -340,7 +332,7 @@ function buildForm() {
             <span class="box" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
             <span>Przepis i${NBSP}zdjęcie są moje albo mam prawo je udostępnić. Zgadzam się na ich publikację na stronie Jajo z${NBSP}moim podpisem.</span>
           </label>
-          <p class="note">Zapisujemy podpis, przepis i${NBSP}zdjęcie. Adresu e-mail z${NBSP}konta Google nie pokazujemy. Swój przepis usuniesz w${NBSP}każdej chwili w${NBSP}„Moje przepisy”.</p>
+          <p class="note">Zapisujemy podpis, przepis i${NBSP}zdjęcie. Adresu e-mail nie pokazujemy. Swój przepis usuniesz w${NBSP}każdej chwili w${NBSP}„Moje przepisy”.</p>
         </fieldset>
 
         <div class="ferrors" id="fErrors" role="alert" hidden></div>

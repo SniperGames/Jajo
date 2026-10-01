@@ -1,8 +1,9 @@
 /* Jajo: polubienia („Smakuje mi”) i komentarze pod przepisami. */
 import {
-  connect, signIn, signInError, ensureGuest, ensureProfile, isMember, isAdmin,
+  connect, ensureGuest, ensureProfile, isMember, isAdmin,
   watchUser, socialReady, relTime, avatarHtml, avatarFor,
 } from './jajo-firebase.js';
+import { openLogin } from './logowanie.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -144,7 +145,7 @@ async function toggleLike(key) {
     if (was) liked.add(key); else liked.delete(key);
     counts.set(key, (counts.get(key) || 0) + (was ? 1 : -1));
     note(err && err.code === 'auth/operation-not-allowed'
-      ? 'Polubienia bez logowania są chwilowo wyłączone. Zaloguj się kontem Google, żeby polubić przepis.'
+      ? 'Polubienia bez logowania są chwilowo wyłączone. Zaloguj się, żeby polubić przepis.'
       : 'Nie udało się zapisać polubienia. Sprawdź połączenie i spróbuj jeszcze raz.');
   } finally {
     busy.delete(key);
@@ -302,15 +303,8 @@ document.addEventListener('submit', async (e) => {
 });
 
 document.addEventListener('click', async (e) => {
-  const login = e.target.closest('[data-c-login]');
-  if (login) {
-    try {
-      await signIn(fb);
-    } catch (err) {
-      const box = login.closest('.cform');
-      const msg = signInError(err);
-      if (box && msg) $('.account-error', box).textContent = msg;
-    }
+  if (e.target.closest('[data-c-login]')) {
+    openLogin(fb, { lede: 'Po zalogowaniu podpiszesz komentarz swoim imieniem.' });
     return;
   }
   const del = e.target.closest('[data-c-del]');

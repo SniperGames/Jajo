@@ -1,7 +1,8 @@
 /* Jajo: panel moderacji przepisów od czytelników. */
 import {
-  connect, configured, signIn, signInError, toRecipe, isAdmin, isMember, watchUser, socialReady, relTime, avatarHtml,
+  connect, configured, toRecipe, isAdmin, isMember, watchUser, socialReady, relTime, avatarHtml,
 } from './jajo-firebase.js';
+import { openLogin } from './logowanie.js';
 
 const app = document.getElementById('modApp');
 const NBSP = ' ';
@@ -84,7 +85,7 @@ function render() {
   if (!user) {
     app.innerHTML = `
       <div class="mod-box">
-        <p>Zaloguj się kontem Google, żeby moderować przepisy.</p>
+        <p>Zaloguj się, żeby moderować przepisy.</p>
         <button type="button" class="btn btn-primary" data-act="in">Zaloguj się</button>
         <p class="account-error" role="alert"></p>
       </div>`;
@@ -207,12 +208,7 @@ app.addEventListener('click', async (e) => {
   const act = e.target.closest('[data-act]');
   if (act) {
     if (act.dataset.act === 'in') {
-      try {
-        await signIn(fb);
-      } catch (err) {
-        const box = app.querySelector('.account-error');
-        if (box) box.textContent = signInError(err);
-      }
+      openLogin(fb);
     } else if (act.dataset.act === 'out') {
       await fb.A.signOut(fb.auth);
     } else if (act.dataset.act === 'copy') {
