@@ -173,6 +173,10 @@ Jak to działa:
 
 Reguły pilnują, żeby zapis był rozsądny: najwyżej 3 gwiazdki i 150 000 punktów na poziom, suma nie może spaść, a kolejny zapis może przyjść najwcześniej po 5 sekundach. Moderator usuwa podejrzane wyniki przyciskiem **×** na tablicy.
 
+## 14. Nocne ślady
+
+Jeszcze raz wklej reguły: **Firestore Database → Reguły**, usuń wszystko, wklej aktualną zawartość pliku [`firestore.rules`](firestore.rules) i kliknij **Opublikuj**. Dochodzi kolekcja `noc`: prywatny zapis postępu, który widzi i zmienia tylko właściciel konta (nikt inny, także moderator, go nie czyta). Postęp może tylko rosnąć. Bez tych reguł wszystko działa, ale zapisuje się tylko w przeglądarce.
+
 ## Koszty i limity
 
 Darmowy plan Spark wystarcza z dużym zapasem: 1 GiB danych, 50 000 odczytów i 20 000 zapisów dziennie. Jedno wejście na stronę z przepisami to kilkadziesiąt odczytów (liczniki polubień i przepisy czytelników). Zdjęcia są zmniejszane w przeglądarce i zapisywane w bazie, więc płatny Cloud Storage nie jest potrzebny. Jeśli limit kiedyś się skończy, strona nie przestanie działać: do północy (czasu USA) nie wczytają się tylko przepisy od czytelników.

@@ -3300,3 +3300,379 @@ html.procy-full .procy-stage { width: min(100vw, calc(100dvh * 16 / 9)); border-
   .game-card-big { grid-column: span 2; }
   .game-card-big .game-thumb { aspect-ratio: 16 / 7; }
 }
+
+/* ---------- Nocne ślady (ukryte zagadki) ---------- */
+
+/* Puste jajko w nagłówku */
+.egg-void { opacity: 0; transition: opacity .3s ease .2s; }
+.egg-void ellipse { fill: #0B0907; }
+.egg-void-eye { fill: #C0392B; transform-box: fill-box; transform-origin: center; animation: noc-blink 3.8s ease-in-out infinite; }
+.egg-btn.is-empty .egg-void { opacity: 1; }
+.egg-btn.is-empty .chick { opacity: 0; transform: none; transition: none; }
+@keyframes noc-blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }
+.noc-cam-link { font-family: var(--f-mono); font-weight: 700; color: var(--stamp); text-decoration: none; white-space: nowrap; }
+.noc-cam-link:hover { text-decoration: underline; }
+
+/* Kod ze skorupki z nocy */
+.decoded.is-noc .st b { color: var(--stamp); animation: noc-jitter 2.4s steps(1) infinite; }
+.decoded.is-noc .dcard-val { color: var(--stamp); }
+@keyframes noc-jitter { 0%, 86%, 100% { transform: none; } 88% { transform: translate(-2px, 1px); } 92% { transform: translate(2px, -1px) skewX(-6deg); } }
+
+/* Notatka Pipa */
+dialog.noc-note {
+  width: min(440px, calc(100vw - 32px));
+  margin: auto;
+  padding: 1.6rem 1.5rem 1.3rem;
+  border: 1px solid #2E2C25;
+  border-radius: 6px;
+  color: #ECE5D2;
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, .025) 0 1px, transparent 1px 3px),
+    radial-gradient(120% 90% at 50% 0%, #1D1C17, #0B0B09);
+  box-shadow: 0 30px 80px -20px rgba(0, 0, 0, .8), 0 0 0 1px rgba(180, 35, 42, .15);
+  font-family: var(--f-mono);
+}
+dialog.noc-note[open] { animation: noc-in .7s steps(1) both; }
+dialog.noc-note::backdrop { background: rgba(4, 4, 3, .78); }
+@keyframes noc-in {
+  0% { opacity: 0; }
+  12% { opacity: 1; transform: translateX(-6px) skewX(4deg); }
+  20% { opacity: .2; }
+  30% { opacity: 1; transform: none; }
+  42% { opacity: .6; transform: translateX(3px); }
+  50%, 100% { opacity: 1; transform: none; }
+}
+.noc-note-kicker { margin: 0 0 1rem; color: #D2333B; font-size: var(--t-xs); font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+.noc-note-text { min-height: 6.5em; margin: 0; font-size: 1.02rem; line-height: 1.65; white-space: pre-line; }
+.noc-note-link { margin: 1rem 0 0; }
+.noc-note-link a { color: #FF5A5F; font-weight: 700; }
+.noc-note-saved { margin: 1.2rem 0 0; padding-top: .8rem; border-top: 1px dashed #3A372E; color: #9C9582; font-size: var(--t-xs); line-height: 1.5; }
+.noc-note-saved .linklike { color: #ECE5D2; }
+.noc-note-close {
+  margin-top: 1rem;
+  padding: .55rem 1.1rem;
+  border: 1px solid #4A463A;
+  border-radius: 6px;
+  color: #ECE5D2;
+  background: transparent;
+  font: inherit;
+  font-size: var(--t-sm);
+  cursor: pointer;
+}
+.noc-note-close:hover, .noc-note-close:focus-visible { border-color: #D2333B; color: #fff; }
+
+/* Przepis, którego nie ma w spisie */
+.rcard-noc { border-color: #2B2A24; color: #E4DDCA; background: #12120F; }
+.rcard-noc .rcard-media { background: #050504; cursor: pointer; }
+.rcard-noc .noc-art { display: block; width: 100%; height: 100%; }
+.rcard-noc .rcard-cat { color: #D2333B; }
+.rcard-noc .rcard-intro, .rcard-noc .rcard-meta { color: #A39C88; }
+.rcard-noc .rcard-link {
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.rdialog.noc-recipe { color: #E4DDCA; background: #12120F; border-color: #2B2A24; }
+.noc-recipe .eyebrow { color: #D2333B; }
+.noc-recipe .rd-intro { color: #A39C88; }
+.noc-recipe .rd-close { color: #E4DDCA; }
+.noc-rd-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 1.5rem; margin-top: 1.5rem; }
+.noc-rd-body h3 { margin: 0 0 .7rem; font-family: var(--f-display); font-size: var(--t-md); }
+.noc-ing, .noc-steps { margin: 0; padding-left: 1.2rem; display: grid; gap: .5rem; line-height: 1.5; }
+.noc-steps li::marker { color: #D2333B; font-family: var(--f-mono); font-weight: 700; }
+.noc-rd-saved { margin: 1.5rem 0 0; color: #8E8874; font-family: var(--f-mono); font-size: var(--t-xs); }
+@media (max-width: 640px) { .noc-rd-body { grid-template-columns: minmax(0, 1fr); } }
+
+/* Forum: napis na ścianie i włącznik światła */
+.noc-wall { margin: 0 0 1.5rem; padding: .5rem 0; pointer-events: none; user-select: none; }
+.noc-wall p {
+  margin: 0;
+  color: rgba(255, 255, 255, .032);
+  font-family: var(--f-display);
+  font-size: clamp(1.2rem, 1rem + 2.4vw, 2.6rem);
+  font-weight: 900;
+  line-height: 1.12;
+  letter-spacing: .02em;
+  transform: rotate(-2.5deg);
+}
+.noc-wall p + p { margin-top: .45em; }
+.noc-wall p:nth-child(2) { margin-left: 6%; transform: rotate(1.5deg); }
+.noc-wall p:nth-child(3) { margin-left: 2%; transform: rotate(-1deg); }
+.noc-wall .noc-wall-saved { color: transparent; font-family: var(--f-mono); font-size: var(--t-xs); font-weight: 500; transform: none; margin-top: .8rem; }
+html.noc-lit .noc-wall p { color: #8E1B1B; text-shadow: 1px 1px 0 rgba(90, 10, 10, .35); }
+html.noc-lit .noc-wall .noc-wall-saved { color: var(--ink-2); text-shadow: none; }
+.footer-grid:has(.noc-switch) { position: relative; }
+.noc-switch {
+  position: absolute;
+  right: 0;
+  bottom: -.4rem;
+  width: 34px;
+  height: 48px;
+  padding: 4px 6px;
+  border: 0;
+  color: var(--ink);
+  background: none;
+  opacity: .1;
+  cursor: pointer;
+  transition: opacity .3s ease;
+}
+.noc-switch:hover, .noc-switch:focus-visible { opacity: .32; }
+.noc-switch svg { display: block; width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.5; }
+.noc-switch .noc-switch-key { fill: currentColor; }
+html.noc-flicker body { animation: noc-flicker 1.3s steps(1) both; }
+@keyframes noc-flicker {
+  0% { filter: brightness(.15); }
+  10% { filter: brightness(1.5); }
+  16% { filter: brightness(.25); }
+  26% { filter: brightness(1.3); }
+  32% { filter: brightness(.5); }
+  44% { filter: brightness(1.7) contrast(.9); }
+  70% { filter: brightness(1.15); }
+  100% { filter: none; }
+}
+
+/* Profil Pipa */
+.noc-banner {
+  display: block;
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, .04) 0 1px, transparent 1px 4px),
+    radial-gradient(80% 120% at 40% 60%, #2B2C27, #0A0A09);
+  color: #D9D6C8;
+  font-family: var(--f-mono);
+  font-size: clamp(.8rem, .7rem + .5vw, 1.05rem);
+  letter-spacing: .08em;
+}
+.noc-banner span { position: absolute; }
+.noc-banner-cam { left: 1.2rem; top: 1rem; }
+.noc-banner-rec { right: 1.2rem; top: 1rem; color: #E0161B; animation: noc-rec 1.4s steps(1) infinite; }
+.noc-banner-time { right: 1.2rem; bottom: 1rem; }
+@keyframes noc-rec { 50% { opacity: 0; } }
+.noc-avatar { background: #141412; }
+.noc-redact {
+  display: inline;
+  padding: .15em .35em;
+  border-radius: 2px;
+  color: #050505;
+  background: #050505;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .08);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  line-height: 2.1;
+  cursor: text;
+}
+.noc-redact::selection { color: #fff; background: #B42318; }
+.noc-redact.is-revealed { color: var(--stamp); background: transparent; box-shadow: none; font-weight: 700; }
+.noc-redact-saved { margin-top: .6rem; font-family: var(--f-mono); font-size: var(--t-xs); }
+
+/* Sekretna gra na liście gier */
+.game-card-noc { border-color: #2B2A24; color: #E4DDCA; background: #101114; }
+.game-card-noc .eyebrow { color: #E0161B; }
+.game-card-noc .game-card-title a { color: inherit; }
+.game-card-noc .game-card-text, .game-card-noc .game-facts dt { color: #A39C88; }
+.game-card-noc .game-thumb { background: #0A0A0C; }
+.game-card-noc .pip-tear { animation: noc-tear 3.7s steps(1) infinite; }
+.game-card-noc .pip-walk { animation: noc-jitter 3.1s steps(1) infinite; }
+@keyframes noc-tear { 0%, 90%, 100% { opacity: 0; } 91% { opacity: .55; transform: translateY(-30px); } 94% { opacity: .35; transform: translateY(24px); } }
+.noc-card-actions { display: flex; flex-wrap: wrap; gap: .6rem; }
+.noc-card-actions .game-card-play { margin: 0; }
+.noc-cam-btn { color: #FF5A5F; border-color: #4A2326; }
+@media (prefers-reduced-motion: reduce) {
+  .egg-void-eye, .decoded.is-noc .st b, dialog.noc-note[open], html.noc-flicker body,
+  .noc-banner-rec, .game-card-noc .pip-tear, .game-card-noc .pip-walk { animation: none; }
+}
+
+/* Gra „Pip wraca do domu” */
+.pip-body {
+  --bg: #0B0B0A;
+  --bg-alt: #161512;
+  --surface: #151411;
+  --ink: #E8E1CE;
+  --ink-2: #A39C88;
+  --line: #2B2A24;
+  --yolk-ink: #F4C542;
+  background: var(--bg);
+  color: var(--ink);
+}
+.pip-body .nav { background: rgba(11, 11, 10, .9); border-color: var(--line); }
+.pip-page { padding: clamp(1.5rem, 4vw, 3rem) 0 clamp(3rem, 6vw, 5rem); }
+.pip-head { margin: 1rem 0 1.5rem; }
+.pip-head .eyebrow { color: #E0161B; }
+.pip-title { margin: .3rem 0 .6rem; }
+.pip-locked { padding: 4rem 0; color: var(--ink-2); font-family: var(--f-mono); text-align: center; }
+.pip-locked a { color: var(--ink); }
+.pip-frame { display: grid; justify-items: center; }
+.pip-frame:fullscreen { align-content: center; background: #000; }
+.pip-frame:fullscreen .pip-stage { width: min(100vw, calc(100vh * 16 / 9)); border-radius: 0; }
+.pip-stage {
+  position: relative;
+  width: min(100%, calc((100dvh - 120px) * 16 / 9));
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 18px;
+  background: #000;
+  box-shadow: 0 30px 70px -40px #000;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+}
+.pip-hud { position: absolute; top: 2.2%; right: 1.6%; z-index: 3; display: flex; gap: .5rem; }
+.pip-hud .is-muted .pip-wave { opacity: 0; }
+.pip-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  padding: 3%;
+  overflow: auto;
+  background: rgba(5, 5, 4, .62);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+.pip-overlay[hidden] { display: none; }
+.pip-overlay[data-kind="final"] { background: #000; }
+.pip-overlay[data-kind="final"] .btn-primary { border-color: #B42318; color: #fff; background: #B42318; }
+.pip-card {
+  display: grid;
+  justify-items: center;
+  gap: .6rem;
+  width: min(100%, 28rem);
+  padding: clamp(1rem, 3vw, 1.75rem);
+  border: 1px solid #2E2C25;
+  border-radius: 10px;
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, .025) 0 1px, transparent 1px 3px),
+    #12110E;
+  color: #ECE5D2;
+  text-align: center;
+  animation: noc-in .6s steps(1) both;
+}
+.pip-card h2 { margin: 0; font-family: var(--f-display); font-size: clamp(1.3rem, 1rem + 1.4vw, 1.9rem); font-weight: 800; letter-spacing: -.02em; }
+.pip-card p { margin: 0; color: #B8B09A; font-size: var(--t-sm); line-height: 1.5; }
+.pip-card b { color: #ECE5D2; }
+.pip-kicker { font: 700 var(--t-xs) var(--f-mono) !important; letter-spacing: .14em; text-transform: uppercase; color: #F4C542 !important; }
+.pip-red { color: #FF4D52 !important; }
+.pip-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem; margin-top: .3rem; }
+.pip-small { font-family: var(--f-mono); font-size: var(--t-xs) !important; color: #8E8874 !important; }
+.pip-stages { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem; margin: 1.2rem 0 0; padding: 0; list-style: none; }
+.pip-stage-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .45rem .85rem .45rem .45rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink);
+  background: var(--surface);
+  font: 500 var(--t-sm) var(--f-body);
+  cursor: pointer;
+}
+.pip-stage-btn:disabled { color: #5E594D; cursor: not-allowed; }
+.pip-stage-btn:not(:disabled):hover { border-color: #F4C542; }
+.pip-stage-n { display: grid; place-items: center; width: 1.7rem; height: 1.7rem; border-radius: 50%; background: #23211B; font: 700 var(--t-xs) var(--f-mono); }
+.pip-stage-btn.is-done .pip-stage-n { background: #F4C542; color: #1D1405; }
+.pip-stage-ok { color: #F4C542; }
+.pip-help { max-width: 46rem; margin: 1rem auto 0; text-align: center; }
+body[data-pip-stage="2"] .pip-title, body[data-pip-stage="3"] .pip-title, body[data-pip-stage="4"] .pip-title { animation: noc-jitter 2.8s steps(1) infinite; }
+body[data-pip-stage="3"] .nav, body[data-pip-stage="4"] .nav { opacity: .55; }
+body[data-pip-stage="4"] .pip-head .section-lede { color: #C94A4E; }
+body[data-pip-stage="koniec"] .nav { opacity: 0; pointer-events: none; }
+
+/* Kamera 05 */
+.cam-body { min-height: 100dvh; margin: 0; background: #000; color: #D9D6C8; font-family: var(--f-mono); }
+.cam {
+  display: grid;
+  gap: .9rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: clamp(.8rem, 2.5vw, 1.6rem) 16px 1.5rem;
+}
+.cam-top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .4rem 1rem; font-size: var(--t-sm); letter-spacing: .08em; }
+.cam-top p { margin: 0; }
+.cam-sys span { color: #6E6A5E; }
+.cam-clock { color: #E8E4D4; }
+.cam-monitor {
+  position: relative;
+  aspect-ratio: 1672 / 941;
+  overflow: hidden;
+  border: 2px solid #1F1E1A;
+  border-radius: 14px;
+  background: #050505;
+  box-shadow: 0 0 0 6px #0D0C0A, 0 30px 80px -30px rgba(0, 0, 0, .9);
+}
+.cam-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(var(--zoom, 1));
+  transform-origin: 43% 38%;
+  transition: transform .2s steps(2);
+  filter: contrast(1.05) brightness(.95);
+  animation: cam-flicker 5.5s infinite;
+}
+.cam-noise { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; opacity: .9; mix-blend-mode: screen; pointer-events: none; }
+.cam-scan {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, .28) 0 1px, transparent 1px 3px),
+    radial-gradient(120% 100% at 50% 50%, transparent 55%, rgba(0, 0, 0, .7));
+}
+.cam-label { position: absolute; left: 3%; bottom: 4%; margin: 0; padding: .2rem .5rem; background: rgba(0, 0, 0, .55); font-size: clamp(.7rem, .6rem + .6vw, 1rem); letter-spacing: .1em; }
+.cam-rec { position: absolute; right: 3%; bottom: 4%; margin: 0; color: #E0161B; font-weight: 700; letter-spacing: .1em; animation: noc-rec 1.4s steps(1) infinite; }
+.cam-gate { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: .6rem; padding: 1rem; text-align: center; }
+.cam-gate[hidden] { display: none; }
+.cam-gate p { margin: 0; text-shadow: 0 0 6px #000, 0 0 2px #000; }
+.cam-gate-title { font-size: clamp(1.2rem, .9rem + 2vw, 2.4rem); font-weight: 800; letter-spacing: .14em; }
+.cam-gate-text { color: #BDB8A8; font-size: var(--t-sm); }
+.cam-btn {
+  padding: .6rem 1.1rem;
+  border: 1px solid #4A463A;
+  border-radius: 6px;
+  color: #E8E4D4;
+  background: rgba(0, 0, 0, .7);
+  font: 600 var(--t-sm) var(--f-mono);
+  letter-spacing: .06em;
+  cursor: pointer;
+}
+.cam-btn:hover, .cam-btn:focus-visible { border-color: #E0161B; color: #fff; }
+.cam-connect { margin-top: .4rem; padding: .8rem 1.4rem; border-color: #E0161B; font-size: var(--t-base); }
+.cam-switch { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: .5rem; }
+.cam-switch[hidden], .cam-controls[hidden] { display: none; }
+.cam-cam {
+  display: grid;
+  gap: .1rem;
+  padding: .55rem .4rem;
+  border: 1px solid #2B2A24;
+  border-radius: 6px;
+  color: #BDB8A8;
+  background: #0D0C0A;
+  font: 500 var(--t-xs) var(--f-mono);
+  letter-spacing: .06em;
+  cursor: pointer;
+}
+.cam-cam b { color: #E8E4D4; font-size: var(--t-sm); }
+.cam-cam[aria-pressed="true"] { border-color: #E0161B; background: #1A0B0B; }
+.cam-cam[aria-pressed="true"] b { color: #FF4D52; }
+.cam-controls { display: flex; flex-wrap: wrap; align-items: center; gap: .8rem 1.4rem; font-size: var(--t-sm); }
+.cam-vol { display: flex; align-items: center; gap: .6rem; }
+.cam-vol input { width: min(220px, 50vw); accent-color: #E0161B; }
+.cam-exit { margin: .4rem 0 0; font-size: var(--t-sm); }
+.cam-exit a { color: #6E6A5E; }
+.cam-exit a:hover { color: #E8E4D4; }
+@keyframes cam-flicker { 0%, 96%, 100% { opacity: 1; } 97% { opacity: .82; } 98% { opacity: .95; } 99% { opacity: .7; } }
+@media (max-width: 640px) {
+  .cam-switch { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cam-img, .cam-rec, .pip-card, body[data-pip-stage] .pip-title { animation: none; }
+}

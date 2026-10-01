@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>KAMERA 05</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;800&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="cam-body">
+<main class="cam" id="cam">
+  <header class="cam-top">
+    <p class="cam-sys">SYSTEM MONITORINGU <span>v2.37</span></p>
+    <p class="cam-clock" id="camClock">28-10-2023 02:37:21</p>
+  </header>
+
+  <div class="cam-monitor" id="camMonitor">
+    <img class="cam-img" id="camImg" alt="" hidden>
+    <canvas class="cam-noise" id="camNoise" aria-hidden="true"></canvas>
+    <div class="cam-scan" aria-hidden="true"></div>
+    <p class="cam-label" id="camLabel" aria-live="polite"></p>
+    <p class="cam-rec" id="camRec" hidden>● REC</p>
+    <div class="cam-gate" id="camGate">
+      <p class="cam-gate-title" id="camGateTitle">BRAK SYGNAŁU</p>
+      <p class="cam-gate-text" id="camGateText">Łączenie…</p>
+      <button type="button" class="cam-btn cam-connect" id="camConnect" hidden>Połącz z kamerą 05</button>
+    </div>
+  </div>
+
+  <nav class="cam-switch" id="camSwitch" aria-label="Kamery" hidden></nav>
+
+  <div class="cam-controls" id="camControls" hidden>
+    <button type="button" class="cam-btn" id="camMute" aria-pressed="false">Dźwięk: wł.</button>
+    <label class="cam-vol"><span>Głośność</span><input type="range" id="camVol" min="0" max="200" step="5" value="120"><output id="camVolOut">120%</output></label>
+  </div>
+
+  <p class="cam-exit"><a href="index.html">← Wyjdź</a></p>
+</main>
+<script type="module" src="noc/kamera.js"></script>
+</body>
+</html>

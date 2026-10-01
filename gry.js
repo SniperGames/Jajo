@@ -17,6 +17,48 @@ const plural = (n, one, few, many) => {
 };
 const BASE_TITLE = document.title;
 
+// Nocne ślady: sekretna gra pojawia się na liście dopiero po rozwiązaniu wszystkich zagadek.
+let noc = null;
+const PIP_ART = `
+  <svg viewBox="0 0 320 200" aria-hidden="true">
+    <defs><linearGradient id="thSkyPip" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1C2240"/><stop offset="1" stop-color="#5B3A55"/></linearGradient></defs>
+    <rect width="320" height="200" fill="url(#thSkyPip)"/>
+    <circle cx="262" cy="40" r="18" fill="#F3F0D7" opacity=".9"/>
+    <path d="M0 150q60-30 120-6t110-10 90 4V200H0z" fill="#2A2E45"/>
+    <rect y="176" width="320" height="24" fill="#1B1E2E"/>
+    <g class="pip-walk" transform="translate(150 150)">
+      <ellipse cx="0" cy="8" rx="22" ry="21" fill="#E8C64A"/>
+      <path d="M-4 -12c-1-7 4-9 5-2 1-6 7-5 4 3z" fill="#E8C64A"/>
+      <ellipse cx="-8" cy="3" rx="3.4" ry="4.2" fill="#050505"/>
+      <ellipse cx="8" cy="3" rx="3.4" ry="4.2" fill="#050505"/>
+      <path d="M-4 10h8l-4 5z" fill="#C46A1C"/>
+      <path d="M-6 28v8M6 28v8" stroke="#C46A1C" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+    <rect class="pip-tear" x="0" y="118" width="320" height="10" fill="#E0161B" opacity="0"/>
+    <text x="14" y="24" fill="#E0161B" font-family="JetBrains Mono, monospace" font-size="12">● REC</text>
+  </svg>`;
+
+function pipCardHtml() {
+  const st = noc.get();
+  return `
+    <article class="game-card game-card-noc" data-game="pip">
+      <a class="game-thumb" href="pip.html" tabindex="-1" aria-hidden="true">${PIP_ART}</a>
+      <div class="game-card-body">
+        <p class="eyebrow">???</p>
+        <h2 class="game-card-title"><a href="pip.html">Pip wraca do domu</a></h2>
+        <p class="game-card-text">Pomóż pisklęciu wrócić do domu. Pięć etapów. Nie oglądaj się za siebie.</p>
+        <dl class="game-facts">
+          <div><dt>Etap</dt><dd>${st.etap} / 5</dd></div>
+          <div><dt>Godzina</dt><dd>02:37</dd></div>
+        </dl>
+        <div class="noc-card-actions">
+          <a class="btn btn-primary game-card-play" href="pip.html">${st.etap ? 'Graj dalej' : 'Graj'}</a>
+          ${st.krok >= 8 && st.klucz ? '<a class="btn btn-ghost noc-cam-btn" href="cam05.html">● Kamera 05</a>' : ''}
+        </div>
+      </div>
+    </article>`;
+}
+
 const ART = {
   'kury-z-procy': `
     <svg viewBox="0 0 320 200" aria-hidden="true">
@@ -202,7 +244,7 @@ function procyStars() {
 /* ---------- Lista gier ---------- */
 
 function renderHub() {
-  $('#gamesGrid').innerHTML = GAMES.map((g) => {
+  $('#gamesGrid').innerHTML = (noc && noc.step() >= 7 ? pipCardHtml() : '') + GAMES.map((g) => {
     const best = bestOf(g.id);
     const lead = leaders[g.id];
     const href = g.href || `#${g.id}`;
@@ -332,6 +374,13 @@ async function openGame(id) {
       // Także gdy ktoś zapauzował w chwili porażki (np. kurczak już spadał).
       if (current && (current.state === 'play' || current.state === 'paused')) gameOver(n);
     },
+    // Nocne ślady: trzy złapane zgniłe jajka w jednej grze (o ile poprzednia zagadka jest rozwiązana).
+    onRotten(n) {
+      if (n !== 3 || !noc || !current || current.meta.id !== 'lap-jajka' || noc.step() < 6) return;
+      current.nocWin = true;
+      if (current.game.glitch) current.game.glitch();
+      noc.staticNoise(0.7, 0.16);
+    },
   });
   overlay('start');
   renderBoard();
@@ -450,6 +499,12 @@ async function gameOver(score) {
     }
   }
   overlay('over', { score, record, status });
+  if (c.nocWin) {
+    setTimeout(async () => {
+      const res = await noc.advance(7);
+      if (res && current === c) noc.whisper(noc.t('n7'), { kicker: 'Łap jajka', link: { href: 'gry.html', text: 'Lista gier' } });
+    }, 1700);
+  }
   if (!(boards && me && c.session && score > boardBefore)) return;
   const saved = await submit(c, score);
   if (current !== c) return;
@@ -658,6 +713,15 @@ window.addEventListener('hashchange', () => route(true));
 
 renderHub();
 route(false);
+
+import('./noc/rdzen.js').then(async (m) => {
+  noc = m;
+  if (m.step() < 8) await m.whenSynced();
+  if (!hub.hidden) renderHub();
+  m.onChange(() => {
+    if (!hub.hidden) renderHub();
+  });
+}).catch(() => {});
 
 (async function start() {
   fb = await connect();

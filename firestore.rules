@@ -451,6 +451,27 @@ service cloud.firestore {
         && request.resource.data.przepisy.size() <= 300;
     }
 
+    /* ---------- Nocne ślady ---------- */
+
+    // Prywatny postęp ukrytych zagadek: widzi go tylko właściciel konta. Postęp nie może się cofnąć.
+    match /noc/{uid} {
+      allow read: if isMember() && request.auth.uid == uid;
+      allow create, update: if isMember() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['krok', 'etap', 'klucz', 'at'])
+        && request.resource.data.krok is int
+        && request.resource.data.krok >= 0
+        && request.resource.data.krok <= 8
+        && request.resource.data.etap is int
+        && request.resource.data.etap >= 0
+        && request.resource.data.etap <= 5
+        && request.resource.data.klucz is string
+        && (request.resource.data.klucz == '' || request.resource.data.klucz.matches('^[0-9a-f]{64}$'))
+        && request.resource.data.at == request.time
+        && (resource == null
+            || (request.resource.data.krok >= resource.data.krok
+                && request.resource.data.etap >= resource.data.etap));
+    }
+
     /* ---------- Pomocnicze ---------- */
 
     // Znaczniki czasu ostatniego przepisu i komentarza (ochrona przed zalewem spamu).

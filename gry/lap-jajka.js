@@ -28,6 +28,8 @@ export default function create(stage, api) {
   let basketX = W / 2;
   let targetX = W / 2;
   let caughtShow = 0;
+  let rottenCaught = 0; // złapane zgniłe jajka w tej grze
+  let glitchT = 0; // > 0: obraz się psuje (nocne ślady)
   const hens = HENS.map((x, i) => ({ x, lay: 0, bob: i * 1.3, brown: i % 2 === 1 }));
   const clouds = [{ x: 40, y: 40, s: 1 }, { x: 230, y: 28, s: 0.8 }, { x: 330, y: 62, s: 0.6 }];
   const keys = { left: false, right: false };
@@ -45,6 +47,8 @@ export default function create(stage, api) {
     nextLay = 0.8;
     shake = 0;
     caughtShow = 0;
+    rottenCaught = 0;
+    glitchT = 0;
     basketX = targetX = W / 2;
     hens.forEach((h) => { h.lay = 0; });
     api.onScore(0);
@@ -136,6 +140,8 @@ export default function create(stage, api) {
       if (!e.done && before <= RIM + 4 && bottom > RIM + 4 && Math.abs(e.x - basketX) < BW / 2 + 2) {
         e.done = true;
         if (e.type === 'rotten') {
+          rottenCaught += 1;
+          if (api.onRotten) api.onRotten(rottenCaught);
           sfx('bad');
           burst(e.x, RIM, '#9DAA74', 10);
           popup(e.x, RIM - 20, 'Fuj!', '#6E7F3A');
@@ -168,6 +174,7 @@ export default function create(stage, api) {
 
   function updateEffects(dt) {
     shake = Math.max(0, shake - dt);
+    glitchT = Math.max(0, glitchT - dt);
     parts.forEach((p) => {
       p.x += p.vx * dt;
       p.y += p.vy * dt;
@@ -304,9 +311,9 @@ export default function create(stage, api) {
     ctx.lineTo(h.x + 34, y - 11);
     ctx.lineTo(h.x + 25, y - 8);
     ctx.fill();
-    ctx.fillStyle = '#15201C';
+    ctx.fillStyle = glitchT > 0 ? '#E0161B' : '#15201C';
     ctx.beginPath();
-    ctx.arc(h.x + 18, y - 14, 2.2, 0, Math.PI * 2);
+    ctx.arc(h.x + 18, y - 14, glitchT > 0 ? 3.4 : 2.2, 0, Math.PI * 2);
     ctx.fill();
     if (laying) {
       ctx.fillStyle = '#B42318';
@@ -450,6 +457,36 @@ export default function create(stage, api) {
     ctx.globalAlpha = 1;
     ctx.restore();
     drawHud();
+    if (glitchT > 0) drawGlitch();
+  }
+
+  // Zepsuty obraz: przesunięte paski, odwrócone kolory i napis, którego nie powinno tu być.
+  function drawGlitch() {
+    const cw = view.canvas.width;
+    const ch = view.canvas.height;
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    for (let i = 0; i < 7; i++) {
+      const y = Math.floor(Math.random() * ch);
+      const h = Math.max(2, Math.floor(Math.random() * ch * 0.08));
+      const dx = Math.floor((Math.random() - 0.5) * cw * 0.18);
+      ctx.drawImage(view.canvas, 0, y, cw, h, dx, y, cw, h);
+    }
+    if (Math.random() < 0.35) {
+      ctx.globalCompositeOperation = 'difference';
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, cw, ch);
+      ctx.globalCompositeOperation = 'source-over';
+    }
+    ctx.restore();
+    if (Math.random() < 0.6) {
+      ctx.save();
+      ctx.font = '900 34px Unbounded, system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#E0161B';
+      ctx.fillText('DZIĘKUJĘ', W / 2 + rand(-4, 4), H / 2 - 40 + rand(-3, 3));
+      ctx.restore();
+    }
   }
 
   const ticker = loop((dt) => {
@@ -500,6 +537,10 @@ export default function create(stage, api) {
     resume() {
       if (state !== 'paused') return;
       state = 'play';
+      ticker.start();
+    },
+    glitch(sec = 2.6) {
+      glitchT = sec;
       ticker.start();
     },
     destroy() {

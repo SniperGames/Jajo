@@ -25,16 +25,36 @@ let images = false;
 let current = null; // { profile, avatarSrc, bannerSrc } wyświetlanego profilu
 const upload = { avatar: null, banner: null }; // nowo wybrane własne zdjęcia (data URL)
 
+let started = false; // czy profile z bazy są gotowe do pokazania
+
+// Niektóre profile nie pochodzą z bazy (nocne ślady). Zwraca true, gdy taki profil został pokazany.
+async function secret() {
+  try {
+    return await (await import('./noc/profil.js')).show(uid, app);
+  } catch (err) {
+    console.error(err);
+    return false;
+  }
+}
+
+window.addEventListener('hashchange', () => {
+  uid = location.hash.slice(1);
+  if (started) render();
+  else secret();
+});
+
 (async function start() {
+  const shown = await secret();
   fb = await connect();
   if (!fb) {
-    app.innerHTML = `<p class="note profile-loading">${configured ? 'Nie udało się połączyć z bazą. Odśwież stronę za chwilę.' : 'Profile ruszą wkrótce.'}</p>`;
+    if (!shown) app.innerHTML = `<p class="note profile-loading">${configured ? 'Nie udało się połączyć z bazą. Odśwież stronę za chwilę.' : 'Profile ruszą wkrótce.'}</p>`;
     return;
   }
   if (!(await socialReady(fb))) {
-    app.innerHTML = '<p class="note profile-loading">Profile ruszą wkrótce.</p>';
+    if (!shown) app.innerHTML = '<p class="note profile-loading">Profile ruszą wkrótce.</p>';
     return;
   }
+  started = true;
   images = await imagesReady(fb);
   watchUser(fb, async (u) => {
     me = isMember(u) ? u : null;
@@ -46,14 +66,12 @@ const upload = { avatar: null, banner: null }; // nowo wybrane własne zdjęcia 
     }
     render();
   });
-  window.addEventListener('hashchange', () => {
-    uid = location.hash.slice(1);
-    render();
-  });
 })();
 
 async function render() {
   const token = ++renderToken;
+  if (await secret()) return;
+  if (token !== renderToken) return;
   if (!uid) {
     app.innerHTML = `
       <div class="mod-box profile-login">

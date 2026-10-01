@@ -38,6 +38,7 @@ export function createGame(stage, cb = {}) {
   let shots = 0;
   let paused = false;
   let ended = false;
+  let sunEye = -1; // >= 0: słońce ma oko (czas od trafienia)
   const lastSound = {};
 
   const play = (name) => {
@@ -183,6 +184,7 @@ export function createGame(stage, cb = {}) {
     if (shake > 0) ctx.translate(rnd(-8, 8) * shake, rnd(-6, 6) * shake);
     const theme = CHAPTERS[level.chapter].theme;
     drawBackground(ctx, theme, t);
+    if (sunEye >= 0) drawSunEye();
     // ślad poprzedniego i obecnego strzału
     ctx.fillStyle = 'rgba(255,255,255,.75)';
     for (const tr of [world.lastTrail, world.trail]) {
@@ -292,6 +294,51 @@ export function createGame(stage, cb = {}) {
     pops = pops.filter((p) => p.life > 0);
   }
 
+  // Słońce w dzień i o zmierzchu (współrzędne ekranu, jak w drawBackground).
+  const SUN = { x: 1060, y: 120, r: 78 };
+
+  function checkSun() {
+    if (sunEye >= 0 || !cb.sunActive || CHAPTERS[level.chapter].theme === 'noc' || !cb.sunActive()) return;
+    for (const b of world.flying) {
+      const p = b.getPosition();
+      if (Math.hypot(px(p.x) - SUN.x, py(p.y) - SUN.y) < SUN.r) {
+        sunEye = 0;
+        shake = 0.4;
+        cb.onSun && cb.onSun();
+        return;
+      }
+    }
+  }
+
+  function drawSunEye() {
+    const open = 1 - Math.max(0, Math.sin(sunEye * 2.2) ** 40); // co jakiś czas mruga
+    const target = slingHen() || ANCHOR;
+    const dx = px(target.x) - SUN.x;
+    const dy = py(target.y) - SUN.y;
+    const d = Math.hypot(dx, dy) || 1;
+    ctx.save();
+    ctx.fillStyle = '#FFF8E6';
+    ctx.beginPath();
+    ctx.ellipse(SUN.x, SUN.y, 38, 26 * open + 0.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    if (open > 0.2) {
+      ctx.fillStyle = '#7A1010';
+      ctx.beginPath();
+      ctx.arc(SUN.x + (dx / d) * 14, SUN.y + (dy / d) * 8, 15 * open, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#0A0A0A';
+      ctx.beginPath();
+      ctx.arc(SUN.x + (dx / d) * 16, SUN.y + (dy / d) * 9, 7 * open, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.strokeStyle = 'rgba(90,30,10,.55)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.ellipse(SUN.x, SUN.y, 38, 26 * open + 0.5, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
   const ticker = loop((dt) => {
     t += dt;
     if (world && !paused) {
@@ -300,8 +347,10 @@ export function createGame(stage, cb = {}) {
         world.step();
         acc -= STEP;
       }
+      checkSun();
       updateEffects(dt);
     }
+    if (sunEye >= 0) sunEye += dt;
     if (world) draw();
   });
 
@@ -403,6 +452,7 @@ export function createGame(stage, cb = {}) {
       shots = 0;
       ended = false;
       paused = false;
+      sunEye = -1;
       acc = 0;
       cb.onScore && cb.onScore(0);
       ticker.start();

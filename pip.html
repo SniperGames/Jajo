@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pip wraca do domu – Jajo</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0B0B0A">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-96.png" type="image/png" sizes="96x96">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;800&family=Onest:wght@400;500;600;700&family=Unbounded:wght@600;700;800;900&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="pip-body">
+
+<a class="skip-link" href="#pipApp">Przejdź do gry</a>
+
+<nav class="nav" aria-label="Sekcje strony">
+  <div class="wrap nav-row">
+    <a class="brand" href="index.html">
+      <svg viewBox="0 0 20 26" aria-hidden="true"><path d="M10 1C15 1 18 9 18 16c0 5.5-3.5 9-8 9s-8-3.5-8-9C2 9 5 1 10 1z"/></svg>
+      Jajo
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html#minutnik">Minutnik</a></li>
+      <li><a href="index.html#kod">Kod</a></li>
+      <li><a class="nav-recipes" href="przepisy.html">Przepisy</a></li>
+      <li><a class="nav-forum" href="forum.html">Forum</a></li>
+      <li><a class="nav-games" href="gry.html" aria-current="page">Gry</a></li>
+    </ul>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Przełącz motyw">
+      <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
+      <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
+    </button>
+  </div>
+</nav>
+
+<main class="pip-page" id="pipApp" tabindex="-1">
+  <div class="wrap">
+    <a class="ft-back" href="gry.html">← Wszystkie gry</a>
+    <header class="pip-head">
+      <p class="eyebrow" id="pipKicker">???</p>
+      <h1 class="page-title pip-title" id="pipTitle">Pip wraca do domu</h1>
+      <p class="section-lede" id="pipLede">Pip zgubił drogę do domu. Pomóż mu wrócić, zanim zrobi się całkiem ciemno.</p>
+    </header>
+
+    <div class="pip-locked" id="pipLocked" hidden>
+      <p>Tu nic nie ma.</p>
+      <p><a href="gry.html">Wróć do gier</a></p>
+    </div>
+
+    <div class="pip-game" id="pipGame" hidden>
+      <div class="pip-frame" id="pipFrame">
+      <div class="pip-stage" id="pipStage">
+        <div class="pip-hud">
+          <button type="button" class="procy-btn" data-act="pause" aria-label="Pauza"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg></button>
+          <button type="button" class="procy-btn" data-act="sound" aria-label="Dźwięk" aria-pressed="true"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path class="pip-wave" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg></button>
+          <button type="button" class="procy-btn" data-act="full" aria-label="Pełny ekran" hidden><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+        </div>
+        <div class="pip-overlay" id="pipOverlay" hidden></div>
+      </div>
+      </div>
+      <ol class="pip-stages" id="pipStages" aria-label="Etapy"></ol>
+      <p class="note pip-help">Skok: stuknięcie, kliknięcie, spacja albo strzałka w&nbsp;górę. W&nbsp;powietrzu możesz machnąć skrzydełkami jeszcze raz. Pod tym, co wisi nisko, przejdź bez skakania.</p>
+    </div>
+  </div>
+</main>
+
+<script src="script.js" defer></script>
+<script type="module" src="konto.js"></script>
+<script type="module" src="noc/pip.js"></script>
+</body>
+</html>

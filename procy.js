@@ -316,7 +316,8 @@ function startLevel(id) {
   menu.hidden = true;
   playView.hidden = false;
   document.title = `Poziom ${lvl.id}: ${lvl.name} – Kury z procy – Jajo`;
-  if (!game) game = createGame(stage, { onEnd });
+  if (!game) game = createGame(stage, { onEnd, sunActive: () => Boolean(noc && noc.step() >= 3), onSun });
+  loadNoc();
   current = withStars(lvl);
   unlockAudio();
   game.load(lvl);
@@ -327,6 +328,27 @@ function startLevel(id) {
   }
   const fresh = [...new Set(lvl.hens)].filter((h) => !seen.has(h));
   if (fresh.length) showIntro(fresh);
+}
+
+// Nocne ślady: słońce w Kurach z procy jest jedną z ukrytych zagadek.
+let noc = null;
+let nocLoading = null;
+
+function loadNoc() {
+  if (!nocLoading) {
+    nocLoading = import('./noc/rdzen.js').then(async (m) => {
+      noc = m;
+      if (m.step() < 3) await m.whenSynced();
+    }).catch(() => {});
+  }
+}
+
+async function onSun() {
+  if (!noc) return;
+  game.pause();
+  const res = await noc.advance(4);
+  if (res) await noc.whisper(noc.t('n4'), { kicker: 'Słońce' });
+  if (!overlay.dataset.kind && !playView.hidden) game.resume();
 }
 
 function hideOverlay() {
