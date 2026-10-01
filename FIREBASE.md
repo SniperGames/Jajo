@@ -123,6 +123,14 @@ Jak to działa na stronie:
 
 Wiadomości przychodzą z adresu `noreply@jajo-85b16.firebaseapp.com` i czasem trafiają do spamu. Strona prosi Firebase o polskie wersje wiadomości. Ich treść możesz zmienić w **Authentication → Szablony** (*Templates*).
 
+## 10. Ulubione przepisy
+
+Wystarczy jeszcze raz wkleić reguły: **Firestore Database → Reguły**, usuń wszystko, wklej aktualną zawartość pliku [`firestore.rules`](firestore.rules) i kliknij **Opublikuj**.
+
+Serduszko „Ulubione” działa od razu, także bez logowania. Ulubione niezalogowanych zostają w pamięci przeglądarki. Zalogowanym strona zapisuje je na koncie (kolekcja `ulubione`), więc widzą je na każdym urządzeniu. Przy logowaniu ulubione z przeglądarki przechodzą na konto. Dopóki nie wkleisz nowych reguł, także zalogowani mają ulubione tylko w przeglądarce.
+
+Listę ulubionych widzi i zmienia tylko jej właściciel, a jedna osoba może mieć najwyżej 300 ulubionych przepisów.
+
 ## Koszty i limity
 
 Darmowy plan Spark wystarcza z dużym zapasem: 1 GiB danych, 50 000 odczytów i 20 000 zapisów dziennie. Jedno wejście na stronę z przepisami to kilkadziesiąt odczytów (liczniki polubień i przepisy czytelników). Zdjęcia są zmniejszane w przeglądarce i zapisywane w bazie, więc płatny Cloud Storage nie jest potrzebny. Jeśli limit kiedyś się skończy, strona nie przestanie działać: do północy (czasu USA) nie wczytają się tylko przepisy od czytelników.

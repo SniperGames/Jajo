@@ -15,6 +15,7 @@ Interaktywny przewodnik po jajku kurzym: ile gotować jajko na miękko i na twar
 - **Przepisy z jajkiem** (`przepisy.html`): dwanaście przepisów ze zdjęciami. Wytłaczanka pokazuje, na ile porcji wystarczą Twoje jajka, a w każdym przepisie można przeliczyć porcje, odhaczać składniki i kroki oraz włączać minutniki.
 - **Przepisy od czytelników**: zalogowani (kontem Google albo e-mailem i hasłem) mogą dodawać własne przepisy z jajkami (ze zdjęciem). Przepis pojawia się po akceptacji w panelu `moderacja.html`. Działa na darmowym Firebase, instrukcja podłączenia w [FIREBASE.md](FIREBASE.md).
 - **Polubienia, komentarze i profile**: przycisk „Smakuje mi” przy każdym przepisie i komentarze pod nim, także bez logowania (jako „Niezalogowany użytkownik”). Każdy zalogowany ma publiczny profil (`profil.html`) ze swoimi przepisami, liczbą polubień i komentarzy oraz ulubionym jajkiem.
+- **Ulubione**: serduszko na każdym przepisie i filtr „Ulubione” nad listą (adres `przepisy.html#ulubione`). Bez logowania ulubione zostają w przeglądarce, po zalogowaniu są na koncie.
 - **Zdjęcie profilowe i baner**: osiem gotowych zdjęć i sześć banerów do wyboru albo własne zdjęcia. Zdjęcie widać w profilu, przy komentarzach i w ikonie konta.
 
 Strona ma jasny i ciemny motyw, działa na telefonie i szanuje ustawienie „ogranicz ruch”.
@@ -46,6 +47,7 @@ W ustawieniach repozytorium: **Settings → Pages → Build and deployment**, ź
 | `reakcje.js`, `profil.html`, `profil.js` | Polubienia, komentarze i profile |
 | `konto.js` | Ikona konta w prawym górnym rogu: logowanie, profil, wylogowanie |
 | `logowanie.js` | Okno logowania: Google albo e-mail i hasło, zakładanie konta, nowe hasło |
+| `ulubione.js` | Ulubione przepisy na koncie zalogowanego |
 | `firebase-config.js`, `firestore.rules` | Konfiguracja Firebase i reguły bezpieczeństwa bazy |
 | `img/przepisy/` | Zdjęcia potraw (Wikimedia Commons, autorzy podani na stronie) |
 | `img/awatary/`, `img/banery/` | Gotowe zdjęcia profilowe i banery |

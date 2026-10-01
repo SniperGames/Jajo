@@ -86,6 +86,7 @@ if (configured && row) {
       </div>
       <nav class="am-list" aria-label="Konto">
         <a class="am-item" href="profil.html#${esc(user.uid)}">Mój profil</a>
+        <a class="am-item" href="przepisy.html#ulubione">Ulubione przepisy</a>
         <a class="am-item" href="przepisy.html#od-czytelnikow">Dodaj przepis</a>
         ${admin ? '<a class="am-item" href="moderacja.html">Moderacja</a>' : ''}
         <button type="button" class="am-item" data-am="out">Wyloguj</button>

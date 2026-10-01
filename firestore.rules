@@ -9,6 +9,7 @@ rules_version = '2';
 //    i napisać komentarz bez linków,
 //  - zalogowany (kontem Google albo e-mailem z potwierdzonym adresem) dodaje przepisy (trafiają
 //    do moderacji), ma profil, widzi i usuwa swoje rzeczy,
+//  - listę ulubionych przepisów widzi i zmienia tylko jej właściciel,
 //  - moderator (dokument w kolekcji „admins” o ID równym jego UID) zatwierdza, odrzuca i usuwa.
 
 service cloud.firestore {
@@ -232,6 +233,17 @@ service cloud.firestore {
       allow read: if true;
       allow create, update: if isMember() && request.auth.uid == uid && validImage(request.resource.data, 350000);
       allow delete: if (isMember() && request.auth.uid == uid) || isAdmin();
+    }
+
+    /* ---------- Ulubione przepisy ---------- */
+
+    // Prywatna lista ulubionych przepisów: widzi i zmienia ją tylko właściciel konta.
+    match /ulubione/{uid} {
+      allow read, delete: if isMember() && request.auth.uid == uid;
+      allow create, update: if isMember() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['przepisy'])
+        && request.resource.data.przepisy is list
+        && request.resource.data.przepisy.size() <= 300;
     }
 
     /* ---------- Pomocnicze ---------- */

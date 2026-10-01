@@ -17,6 +17,7 @@
     ['obiady', 'Obiady'],
     ['przekaski', 'Przekąski'],
     ['desery', 'Desery'],
+    ['ulubione', 'Ulubione'],
   ];
   const CATEGORY_ONE = { sniadania: 'Śniadanie', obiady: 'Obiad', przekaski: 'Przekąska', desery: 'Deser' };
   const DIFFICULTY = ['', 'łatwe', 'średnie', 'wymagające'];
@@ -39,6 +40,7 @@
     pause: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg>',
     check: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
     close: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+    heart: '<svg class="ico ico-heart" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.3s-7.6-4.5-9.3-9.3C1.5 7.4 3.8 3.9 7.4 3.9c2 0 3.6 1.1 4.6 2.7 1-1.6 2.6-2.7 4.6-2.7 3.6 0 5.9 3.5 4.7 7.1-1.7 4.8-9.3 9.3-9.3 9.3z"/></svg>',
   };
 
   const store = {
@@ -172,7 +174,15 @@
 
   let eggs = Number(store.get('eggs', 10));
   if (!Number.isInteger(eggs) || eggs < 0 || eggs > 10) eggs = 10;
-  let category = 'wszystkie';
+  let category = location.hash === '#ulubione' ? 'ulubione' : 'wszystkie';
+  // Ulubione: w pamięci przeglądarki, a po zalogowaniu na koncie (zapis robi ulubione.js).
+  const MAX_FAVS = 300;
+  const localFavs = () => {
+    const list = store.get('ulubione', []);
+    return Array.isArray(list) ? list.filter((id) => typeof id === 'string').slice(0, MAX_FAVS) : [];
+  };
+  let favs = new Set(localFavs());
+  let favSave = null; // (id, dodane) => Promise z zapisem na koncie albo null
   const progress = new Map(); // id → { servings, have: Set, done: Set }
   const timers = new Map(); // "id:krok" → { total, remaining, endAt, running, done }
 
@@ -230,20 +240,32 @@
     chip.className = 'chip';
     chip.setAttribute('role', 'radio');
     chip.dataset.cat = key;
-    chip.innerHTML = `${label}<span class="chip-count"></span>`;
+    if (key === 'ulubione') chip.classList.add('chip-fav');
+    chip.innerHTML = `${key === 'ulubione' ? ICONS.heart : ''}${label}<span class="chip-count"></span>`;
     chip.addEventListener('click', () => {
-      category = key;
-      syncChips();
-      renderGrid();
+      setCategory(key);
+      // Adres #ulubione pozwala wrócić prosto do ulubionych (np. z menu konta).
+      if (key === 'ulubione') history.replaceState(null, '', '#ulubione');
+      else if (location.hash === '#ulubione') history.replaceState(null, '', location.pathname + location.search);
     });
     catFilter.appendChild(chip);
   });
 
+  function setCategory(key) {
+    category = key;
+    syncChips();
+    syncCopies();
+    renderGrid();
+  }
+
   function syncChips() {
-    const listed = $$('.rcard').map((card) => byId[card.dataset.id]);
+    const listed = $$('.rcard:not(.rcard-copy)').map((card) => byId[card.dataset.id]).filter(Boolean);
     $$('.chip', catFilter).forEach((c) => {
-      c.setAttribute('aria-checked', String(c.dataset.cat === category));
-      const count = c.dataset.cat === 'wszystkie' ? listed.length : listed.filter((r) => r.category === c.dataset.cat).length;
+      const cat = c.dataset.cat;
+      c.setAttribute('aria-checked', String(cat === category));
+      const count = cat === 'wszystkie' ? listed.length
+        : cat === 'ulubione' ? listed.filter((r) => favs.has(r.id)).length
+          : listed.filter((r) => r.category === cat).length;
       $('.chip-count', c).textContent = String(count);
     });
   }
@@ -265,6 +287,7 @@
         ${mediaHtml(r)}
         <span class="rcard-timer" hidden></span>
         <span class="like-slot" data-like-key="${r.id}"></span>
+        <button type="button" class="fav-btn" data-fav="${r.id}" aria-pressed="false" aria-label="${esc('Ulubione: ' + r.name)}">${ICONS.heart}</button>
       </div>
       <div class="rcard-body">
         <p class="rcard-cat">${CATEGORY_ONE[r.category]}${r.community ? ` · od <a class="rcard-author" href="profil.html#${esc(r.authorUid)}">${esc(r.authorName)}</a>` : ''}</p>
@@ -285,24 +308,131 @@
 
   RECIPES.forEach((r) => grid.appendChild(createCard(r)));
 
+  // Czy karta jest widoczna przy wybranym filtrze. W „Ulubionych” lista przepisów czytelników
+  // niżej zostaje cała, bo ich ulubione pokazujemy jako kopie kart w głównej siatce.
+  function shown(card, r) {
+    if (category === 'wszystkie' || card.classList.contains('rcard-copy')) return true;
+    if (category === 'ulubione') return !grid.contains(card) || favs.has(r.id);
+    return r.category === category;
+  }
+
   function renderGrid() {
     let ok = 0;
-    const cards = $$('.rcard');
-    cards.forEach((card) => {
+    let total = 0;
+    let favShown = 0;
+    let favOk = 0;
+    $$('.rcard').forEach((card) => {
       const r = byId[card.dataset.id];
+      if (!r) return;
       const { best, need } = fit(r, eggs);
       const fits = best !== null;
-      if (fits) ok++;
-      card.hidden = category !== 'wszystkie' && r.category !== category;
+      card.hidden = !shown(card, r);
+      if (!card.classList.contains('rcard-copy')) {
+        total++;
+        if (fits) ok++;
+      }
+      if (grid.contains(card) && !card.hidden) {
+        favShown++;
+        if (fits) favOk++;
+      }
       card.classList.toggle('is-short', !fits);
       $('.rcard-fit', card).textContent = fits
         ? `Z ${eggs} ${eggsGen(eggs)}: do ${best} porcji`
         : `Brakuje ${need - eggs} ${eggsGen(need - eggs)} (potrzeba ${need})`;
     });
-    $('#recipeStatus').textContent = eggs === 0
-      ? 'Pusta wytłaczanka. Dodaj jajka, żeby zobaczyć, co możesz ugotować.'
-      : `Z ${eggs} ${eggsGen(eggs)} zrobisz ${ok} z ${cards.length} przepisów.`;
+    const status = $('#recipeStatus');
+    status.classList.toggle('is-empty-favs', category === 'ulubione' && !favShown);
+    if (category === 'ulubione' && !favShown) {
+      status.textContent = 'Nie masz jeszcze ulubionych przepisów. Kliknij serduszko na zdjęciu przepisu albo w przepisie, a trafi tutaj.';
+    } else if (eggs === 0) {
+      status.textContent = 'Pusta wytłaczanka. Dodaj jajka, żeby zobaczyć, co możesz ugotować.';
+    } else if (category === 'ulubione') {
+      status.textContent = `Z ${eggs} ${eggsGen(eggs)} zrobisz ${favOk} z ${favShown} ${favShown === 1 ? 'ulubionego przepisu' : 'ulubionych przepisów'}.`;
+    } else {
+      status.textContent = `Z ${eggs} ${eggsGen(eggs)} zrobisz ${ok} z ${total} przepisów.`;
+    }
   }
+
+  /* ---------- Ulubione ---------- */
+
+  const canFav = (r) => Boolean(r) && (!r.status || r.status === 'approved');
+
+  // Ulubione przepisy czytelników pokazujemy w głównej siatce jako kopie ich kart.
+  function syncCopies() {
+    $$('.rcard-copy', grid).forEach((c) => c.remove());
+    if (category !== 'ulubione') return;
+    const extra = $$('.rcard-community:not(.rcard-copy)')
+      .map((card) => byId[card.dataset.id])
+      .filter((r) => canFav(r) && favs.has(r.id));
+    extra.forEach((r) => {
+      const card = createCard(r);
+      card.classList.add('rcard-copy');
+      grid.appendChild(card);
+    });
+    paintFavs();
+    if (extra.length) document.dispatchEvent(new CustomEvent('jajo:karty'));
+  }
+
+  function paintFavs() {
+    $$('[data-fav]').forEach((b) => {
+      const on = favs.has(b.dataset.fav);
+      b.setAttribute('aria-pressed', String(on));
+      b.classList.toggle('is-on', on);
+      const label = $('.fav-label', b);
+      if (label) label.textContent = on ? 'W ulubionych' : 'Dodaj do ulubionych';
+    });
+  }
+
+  function favsChanged() {
+    paintFavs();
+    syncChips();
+    if (category === 'ulubione') {
+      syncCopies();
+      renderGrid();
+    }
+  }
+
+  function toggleFav(id) {
+    if (!canFav(byId[id])) return;
+    const on = !favs.has(id);
+    if (on && favs.size >= MAX_FAVS) {
+      toast(`Masz już ${MAX_FAVS} ulubionych przepisów. Usuń któryś, żeby dodać nowy.`);
+      return;
+    }
+    if (on) favs.add(id);
+    else favs.delete(id);
+    if (favSave) {
+      const save = favSave;
+      save(id, on).catch((err) => {
+        console.error(err);
+        if (favSave !== save) return;
+        if (on) favs.delete(id);
+        else favs.add(id);
+        favsChanged();
+        toast('Nie udało się zapisać ulubionych. Sprawdź połączenie i spróbuj jeszcze raz.');
+      });
+    } else {
+      store.set('ulubione', [...favs]);
+    }
+    favsChanged();
+    if (on && !store.get('ulubione-podpowiedz', false)) {
+      store.set('ulubione-podpowiedz', true);
+      toast('Dodano do ulubionych. Wszystkie znajdziesz w filtrze „Ulubione” nad przepisami.');
+    } else {
+      toast(on ? 'Dodano do ulubionych.' : 'Usunięto z ulubionych.');
+    }
+  }
+
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-fav]');
+    if (!btn) return;
+    toggleFav(btn.dataset.fav);
+    if (btn.classList.contains('is-on')) {
+      btn.classList.remove('is-pop');
+      void btn.offsetWidth; // ponowne uruchomienie animacji
+      btn.classList.add('is-pop');
+    }
+  });
 
   /* ---------- Okno przepisu ---------- */
 
@@ -360,7 +490,10 @@
               ${r.wait ? `<div><dt>Czekanie</dt><dd>${esc(r.wait)}</dd></div>` : ''}
               <div><dt>Trudność</dt><dd>${DIFFICULTY[r.difficulty]}</dd></div>
             </dl>
-            <div class="rd-social" data-like-key="${r.id}" data-big="1"></div>
+            <div class="rd-actions">
+              ${canFav(r) ? `<button type="button" class="fav-wide" data-fav="${r.id}" aria-pressed="false" aria-label="Ulubione">${ICONS.heart}<span class="fav-label">Dodaj do ulubionych</span></button>` : ''}
+              <div class="rd-social" data-like-key="${r.id}" data-big="1"></div>
+            </div>
           </header>
           <div class="rd-body">
             <section class="rd-ing" aria-labelledby="rdIngTitle">
@@ -388,6 +521,7 @@
     renderIngredients(r);
     syncSteps(r);
     syncTimers();
+    paintFavs();
     document.dispatchEvent(new CustomEvent('jajo:okno', { detail: { id: r.id } }));
     if (r.loadPhoto) {
       r.loadPhoto().then((src) => {
@@ -502,9 +636,18 @@
   window.addEventListener('popstate', () => {
     const id = location.hash.slice(1);
     pushed = false;
-    if (byId[id]) openRecipe(id);
-    else closeRecipe();
+    if (byId[id]) {
+      openRecipe(id);
+      return;
+    }
+    closeRecipe();
+    if (id === 'ulubione' && category !== 'ulubione') showFavorites();
   });
+
+  function showFavorites() {
+    setCategory('ulubione');
+    $('#przepisy').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  }
 
   dialog.addEventListener('cancel', (e) => {
     e.preventDefault();
@@ -735,10 +878,12 @@
   $$('.ei-slot').forEach((slot) => {
     slot.outerHTML = eggIcon(slot.dataset.egg);
   });
+  paintFavs();
   syncChips();
   renderCarton();
   renderGrid();
   if (byId[location.hash.slice(1)]) openRecipe(location.hash.slice(1));
+  else if (category === 'ulubione') requestAnimationFrame(() => $('#przepisy').scrollIntoView());
 
   // Interfejs dla spolecznosc.js: przepisy czytelników używają tych samych kart i okna.
   window.JAJO_PRZEPISY_API = {
@@ -751,7 +896,9 @@
         byId[r.id] = r;
         container.appendChild(createCard(r));
       });
+      paintFavs();
       syncChips();
+      syncCopies();
       renderGrid();
       document.dispatchEvent(new CustomEvent('jajo:karty'));
       const id = location.hash.slice(1);
@@ -767,6 +914,23 @@
         history.replaceState(null, '', '#' + r.id);
       }
       openRecipe(r.id);
+    },
+    // Dla ulubione.js: przełączanie między ulubionymi w przeglądarce a na koncie.
+    favorites: {
+      local: localFavs,
+      clearLocal() {
+        store.set('ulubione', []);
+      },
+      useAccount(list, save) {
+        favs = new Set(list.filter((id) => typeof id === 'string'));
+        favSave = save;
+        favsChanged();
+      },
+      useLocal() {
+        favs = new Set(localFavs());
+        favSave = null;
+        favsChanged();
+      },
     },
     eggParts,
     eggIcon,
