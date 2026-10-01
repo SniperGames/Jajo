@@ -92,12 +92,30 @@
     </div>
   </section>
 
-  <section class="band" id="zdjecia" aria-labelledby="zdjeciaTitle">
+  <section class="band" id="od-czytelnikow" aria-labelledby="czytelnicyTitle">
+    <div class="wrap">
+      <div class="community-head">
+        <div class="section-head">
+          <p class="eyebrow">Od czytelników</p>
+          <h2 id="czytelnicyTitle">Przepisy od czytelników</h2>
+          <p class="section-lede">Masz swój sprawdzony przepis z&nbsp;jajkami? Dodaj go. Po akceptacji moderatora pojawi się tutaj z&nbsp;Twoim podpisem i&nbsp;będzie działał jak każdy przepis na tej stronie.</p>
+        </div>
+        <div class="account" id="account">
+          <button class="btn btn-primary" type="button" disabled>Dodaj swój przepis</button>
+        </div>
+      </div>
+      <div class="mine" id="mine" hidden></div>
+      <p class="community-state" id="communityState" aria-live="polite">Wczytuję przepisy od czytelników…</p>
+      <div class="rgrid" id="communityGrid"></div>
+    </div>
+  </section>
+
+  <section class="band band-alt" id="zdjecia" aria-labelledby="zdjeciaTitle">
     <div class="wrap">
       <div class="section-head">
         <p class="eyebrow">Zdjęcia</p>
         <h2 id="zdjeciaTitle">Autorzy zdjęć</h2>
-        <p class="section-lede">Wszystkie zdjęcia pochodzą z&nbsp;Wikimedia Commons i&nbsp;są na wolnych licencjach. Dziękujemy autorom.</p>
+        <p class="section-lede">Zdjęcia przepisów ze strony pochodzą z&nbsp;Wikimedia Commons i&nbsp;są na wolnych licencjach. Dziękujemy autorom. Zdjęcia przy przepisach od czytelników należą do ich autorów.</p>
       </div>
       <ul class="credits" id="credits"></ul>
     </div>
@@ -121,5 +139,6 @@
 <script src="script.js" defer></script>
 <script src="przepisy-dane.js" defer></script>
 <script src="przepisy.js" defer></script>
+<script type="module" src="spolecznosc.js"></script>
 </body>
 </html>

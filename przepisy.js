@@ -24,6 +24,7 @@
   const UNITS = {
     'łyżka': ['łyżka', 'łyżki', 'łyżek', 'łyżki'],
     'łyżeczka': ['łyżeczka', 'łyżeczki', 'łyżeczek', 'łyżeczki'],
+    'szklanka': ['szklanka', 'szklanki', 'szklanek', 'szklanki'],
     'pęczek': ['pęczek', 'pęczki', 'pęczków', 'pęczka'],
     'ząbek': ['ząbek', 'ząbki', 'ząbków', 'ząbka'],
     'szczypta': ['szczypta', 'szczypty', 'szczypt', 'szczypty'],
@@ -224,13 +225,12 @@
 
   const catFilter = $('#catFilter');
   CATEGORIES.forEach(([key, label]) => {
-    const count = key === 'wszystkie' ? RECIPES.length : RECIPES.filter((r) => r.category === key).length;
     const chip = document.createElement('button');
     chip.type = 'button';
     chip.className = 'chip';
     chip.setAttribute('role', 'radio');
     chip.dataset.cat = key;
-    chip.innerHTML = `${label}<span class="chip-count">${count}</span>`;
+    chip.innerHTML = `${label}<span class="chip-count"></span>`;
     chip.addEventListener('click', () => {
       category = key;
       syncChips();
@@ -240,22 +240,33 @@
   });
 
   function syncChips() {
-    $$('.chip', catFilter).forEach((c) => c.setAttribute('aria-checked', String(c.dataset.cat === category)));
+    const listed = $$('.rcard').map((card) => byId[card.dataset.id]);
+    $$('.chip', catFilter).forEach((c) => {
+      c.setAttribute('aria-checked', String(c.dataset.cat === category));
+      const count = c.dataset.cat === 'wszystkie' ? listed.length : listed.filter((r) => r.category === c.dataset.cat).length;
+      $('.chip-count', c).textContent = String(count);
+    });
   }
 
   const grid = $('#recipeGrid');
-  RECIPES.forEach((r) => {
+
+  function mediaHtml(r) {
+    if (!r.photo || !r.photo.file) return `<div class="rcard-noimg">${eggIcon('whole')}</div>`;
+    return `<img src="${esc(r.photo.file)}" alt="${esc(r.name)}" width="${r.photo.w}" height="${r.photo.h}" loading="lazy" decoding="async" style="object-position:${esc(r.photo.focus || '50% 50%')}">`;
+  }
+
+  function createCard(r) {
     const p = eggParts(r, r.servings);
     const card = document.createElement('article');
-    card.className = 'rcard';
+    card.className = 'rcard' + (r.community ? ' rcard-community' : '');
     card.dataset.id = r.id;
     card.innerHTML = `
       <div class="rcard-media">
-        <img src="${esc(r.photo.file)}" alt="${esc(r.name)}" width="${r.photo.w}" height="${r.photo.h}" loading="lazy" decoding="async" style="object-position:${esc(r.photo.focus)}">
+        ${mediaHtml(r)}
         <span class="rcard-timer" hidden></span>
       </div>
       <div class="rcard-body">
-        <p class="rcard-cat">${CATEGORY_ONE[r.category]}</p>
+        <p class="rcard-cat">${CATEGORY_ONE[r.category]}${r.community ? ` · od ${esc(r.authorName)}` : ''}</p>
         <h3 class="rcard-title"><a class="rcard-link" href="#${r.id}">${esc(r.name)}</a></h3>
         <p class="rcard-intro">${esc(r.intro)}</p>
         <p class="rcard-meta">
@@ -268,12 +279,15 @@
         </div>
         <p class="rcard-fit"></p>
       </div>`;
-    grid.appendChild(card);
-  });
+    return card;
+  }
+
+  RECIPES.forEach((r) => grid.appendChild(createCard(r)));
 
   function renderGrid() {
     let ok = 0;
-    $$('.rcard', grid).forEach((card) => {
+    const cards = $$('.rcard');
+    cards.forEach((card) => {
       const r = byId[card.dataset.id];
       const { best, need } = fit(r, eggs);
       const fits = best !== null;
@@ -286,7 +300,7 @@
     });
     $('#recipeStatus').textContent = eggs === 0
       ? 'Pusta wytłaczanka. Dodaj jajka, żeby zobaczyć, co możesz ugotować.'
-      : `Z ${eggs} ${eggsGen(eggs)} zrobisz ${ok} z ${RECIPES.length} przepisów.`;
+      : `Z ${eggs} ${eggsGen(eggs)} zrobisz ${ok} z ${cards.length} przepisów.`;
   }
 
   /* ---------- Okno przepisu ---------- */
@@ -316,16 +330,28 @@
         <p>${esc(r.tip)}</p>
         ${r.link ? `<p><a href="${esc(r.link.href)}">${esc(r.link.label)} →</a></p>` : ''}
       </aside>` : '';
-    dialog.innerHTML = `
-      <div class="rd">
-        <div class="rd-bar"><button type="button" class="rd-close" data-close aria-label="Zamknij przepis">${ICONS.close}</button></div>
+    let figure = '';
+    if (photo && photo.file) {
+      const credit = photo.source
+        ? `Fot. <a href="${esc(photo.source)}" target="_blank" rel="noopener">${esc(photo.author)}</a>, <a href="${esc(photo.licenseUrl)}" target="_blank" rel="noopener license">${esc(photo.license)}</a>`
+        : `Fot. ${esc(photo.author)}`;
+      figure = `
         <figure class="rd-photo">
-          <img src="${esc(photo.file)}" alt="${esc(r.name)}" width="${photo.w}" height="${photo.h}" style="object-position:${esc(photo.focus)}">
-          <figcaption>Fot. <a href="${esc(photo.source)}" target="_blank" rel="noopener">${esc(photo.author)}</a>, <a href="${esc(photo.licenseUrl)}" target="_blank" rel="noopener license">${esc(photo.license)}</a></figcaption>
-        </figure>
+          <img src="${esc(photo.file)}" alt="${esc(r.name)}" width="${photo.w}" height="${photo.h}" style="object-position:${esc(photo.focus || '50% 50%')}">
+          <figcaption>${credit}</figcaption>
+        </figure>`;
+    }
+    const status = r.status && r.status !== 'approved'
+      ? `<p class="rd-status" data-status="${esc(r.status)}">${r.status === 'pending' ? 'Czeka na akceptację moderatora. Widzisz go tylko Ty.' : 'Odrzucony' + (r.rejectReason ? ': ' + esc(r.rejectReason) : '.')}</p>`
+      : '';
+    dialog.innerHTML = `
+      <div class="rd${figure ? '' : ' rd-nophoto'}">
+        <div class="rd-bar"><button type="button" class="rd-close" data-close aria-label="Zamknij przepis">${ICONS.close}</button></div>
+        ${figure}
         <div class="rd-content">
           <header class="rd-head">
-            <p class="eyebrow">${CATEGORY_ONE[r.category]}</p>
+            ${status}
+            <p class="eyebrow">${CATEGORY_ONE[r.category]}${r.community ? ` · przepis od ${esc(r.authorName)}` : ''}</p>
             <h2 class="rd-title" id="rdTitle" tabindex="-1">${esc(r.name)}</h2>
             <p class="rd-intro">${esc(r.intro)}</p>
             <dl class="rd-facts">
@@ -359,6 +385,12 @@
     renderIngredients(r);
     syncSteps(r);
     syncTimers();
+    if (r.loadPhoto) {
+      r.loadPhoto().then((src) => {
+        const img = currentId === r.id && $('.rd-photo img', dialog);
+        if (img && src) img.src = src;
+      }).catch(() => {});
+    }
   }
 
   function renderIngredients(r) {
@@ -595,7 +627,7 @@
     });
 
     // Odliczanie widać też na karcie, gdy okno jest zamknięte.
-    $$('.rcard', grid).forEach((card) => {
+    $$('.rcard').forEach((card) => {
       const badge = $('.rcard-timer', card);
       let soonest = null;
       timers.forEach((t, key) => {
@@ -703,4 +735,41 @@
   renderCarton();
   renderGrid();
   if (byId[location.hash.slice(1)]) openRecipe(location.hash.slice(1));
+
+  // Interfejs dla spolecznosc.js: przepisy czytelników używają tych samych kart i okna.
+  window.JAJO_PRZEPISY_API = {
+    setCommunity(list, container) {
+      $$('.rcard-community').forEach((card) => {
+        delete byId[card.dataset.id];
+        card.remove();
+      });
+      list.forEach((r) => {
+        byId[r.id] = r;
+        container.appendChild(createCard(r));
+      });
+      syncChips();
+      renderGrid();
+      const id = location.hash.slice(1);
+      if (byId[id] && !dialog.open) openRecipe(id);
+    },
+    preview(r) {
+      byId[r.id] = r;
+      progress.delete(r.id);
+      if (!dialog.open) {
+        history.pushState(null, '', '#' + r.id);
+        pushed = true;
+      } else {
+        history.replaceState(null, '', '#' + r.id);
+      }
+      openRecipe(r.id);
+    },
+    eggParts,
+    eggIcon,
+    eggIcons,
+    eggLabel,
+    plural,
+    esc,
+    CATEGORY_ONE,
+  };
+  document.dispatchEvent(new CustomEvent('jajo:przepisy-gotowe'));
 })();

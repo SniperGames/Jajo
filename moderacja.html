@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Moderacja przepisów – Jajo</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#EEF3EF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0C1412" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;800&family=Onest:wght@400;500;600;700&family=Unbounded:wght@600;700;800;900&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="nav" aria-label="Sekcje strony">
+  <div class="wrap nav-row">
+    <a class="brand" href="index.html">
+      <svg viewBox="0 0 20 26" aria-hidden="true"><path d="M10 1C15 1 18 9 18 16c0 5.5-3.5 9-8 9s-8-3.5-8-9C2 9 5 1 10 1z"/></svg>
+      Jajo
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html#minutnik">Minutnik</a></li>
+      <li><a class="nav-recipes" href="przepisy.html">Przepisy</a></li>
+    </ul>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Przełącz motyw">
+      <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
+      <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
+    </button>
+  </div>
+</nav>
+
+<main class="band mod-page">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Tylko dla moderatora</p>
+      <h1 class="page-title mod-title">Moderacja przepisów</h1>
+      <p class="section-lede">Tu zatwierdzasz przepisy od czytelników. Na stronie pojawiają się dopiero po akceptacji.</p>
+    </div>
+    <div id="modApp" aria-live="polite">
+      <p class="note">Wczytuję…</p>
+    </div>
+  </div>
+</main>
+
+<script src="script.js" defer></script>
+<script type="module" src="moderacja.js"></script>
+</body>
+</html>

@@ -13,6 +13,7 @@ Interaktywny przewodnik po jajku kurzym: ile gotować jajko na miękko i na twar
 - **Dekoder kodu ze skorupki**: wpisz kod typu `1-PL-30241301`, a strona powie, jak żyła kura, z jakiego kraju jest jajo i z którego województwa pochodzi.
 - **Test szklanki wody**: suwak postarza jajko i pokazuje, jak zachowuje się w wodzie.
 - **Przepisy z jajkiem** (`przepisy.html`): dwanaście przepisów ze zdjęciami. Wytłaczanka pokazuje, na ile porcji wystarczą Twoje jajka, a w każdym przepisie można przeliczyć porcje, odhaczać składniki i kroki oraz włączać minutniki.
+- **Przepisy od czytelników**: zalogowani kontem Google mogą dodawać własne przepisy z jajkami (ze zdjęciem). Przepis pojawia się po akceptacji w panelu `moderacja.html`. Działa na darmowym Firebase, instrukcja podłączenia w [FIREBASE.md](FIREBASE.md).
 
 Strona ma jasny i ciemny motyw, działa na telefonie i szanuje ustawienie „ogranicz ruch”.
 
@@ -39,6 +40,8 @@ W ustawieniach repozytorium: **Settings → Pages → Build and deployment**, ź
 | `script.js`  | Minutnik, dekoder, wykres skali, animacje   |
 | `przepisy.html`, `przepisy.js` | Strona z przepisami i jej interakcje |
 | `przepisy-dane.js` | Treść przepisów |
+| `spolecznosc.js`, `moderacja.html`, `moderacja.js`, `jajo-firebase.js` | Przepisy od czytelników i panel moderacji |
+| `firebase-config.js`, `firestore.rules` | Konfiguracja Firebase i reguły bezpieczeństwa bazy |
 | `img/przepisy/` | Zdjęcia potraw (Wikimedia Commons, autorzy podani na stronie) |
 | `sitemap.xml`, `og-image.png`, `favicon.*` | Mapa strony dla wyszukiwarek, obrazek podglądu linku, ikony |
 

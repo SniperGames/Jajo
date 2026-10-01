@@ -1,0 +1,111 @@
+rules_version = '2';
+
+// Reguły bazy dla przepisów od czytelników strony Jajo.
+// Wklej całość w Firebase: Firestore Database → Reguły → Opublikuj.
+//
+// Kto co może:
+//  - każdy czyta zatwierdzone przepisy i ich zdjęcia,
+//  - zalogowany użytkownik dodaje przepis (trafia do moderacji), widzi i usuwa swoje,
+//  - moderator (dokument w kolekcji „admins” o ID równym jego UID) zatwierdza, odrzuca i usuwa.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function userDoc() {
+      return /databases/$(database)/documents/uzytkownicy/$(request.auth.uid);
+    }
+
+    function validRecipe(d) {
+      return d.keys().hasAll(['name', 'category', 'intro', 'time', 'wait', 'difficulty', 'servings',
+                              'minServings', 'ingredients', 'steps', 'tip', 'eggs', 'thumb', 'hasPhoto',
+                              'authorUid', 'authorName', 'status', 'rejectReason', 'createdAt'])
+        && d.keys().hasOnly(['name', 'category', 'intro', 'time', 'wait', 'difficulty', 'servings',
+                             'minServings', 'ingredients', 'steps', 'tip', 'eggs', 'thumb', 'hasPhoto',
+                             'authorUid', 'authorName', 'status', 'rejectReason', 'createdAt', 'reviewedAt'])
+        && d.name is string && d.name.size() >= 3 && d.name.size() <= 80
+        && d.category in ['sniadania', 'obiady', 'przekaski', 'desery']
+        && d.intro is string && d.intro.size() <= 220
+        && d.time is int && d.time >= 1 && d.time <= 720
+        && d.wait is string && d.wait.size() <= 40
+        && d.difficulty is int && d.difficulty >= 1 && d.difficulty <= 3
+        && d.servings is int && d.servings >= 1 && d.servings <= 24
+        && d.minServings is int && d.minServings >= 1 && d.minServings <= d.servings
+        && d.ingredients is list && d.ingredients.size() >= 2 && d.ingredients.size() <= 40
+        && d.steps is list && d.steps.size() >= 1 && d.steps.size() <= 30
+        && d.tip is string && d.tip.size() <= 400
+        // Strona jest o jajkach: przepis bez jajek nie przejdzie.
+        && d.eggs is int && d.eggs >= 1 && d.eggs <= 60
+        && d.thumb is string && d.thumb.size() <= 60000
+        && d.hasPhoto is bool
+        && d.authorName is string && d.authorName.size() >= 2 && d.authorName.size() <= 40
+        && d.rejectReason is string && d.rejectReason.size() <= 300;
+    }
+
+    match /przepisy/{id} {
+      allow read: if resource.data.status == 'approved'
+        || (signedIn() && resource.data.authorUid == request.auth.uid)
+        || isAdmin();
+
+      // Nowy przepis zawsze czeka na moderację. Jeden przepis na 2 minuty na osobę.
+      allow create: if signedIn()
+        && validRecipe(request.resource.data)
+        && request.resource.data.authorUid == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.rejectReason == ''
+        && request.resource.data.createdAt == request.time
+        && !('reviewedAt' in request.resource.data)
+        && getAfter(userDoc()).data.ostatni == request.time
+        && (!exists(userDoc()) || get(userDoc()).data.ostatni < request.time - duration.value(2, 'm'));
+
+      // Tylko moderator zmienia status. Treści przepisu nie zmienia nikt.
+      allow update: if isAdmin()
+        && validRecipe(request.resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'rejectReason', 'reviewedAt'])
+        && request.resource.data.status in ['approved', 'rejected']
+        && request.resource.data.reviewedAt == request.time;
+
+      allow delete: if (signedIn() && resource.data.authorUid == request.auth.uid) || isAdmin();
+    }
+
+    // Pełne zdjęcie przepisu, osobno, żeby lista ładowała się szybko.
+    match /zdjecia/{id} {
+      allow read: if (signedIn() && resource.data.authorUid == request.auth.uid)
+        || isAdmin()
+        || get(/databases/$(database)/documents/przepisy/$(id)).data.status == 'approved';
+
+      // Zdjęcie dodaje się tylko razem z nowym przepisem, więc nie da się go podmienić po akceptacji.
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['data', 'authorUid'])
+        && request.resource.data.authorUid == request.auth.uid
+        && request.resource.data.data is string
+        && request.resource.data.data.size() <= 450000
+        && !exists(/databases/$(database)/documents/przepisy/$(id))
+        && getAfter(/databases/$(database)/documents/przepisy/$(id)).data.authorUid == request.auth.uid;
+
+      allow delete: if (signedIn() && resource.data.authorUid == request.auth.uid) || isAdmin();
+    }
+
+    // Znacznik czasu ostatniego dodanego przepisu (ochrona przed zalewem spamu).
+    match /uzytkownicy/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow create, update: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['ostatni'])
+        && request.resource.data.ostatni == request.time;
+    }
+
+    // Lista moderatorów. Dodaje się ją ręcznie w konsoli Firebase.
+    match /admins/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow write: if false;
+    }
+  }
+}
