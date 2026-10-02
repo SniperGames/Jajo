@@ -1,10 +1,19 @@
-/* Jajo: kamera 05. Odszyfrowuje nagranie (zdjęcie i dźwięk) kluczem z zagadek i odtwarza je jak monitoring. */
+/* Jajo: kamera 05. Odszyfrowuje nagranie (zdjęcie i dźwięk) kluczem z zagadek i pokazuje je na cały ekran jak monitoring. */
 import { get, step, whenSynced, staticNoise } from './rdzen.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const PERIOD = 114.6146; // dźwięk w nagraniu powtarza się co tyle sekund
 const FADE = 2; // płynne przejście między kolejnymi pętlami
-const CAMS = [['01', 'KURNIK'], ['02', 'PODWÓRKO'], ['03', 'KUCHNIA'], ['04', 'MAGAZYN'], ['05', 'SALA'], ['06', 'ZAPLECZE']];
+const VOLUME = 1.2;
+// Kamery na mapie budynku: [numer, pomieszczenie, x, y] (współrzędne mapy 300 × 250).
+const CAMS = [
+  ['01', 'KURNIK', 150, 34],
+  ['02', 'PODWÓRKO', 32, 88],
+  ['03', 'KUCHNIA', 268, 181],
+  ['04', 'MAGAZYN', 32, 182],
+  ['05', 'SALA', 112, 104],
+  ['06', 'ZAPLECZE', 268, 88],
+];
 const ZOOM = [1, 1.1, 1.22, 1.36, 1.55]; // za każdym powrotem na kamerę 05 postać jest bliżej
 const ALT = 'Kadr z kamery monitoringu: postać z nożem stoi na środku pustej sali restauracji.';
 
@@ -13,10 +22,10 @@ const gate = $('#camGate');
 const gateTitle = $('#camGateTitle');
 const gateText = $('#camGateText');
 const connect = $('#camConnect');
-const label = $('#camLabel');
+const map = $('#camMap');
 const rec = $('#camRec');
 const noiseCanvas = $('#camNoise');
-let noiseLevel = 0.9;
+let noiseLevel = 0.85;
 let flash = 0;
 let ac = null;
 let master = null;
@@ -30,25 +39,25 @@ let visits = 0;
 
 (function noise() {
   const c = noiseCanvas.getContext('2d');
-  noiseCanvas.width = 192;
-  noiseCanvas.height = 108;
-  const img2 = c.createImageData(192, 108);
+  noiseCanvas.width = 240;
+  noiseCanvas.height = 135;
+  const frame = c.createImageData(240, 135);
   let last = 0;
-  const frame = (t) => {
-    if (t - last > 40) {
+  const draw = (t) => {
+    if (t - last > 45) {
       last = t;
-      for (let i = 0; i < img2.data.length; i += 4) {
+      for (let i = 0; i < frame.data.length; i += 4) {
         const v = Math.random() * 255;
-        img2.data[i] = img2.data[i + 1] = img2.data[i + 2] = v;
-        img2.data[i + 3] = 255;
+        frame.data[i] = frame.data[i + 1] = frame.data[i + 2] = v;
+        frame.data[i + 3] = 255;
       }
-      c.putImageData(img2, 0, 0);
-      flash = Math.max(0, flash - 0.08);
+      c.putImageData(frame, 0, 0);
+      flash = Math.max(0, flash - 0.09);
       noiseCanvas.style.opacity = String(Math.min(1, noiseLevel + flash));
     }
-    requestAnimationFrame(frame);
+    requestAnimationFrame(draw);
   };
-  requestAnimationFrame(frame);
+  requestAnimationFrame(draw);
 })();
 
 (function clock() {
@@ -59,7 +68,7 @@ let visits = 0;
     const hh = String(Math.floor(s / 3600) % 24).padStart(2, '0');
     const mm = String(Math.floor(s / 60) % 60).padStart(2, '0');
     const ss = String(s % 60).padStart(2, '0');
-    $('#camClock').textContent = `28-10-2023 ${hh}:${mm}:${ss}`;
+    $('#camClock').textContent = `${hh}:${mm}:${ss}`;
   };
   tick();
   setInterval(tick, 1000);
@@ -100,30 +109,28 @@ async function startAudio() {
   ac = new (window.AudioContext || window.webkitAudioContext)();
   if (ac.state === 'suspended') await ac.resume();
   master = ac.createGain();
-  const comp = ac.createDynamicsCompressor(); // przy głośności powyżej 100% nie przesteruje
+  master.gain.value = VOLUME;
+  const comp = ac.createDynamicsCompressor(); // głośniej, ale bez przesterowania
   comp.threshold.value = -6;
   comp.ratio.value = 8;
   master.connect(comp).connect(ac.destination);
-  setVolume();
   const raw = await audioP;
   audioBuf = await new Promise((resolve, reject) => ac.decodeAudioData(raw.slice(0), resolve, reject));
   nextAt = ac.currentTime + 0.05;
   schedule();
   setInterval(schedule, 1000);
+  // Telefon mógł uśpić dźwięk, gdy karta była w tle.
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && ac.state === 'suspended') ac.resume();
+  });
 }
 
-let muted = false;
-function setVolume() {
-  const v = Number($('#camVol').value);
-  $('#camVolOut').textContent = v + '%';
-  if (master) master.gain.setTargetAtTime(muted ? 0 : v / 100, ac.currentTime, 0.05);
-}
+/* ---------- Mapa i przełączanie kamer ---------- */
 
-/* ---------- Przełączanie kamer ---------- */
-
-function renderSwitch() {
-  $('#camSwitch').innerHTML = CAMS.map(([id, name]) => `
-    <button type="button" class="cam-cam" data-cam="${id}" aria-pressed="false"><b>CAM ${id}</b><span>${name}</span></button>`).join('');
+function renderMap() {
+  map.insertAdjacentHTML('beforeend', CAMS.map(([id, name, x, y]) => `
+    <button type="button" class="cam-cam" data-cam="${id}" aria-pressed="false" aria-label="Kamera ${id}: ${name.toLowerCase()}"
+      style="left:${(x / 300) * 100}%;top:${(y / 250) * 100}%"><span>CAM</span><span>${id}</span></button>`).join(''));
 }
 
 function switchTo(id) {
@@ -132,12 +139,12 @@ function switchTo(id) {
   flash = 1;
   staticNoise(0.28, 0.09);
   const name = CAMS.find(([c]) => c === id)[1];
-  label.textContent = `CAM ${id} · ${name}`;
-  document.querySelectorAll('[data-cam]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.cam === id)));
+  $('#camName').textContent = `CAM ${id}`;
+  $('#camRoom').textContent = name;
+  map.querySelectorAll('[data-cam]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.cam === id)));
   if (id === '05') {
     visits += 1;
-    const zoom = ZOOM[Math.min(visits - 1, ZOOM.length - 1)];
-    img.style.setProperty('--zoom', String(zoom));
+    img.style.setProperty('--zoom', String(ZOOM[Math.min(visits - 1, ZOOM.length - 1)]));
     img.hidden = false;
     img.alt = ALT;
     gate.hidden = true;
@@ -147,10 +154,10 @@ function switchTo(id) {
     img.hidden = true;
     gate.hidden = false;
     gateTitle.textContent = 'BRAK SYGNAŁU';
-    gateText.textContent = `Kamera ${id} nie odpowiada.`;
+    gateText.textContent = '';
     connect.hidden = true;
     rec.hidden = true;
-    noiseLevel = 0.9;
+    noiseLevel = 0.85;
   }
 }
 
@@ -188,35 +195,23 @@ function locked(text) {
 
 connect.addEventListener('click', async () => {
   connect.disabled = true;
-  gateText.textContent = 'Łączenie…';
-  renderSwitch();
-  $('#camSwitch').hidden = false;
-  $('#camControls').hidden = false;
+  renderMap();
+  map.hidden = false;
   switchTo('05');
   try {
     await startAudio();
   } catch (err) {
     console.error(err);
-    $('#camMute').textContent = 'Dźwięk niedostępny';
-    $('#camMute').disabled = true;
   }
 });
 
-document.addEventListener('click', (e) => {
+map.addEventListener('click', (e) => {
   const b = e.target.closest('[data-cam]');
   if (b) switchTo(b.dataset.cam);
 });
 
 window.addEventListener('keydown', (e) => {
-  if ($('#camSwitch').hidden) return;
+  if (map.hidden) return;
   const n = Number(e.key);
-  if (n >= 1 && n <= CAMS.length) switchTo(CAMS[n - 1][0]);
-});
-
-$('#camVol').addEventListener('input', setVolume);
-$('#camMute').addEventListener('click', (e) => {
-  muted = !muted;
-  e.currentTarget.textContent = muted ? 'Dźwięk: wył.' : 'Dźwięk: wł.';
-  e.currentTarget.setAttribute('aria-pressed', String(muted));
-  setVolume();
+  if (n >= 1 && n <= CAMS.length) switchTo(String(n).padStart(2, '0'));
 });

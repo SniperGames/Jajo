@@ -502,7 +502,7 @@ async function gameOver(score) {
   if (c.nocWin) {
     setTimeout(async () => {
       const res = await noc.advance(7);
-      if (res && current === c) noc.whisper(noc.t('n7'), { kicker: 'Łap jajka', link: { href: 'gry.html', text: 'Lista gier' } });
+      if (res && current === c) noc.whisper(noc.t('n7'), { kicker: 'Łap jajka', next: noc.t('n7next'), link: { href: 'gry.html', text: '▶ Lista gier' } });
     }, 1700);
   }
   if (!(boards && me && c.session && score > boardBefore)) return;

@@ -347,7 +347,7 @@ async function onSun() {
   if (!noc) return;
   game.pause();
   const res = await noc.advance(4);
-  if (res) await noc.whisper(noc.t('n4'), { kicker: 'Słońce' });
+  if (res) await noc.whisper(noc.t('n4'), { kicker: 'Słońce', next: noc.t('n4next') });
   if (!overlay.dataset.kind && !playView.hidden) game.resume();
 }
 

@@ -9,28 +9,47 @@ export const STAGES = 5; // etapy sekretnej gry
 const SALT = 'jajo-noc-0237';
 const BLOB =
 /*BLOB*/'EWZKYdO83kI/JmLn4vtLYVwxhPGnfnAOPN+I8h9hWTnt5a5P5Orv6cruDfiySOWoqUIpC4an0/1fc2CK6ITkXx7Lcqbevl4OJ4LS' +
-  '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';
+  'kLxiQyTYh9uzJRthmai9XiJfbon970ojBzffraQXP0x5n4/ZAW1FPc+a5gSctXGQxt9TZADW9WUMXjIczazbvE9gO5GokegMeGuC' +
+  'CHzoWxA9xqfP7nRYcYfwjOx6Hm2YvJ8MK0sz3OXNXXtAfJe1oEdhHnnbgKxYNVxg09T9QD8bIfbX5lgEQmrs1+gDNT3Z5Jq5W3Ns' +
+  'ybCCrRZFPtf72/wXDiTF7YzkGFR2m7DX4z8FIMT3uFE3Fzed9pQibEY9kP2wFG8UZYKm/08pX3Oe0Pkdb1J96JCcQ2saOfKQu05/' +
+  'Ecn4xu4PKgbVu46vHS59mOreu1RPJsL/meoPXWaAv9H6YRg2ZhnT92wKYZa200plH2LPo6FaaUJtM18KvXwbL5jBrjkxGWaIjKlP' +
+  'IlVM4ffkXZ2vw01hqk5vQCdAzfFbfyDi/yd8DSFkju3e8RZbI9mjkr8wXXOD4JfjLx8wwfOCCi3lmpb2nEVUEWHI4+0LLUt7j8Hn' +
+  'TXuj8IneTOWZ/3G0y69LK0kjums3DnBUguSPqE98d4GiwLtOMXmc4Sd5TlguxvjgtgFKZoNGcbl8THk+W5lOIwky1vGIVzhVbJn7' +
+  'o0krEmXC6aAXb1d2wMX7DnIDaf2ToKvFVTqsyedaKUzvvYP/Gi0GyPyPiU1lNXV8kPIVTellUr+mXgUyBVMgvSx4don9L0/T+2eI' +
+  '8sFbO0x8fxLyWHwFdpq0owg7ETfDh6xLehxggpP+AjkGJrCO+xAkWCsRYTwOdwvcu424BiRv3LzStlDM5cj3wPRXXyWFq5z4MCc2' +
+  'zLvVtDwXeZijmPSQWCme+8YKaQB4OCMXtz8VaIjF5F5hUjrDnKlEcFZ8oYm2DDtOO/Hbs003S4GsjvwDNijS99y0tt3NYuPG9hYH' +
+  'N5lGeecXT3JmX9awLzwyy+rfCCUFJZX4n1M0XTLDv+ECJV8hrv6ZcExADL/gxCLZuTSHp452SaqQBiSibJyyrU54gWcvGceC7ZtW' +
+  'HEjvvLaIZW8krIGt1rWmZ5Gir54ZfiGluOTCCCcHgd6nIQNs2j/30kolEXKIs6s6gr81NyrmQyAKO93J5qDFsJGiip1PSgmXvMDq' +
+  'CWFAj67Akkx/N8yow1+1cXyT4Yq+V1Vmgr+DiiAfJPLIxv0mETvV6sleeQpxh+ODV2EVYtX96RwnEyKLyfAjJv2lxI3pAXwJN7Dd' +
+  'oxw6QTqlwsRQbgCTqoTEHT8kjq+MulBqIsbn3fQWTGWF84/q6Ms/gLzL8WcJc4DhjkJ/DmSWu58ODVdjw6ypFX9Se4el6QkzEGCN' +
+  'nr1cP04xoYHhQCAdKus/X1gyWIfqi71aNQzZ75ftCy4vkODu+loDPNi6kroXQzCNqcaoWBo+yP2Btx8RIIuoiktmCy2T+vkDw7g7' +
+  'gPKwQNr82H/EpwRyGHqQzvkNNgEr6oTjHBVZz/CU/hlxWIajmvUWPm6au4fgSnw83rKNtVJNM/Ljg/QtDT+Avsz0a73bg6yUED5L' +
+  'OY622Vs7RmL8tu8MYxJq1JbqFj8XPJvG9wF6S1qsjbQAPE9BqoPvVzMSj/+RplcsbIGyzaBZcVTKvYerT1Fuj77YpEIdd4mhguos' +
+  'XG+bXjFPdF9xl7rHSR5TeN6rrhImEybF4a4SI10mNi/rAcT/P/7O/6DZGz7u1uwAa1qU9ojOFTdfgq/DqU99Ic23zOBd64iIooKu' +
+  'XxljwoTW4X0TO4qpyP4rA3+YEkoIMkY51Oe6WSEAQpjE+QIqBmfZ0qIAPVY13NimWD4SKPCDQ/IzFGhQ0uVYfaky8InPEwMlmOTe' +
+  'uQp+IH132LICHWaFu5fnMhw8jvXY8MuaZoi6lhNiHWna8pwLN0hgl7erFnVaepSN8kYQXiSM3flXPUJ37NGnOzmyzVJ/ugMg8m+q' +
+  'kKZVZjFyI5zkETF+y6rW9RFDZIq0n1nCCyuTqNqkfBwwhqvTDjAOYJWj01w6TnfH7rxLKhx7m/2hTz9eMK/S/Uo+VDjph7dbahN7' +
+  'poekEzVKgra3rFYxSoUCer0ZN4oL+4jhC0BihPjbU/8LNZOhJSolTn2dtdz3fVk2xeWXDSRGfIim+U15Bz7atUfgbF9am9upWiKj' +
+  '8ZCF6BVx84nhgBimJRaLvs7hWi1IzqfR4lduaJWky/pOcl1hHIC7Ckxqh/6W+yZDZ8v0kLBpU2CT83fsIEYqxuODD2YES5W56ABv' +
+  'BC6IkP0RIBV0p9juRHtFIOLb5Qggs4jrzrFZfQeb79C3W3g4yPPAnu6PNZLs3PRQD2SG9IDoWAF5lvnNtyJByj7jyVlzSmWf+K8D' +
+  'EA41wuq8VCsReIfo70gREB/blLQfcFNg+sT3Ft3wbPSN/QQ0HY7khv0PKFeV2t77tssknKl2QgUuOPm3z+QYTnUmVNqjZwI9iKDV' +
+  'visLI56kg1VsDznN89hNLkTSDq6mG/i4iKbcsQAvXyTWFFqkdxlZrMrlveYEyvLZqwoqW4L8g/cRYiWU757rvtdqx7rd9VsTdV0G' +
+  'ItMmT2eMusmpMxA/z7jWVKvmg9T5qFV5FCGApqgSIVFwnYf1T28Zaozd7Ek5GHXtnLJCIhh1os+oHD0e3/6bsFYie4rliPscNiGU' +
+  'v4AFygB2i+7P9BIAPJywxrljenfZvM1DeBU3xvndQjFLm2Dz8llhBzbEpqlDKgrVQdOvW2xFO6ne5aWCWXilj/1ObQ7Lpdhaujse' +
+  'xajcrxgoMsSI3/uwtGXO/oijTAlik7I/CW5LJ9DumqmLqj6g++MkFEEC7MueLo6kO/Cf2CBOpsFrcKw5n7sYNCjJYi02INThyFsX' +
+  'P6vq/I9tTk34g/jZvJchtaa2kHpVc7nv6cV/b1HPyauAVjjEavCU/29JPdHilkYzGzOosJgOg5d+368zsNh3bo0PC/hgWTnDhLoK' +
+  'c9+TEuPxAWFKN7eO9h0xS01JPrwbRTOW7crvGj4jj6eRoAwXL9W/2v4JBCePuZCvdRl707nBQShUaZLmmUJhA3Xf9vlSNktkzeq6' +
+  'GnJMazM06g8xVjj/17AYKUFno47sUXQF0P/YAsM+V5Kk1O4adjtwHYe8Clhl1LXUukRTKXsH0ljPSiPerZmiZhoq3b+cD4vSbZeh' +
+  'oBVqEySG8atLIlIskYmuTSFYMqncRZCZsD7hlv5RdUOOoWFbWjH4LFtMtk6ShcygkrsGOSLa9onvlaOToPOY+zkGO979j7QpTWaf' +
+  't9JCYRoozfhX5d4BdoHy7E9yFn+MSAT+CxZzEyBYFCANa7zX6AxiFGSmif5VbgTIrcn6FXcjxOnKqE9xfcv9n5UGWcYV8p3pWFxn' +
+  'grWZsx1NMcCkwEc9UXyY/cMHaw4rYDOzBmpbdtW+qw5sEyPdj61OK1Am7sToAm8EiBDB+Vg5FZ2s26gFexjBrMHgV2B+h6mVqlxa' +
+  'fMCe1+YTV2aD/p2v1/Mhhb7Y8iRJed/8hPWJCDA5b6gJPAwzbQnwUCNQZ4qY6aDUVGrXlqQKM1For8NH9yFLwuSH4BY69SuhzPhQ' +
+  'LCPavNT9FTppirjDr+n1dNq31f5vGHaaroC8awI3mbyWAGoFcZ/yhRZqGHWctKMIbhx7gJ6yQWwcItb7oAk58euxg/jF36VSuZ1i' +
+  '/MZckuWQshk3KggHP177ciOa9IT3FkrrJkOUuff1Os2kyOsxQ4R9vJhHdBI3wv+fCILcPIK+r0x3p8fQrf4HZ1zTec+tWWwI1EPK' +
+  'pQogX3jil7FELBaa7MmoGD1dxPDQ4F84aYy0lfke582a7o4K7QJyjb+BszIeNcnyjPYtCi+ejHfjawxjzuP5HjlLMJK8oFFvGj2L' +
+  '0eAPNr2WlYezHmsOLqbD7F58R5Wjyf0KKAfep8LlTnA0x9GSBJrMicig0/UfRHfV+MSvfkp5y/u68WxYIc/ghRYr6amI7dRLOgwp' +
+  'y/m8qM9aOcXHTvAiCiTalaILKllr70sIo1UBPLPU/Rg0EcyswPxCZj7HIi4DWDNdlbSarUq368GmzO9LWXKG943vYRnCaRgzDS5R' +
+  'bclKX0cxB0OSoLis3UN42eQTp2RIc4KG+hY4HmWwiw==';
 // Skróty SHA-256 odpowiedzi (same odpowiedzi nie są nigdzie zapisane).
 const HASH = {
   kod: 'bd2bebca54c0a877ccfbe2c1588732a4a2c20e3d95f26351ae21ff4d1b68e3f7',
@@ -290,9 +309,9 @@ export function savedLine() {
 
 /**
  * Notatka Pipa: ciemna kartka z tekstem pisanym na maszynie. Zwraca Promise, który kończy się po zamknięciu.
- * opcje: { kicker, link: { href, text } }
+ * opcje: { kicker, next (jasna wskazówka, co zrobić dalej), link: { href, text } }
  */
-export function whisper(text, { kicker = 'Notatka', link = null } = {}) {
+export function whisper(text, { kicker = 'Notatka', next = '', link = null } = {}) {
   document.querySelectorAll('dialog.noc-note').forEach((d) => d.remove());
   const dlg = document.createElement('dialog');
   dlg.className = 'noc-note';
@@ -300,15 +319,21 @@ export function whisper(text, { kicker = 'Notatka', link = null } = {}) {
   dlg.innerHTML = `
     <p class="noc-note-kicker">${esc(kicker)}</p>
     <p class="noc-note-text" aria-live="polite"></p>
+    ${next ? `<div class="noc-note-next" hidden><p class="noc-note-next-label">Co dalej?</p><p>${esc(next)}</p></div>` : ''}
     ${link ? `<p class="noc-note-link"><a href="${esc(link.href)}">${esc(link.text)}</a></p>` : ''}
     <p class="noc-note-saved">${savedLine()}</p>
     <button type="button" class="noc-note-close" data-noc-close>Zamknij</button>`;
   document.body.appendChild(dlg);
   const box = dlg.querySelector('.noc-note-text');
+  const nextBox = dlg.querySelector('.noc-note-next');
+  const showNext = () => {
+    if (nextBox) nextBox.hidden = false;
+  };
   staticNoise();
   let timer = 0;
   if (reduceMotion()) {
     box.textContent = text;
+    showNext();
   } else {
     // Tekst pojawia się znak po znaku, a czytnik ekranu dostaje go od razu w całości.
     box.setAttribute('aria-label', text);
@@ -317,7 +342,14 @@ export function whisper(text, { kicker = 'Notatka', link = null } = {}) {
       i = Math.min(text.length, i + 1 + (Math.random() < 0.2 ? 1 : 0));
       box.textContent = text.slice(0, i);
       if (i < text.length) timer = setTimeout(tick, text[i - 1] === '\n' ? 200 : 16 + Math.random() * 22);
+      else showNext();
     };
+    // kliknięcie w tekst pokazuje go od razu w całości
+    box.addEventListener('click', () => {
+      clearTimeout(timer);
+      box.textContent = text;
+      showNext();
+    });
     tick();
   }
   return new Promise((resolve) => {

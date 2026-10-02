@@ -75,13 +75,19 @@ function openDialog() {
             <ol class="noc-steps">${p.steps.map((s) => `<li>${esc(s)}</li>`).join('')}</ol>
           </section>
         </div>
+        <div class="noc-rd-next" hidden>
+          <p class="noc-note-next-label">Co dalej?</p>
+          <p>${esc(p.next)}</p>
+        </div>
         <p class="noc-rd-saved"></p>
       </div>
     </div>`;
   dialog.showModal();
   $('#nocRdTitle', dialog).focus({ preventScroll: true });
   advance(2).then((res) => {
-    if (res) $('.noc-rd-saved', dialog).textContent = savedText();
+    if (!res) return;
+    $('.noc-rd-next', dialog).hidden = false;
+    $('.noc-rd-saved', dialog).textContent = savedText();
   });
 }
 

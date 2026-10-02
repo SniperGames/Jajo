@@ -52,7 +52,7 @@ const CAMERA = { href: 'cam05.html', text: '▶ Kamera 05' };
       a.textContent = CAMERA.text;
       hint.append(a);
     }
-    whisper(t('n1'), { kicker: 'Karteczka w skorupce', link: step() >= 8 ? CAMERA : null });
+    whisper(t('n1'), { kicker: 'Karteczka w skorupce', next: t('n1next'), link: step() >= 8 ? CAMERA : null });
   }
 })();
 
@@ -80,7 +80,7 @@ const CAMERA = { href: 'cam05.html', text: '▶ Kamera 05' };
     const res = await advance(5);
     if (!res || mine !== token) return;
     setKey(key);
-    whisper(t('n5'), { kicker: 'Kod ze skorupki' });
+    whisper(t('n5'), { kicker: 'Kod ze skorupki', next: t('n5next'), link: { href: 'profil.html#pip', text: '▶ Profil Pipa' } });
   }
 
   function show() {

@@ -1,5 +1,5 @@
 /* Jajo: nocne ślady w profilach. Profil, którego nie ma w bazie, z zamazaną notatką (widać ją dopiero po zaznaczeniu). */
-import { t, step, advance, whenSynced, isPip, savedText, staticNoise } from './rdzen.js';
+import { t, step, advance, whenSynced, isPip, savedText, staticNoise, whisper } from './rdzen.js';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
@@ -48,6 +48,10 @@ export async function show(uid, app) {
     <section class="profile-section" aria-labelledby="nocNote">
       <h2 id="nocNote">Notatka</h2>
       <p class="noc-redact${step() >= 6 ? ' is-revealed' : ''}">${esc(p.secret)}</p>
+      <div class="noc-rd-next noc-profile-next"${step() >= 6 ? '' : ' hidden'}>
+        <p class="noc-note-next-label">Co dalej?</p>
+        <p>${esc(t('n6next'))}</p>
+      </div>
       <p class="noc-redact-saved note" aria-live="polite"></p>
     </section>`;
   if (!listening) {
@@ -65,6 +69,13 @@ async function onSelect(app) {
   el.classList.add('is-revealed');
   staticNoise(0.25, 0.1);
   const res = await advance(6);
+  if (!res) return;
   const saved = app.querySelector('.noc-redact-saved');
-  if (res && saved) saved.textContent = savedText();
+  if (saved) saved.textContent = savedText();
+  const next = app.querySelector('.noc-profile-next');
+  if (next) next.hidden = false;
+  setTimeout(() => {
+    document.getSelection().removeAllRanges();
+    whisper(t('n6'), { kicker: 'Notatka Pipa', next: t('n6next') });
+  }, 900);
 }

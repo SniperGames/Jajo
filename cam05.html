@@ -14,32 +14,38 @@
 </head>
 <body class="cam-body">
 <main class="cam" id="cam">
-  <header class="cam-top">
-    <p class="cam-sys">SYSTEM MONITORINGU <span>v2.37</span></p>
-    <p class="cam-clock" id="camClock">28-10-2023 02:37:21</p>
-  </header>
+  <div class="cam-pan"><img class="cam-img" id="camImg" alt="" hidden></div>
+  <canvas class="cam-noise" id="camNoise" aria-hidden="true"></canvas>
+  <div class="cam-scan" aria-hidden="true"></div>
+  <div class="cam-corners" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
 
-  <div class="cam-monitor" id="camMonitor">
-    <img class="cam-img" id="camImg" alt="" hidden>
-    <canvas class="cam-noise" id="camNoise" aria-hidden="true"></canvas>
-    <div class="cam-scan" aria-hidden="true"></div>
-    <p class="cam-label" id="camLabel" aria-live="polite"></p>
+  <div class="cam-hud cam-hud-tl">
+    <p class="cam-name" id="camName">CAM 05</p>
+    <p class="cam-room" id="camRoom">SALA</p>
+  </div>
+  <div class="cam-hud cam-hud-tr">
+    <p class="cam-date">28-10-2023</p>
+    <p class="cam-time" id="camClock">02:37:21</p>
     <p class="cam-rec" id="camRec" hidden>● REC</p>
-    <div class="cam-gate" id="camGate">
-      <p class="cam-gate-title" id="camGateTitle">BRAK SYGNAŁU</p>
-      <p class="cam-gate-text" id="camGateText">Łączenie…</p>
-      <button type="button" class="cam-btn cam-connect" id="camConnect" hidden>Połącz z kamerą 05</button>
-    </div>
+  </div>
+  <div class="cam-hud cam-hud-bl">
+    <p class="cam-sys">SYSTEM MONITORINGU <span>v2.37</span></p>
+    <a class="cam-exit" href="index.html">◂ WYJDŹ</a>
   </div>
 
-  <nav class="cam-switch" id="camSwitch" aria-label="Kamery" hidden></nav>
-
-  <div class="cam-controls" id="camControls" hidden>
-    <button type="button" class="cam-btn" id="camMute" aria-pressed="false">Dźwięk: wł.</button>
-    <label class="cam-vol"><span>Głośność</span><input type="range" id="camVol" min="0" max="200" step="5" value="120"><output id="camVolOut">120%</output></label>
+  <div class="cam-gate" id="camGate">
+    <p class="cam-gate-title" id="camGateTitle">BRAK SYGNAŁU</p>
+    <p class="cam-gate-text" id="camGateText">Łączenie…</p>
+    <button type="button" class="cam-connect" id="camConnect" hidden>POŁĄCZ Z KAMERĄ 05</button>
   </div>
 
-  <p class="cam-exit"><a href="index.html">← Wyjdź</a></p>
+  <nav class="cam-map" id="camMap" aria-label="Kamery" hidden>
+    <svg class="cam-map-lines" viewBox="0 0 300 250" aria-hidden="true">
+      <path d="M100 14h100v40H100zM62 62h176v92H62zM10 64h44v48H10zM246 64h44v48H246zM10 160h44v44H10zM246 158h44v46H246zM128 214h44v30h-44z"/>
+      <path d="M54 88h8M238 88h8M32 112v48M268 112v46M150 54v8M98 154v66h30M202 154v66h-30"/>
+    </svg>
+    <span class="cam-you" aria-hidden="true">TY</span>
+  </nav>
 </main>
 <script type="module" src="noc/kamera.js"></script>
 </body>

@@ -1,5 +1,5 @@
 /* Jajo: nocne ślady na forum. Po ciemku da się znaleźć włącznik, a po zapaleniu światła widać napis na ścianie. */
-import { t, step, advance, whenSynced, savedText, staticNoise } from './rdzen.js';
+import { t, step, advance, whenSynced, savedText, staticNoise, whisper } from './rdzen.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const root = document.documentElement;
@@ -61,7 +61,10 @@ async function lightOn() {
   root.dataset.theme = 'light';
   setTimeout(() => root.classList.remove('noc-flicker'), 1300);
   const res = await advance(3);
-  if (res && wall) $('.noc-wall-saved', wall).textContent = savedText();
+  if (!res) return;
+  if (wall) $('.noc-wall-saved', wall).textContent = savedText();
+  // chwila na przeczytanie napisu, potem notatka z tym, co dalej
+  setTimeout(() => whisper(t('n3'), { kicker: 'Napis na ścianie', next: t('n3next') }), 2600);
 }
 
 async function sync() {
