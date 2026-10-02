@@ -3,14 +3,104 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Jajo</title>
+<title>Pięć Koszmarnych Nocy u Magdy Gessler</title>
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#000000">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<style>
-  html, body { height: 100%; margin: 0; background: #000; }
-</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&display=swap">
+<link rel="stylesheet" href="noc/gra.css?v=20261003">
 </head>
-<body>
+<body class="fn-body">
+<main class="fn" id="fn">
+  <canvas class="fn-view" id="fnView" aria-hidden="true"></canvas>
+
+  <!-- Menu jak w FNaF 1 -->
+  <section class="fn-menu" id="fnMenu" aria-label="Menu" hidden>
+    <img class="fn-face" id="fnFace" alt="">
+    <div class="fn-menu-left">
+      <h1 class="fn-title">Pięć<br>Koszmarnych<br>Nocy u<br>Magdy Gessler</h1>
+      <p class="fn-stars" id="fnStars" hidden></p>
+      <ul class="fn-items" id="fnItems">
+        <li><button type="button" class="fn-item" data-act="new">Nowa gra</button></li>
+        <li><button type="button" class="fn-item" data-act="continue">Kontynuuj</button><span class="fn-item-sub" id="fnContNight">Noc 1</span></li>
+        <li id="fnSixthItem" hidden><button type="button" class="fn-item" data-act="sixth">6. noc</button></li>
+        <li id="fnCustomItem" hidden><button type="button" class="fn-item" data-act="custom">Własna noc</button></li>
+      </ul>
+    </div>
+    <p class="fn-ver">v 1.0.237</p>
+    <p class="fn-copy">© 2023 Restauracja u&nbsp;Magdy</p>
+  </section>
+
+  <!-- Własna noc -->
+  <section class="fn-custom" id="fnCustom" aria-labelledby="fnCustomTitle" hidden>
+    <h2 class="fn-custom-title" id="fnCustomTitle">Własna noc</h2>
+    <div class="fn-custom-grid" id="fnCustomGrid"></div>
+    <p class="fn-custom-hint">Wszyscy na 20 to tryb 4/20: przetrwaj go, a&nbsp;dostaniesz trzecią gwiazdkę.</p>
+    <div class="fn-custom-actions">
+      <button type="button" class="fn-btn" id="fnCustomBack">◂ Wróć</button>
+      <button type="button" class="fn-btn fn-btn-go" id="fnCustomGo">Gotowe</button>
+    </div>
+  </section>
+
+  <!-- Gra -->
+  <section class="fn-hud" id="fnHud" hidden>
+    <div class="fn-doorbtns" id="fnDoorBtns">
+      <button type="button" class="fn-pbtn" id="fnDoorL" aria-label="Lewe drzwi (Q)" aria-pressed="false"></button>
+      <button type="button" class="fn-pbtn" id="fnLightL" aria-label="Lewe światło (A)" aria-pressed="false"></button>
+      <button type="button" class="fn-pbtn" id="fnDoorR" aria-label="Prawe drzwi (E)" aria-pressed="false"></button>
+      <button type="button" class="fn-pbtn" id="fnLightR" aria-label="Prawe światło (D)" aria-pressed="false"></button>
+    </div>
+    <div class="fn-camui" id="fnCamUi" hidden>
+      <div class="fn-cam-corners" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+      <p class="fn-rec" aria-hidden="true">●</p>
+      <nav class="fn-map" id="fnMap" aria-label="Kamery">
+        <p class="fn-cam-name" id="fnCamName">Scena</p>
+        <div class="fn-map-box" id="fnMapBox">
+          <svg class="fn-map-lines" viewBox="0 0 300 250" aria-hidden="true">
+            <path d="M110 6h80v30h-80zM84 44h132v90H84zM40 102h40v34H40zM8 44h48v40H8zM236 44h56v44h-56zM236 104h56v44h-56zM100 140h26v84h-26zM174 140h26v84h-26zM126 204h48v38h-48z"/>
+            <path d="M150 36v8M56 64h28M80 118h4M216 66h20M216 126h20M113 134v6M187 134v6"/>
+          </svg>
+          <span class="fn-you" aria-hidden="true">TY</span>
+        </div>
+      </nav>
+    </div>
+    <button type="button" class="fn-mute" id="fnMute" hidden>Wycisz rozmowę</button>
+    <div class="fn-clock" aria-live="off">
+      <p class="fn-time" id="fnTime">12 AM</p>
+      <p class="fn-nightlbl" id="fnNightLbl">Noc 1</p>
+    </div>
+    <div class="fn-power" id="fnPowerBox">
+      <p>Pozostała moc: <b id="fnPower">99</b>%</p>
+      <p>Zużycie: <span class="fn-usage" id="fnUsage"><i></i><i></i><i></i><i></i><i></i></span></p>
+    </div>
+    <button type="button" class="fn-cambar" id="fnCamBar" aria-label="Kamery (spacja)"><span aria-hidden="true">︽</span></button>
+  </section>
+
+  <canvas class="fn-noise" id="fnNoise" aria-hidden="true"></canvas>
+  <div class="fn-scan" id="fnScan" aria-hidden="true"></div>
+
+  <!-- Intro -->
+  <section class="fn-intro" id="fnIntro" hidden>
+    <video id="fnVideo" playsinline preload="auto"></video>
+    <button type="button" class="fn-skip" id="fnSkip">Pomiń ▸</button>
+  </section>
+
+  <!-- Napisy na czarnym ekranie: noc, 6 AM, koniec gry, wypłata, ładowanie -->
+  <section class="fn-screen" id="fnScreen" hidden>
+    <div class="fn-screen-in" id="fnScreenIn"></div>
+  </section>
+
+  <!-- Start: ostrzeżenie (i kliknięcie, które pozwala grać dźwięk) -->
+  <section class="fn-boot" id="fnBoot">
+    <p class="fn-boot-title" id="fnBootTitle">Ładowanie…</p>
+    <p class="fn-boot-text" id="fnBootText"></p>
+    <button type="button" class="fn-btn" id="fnStart" hidden>Kliknij, aby zacząć</button>
+  </section>
+
+  <div class="fn-rotate" id="fnRotate" hidden><p>Obróć telefon poziomo</p></div>
+</main>
+<script type="module" src="noc/gra.js?v=20261003"></script>
 </body>
 </html>

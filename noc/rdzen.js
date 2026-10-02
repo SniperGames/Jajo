@@ -95,8 +95,14 @@ function clean(s) {
     krok: int(s && s.krok, LAST),
     etap: int(s && s.etap, STAGES),
     klucz: s && /^[0-9a-f]{64}$/.test(s.klucz) ? s.klucz : '',
+    // gra z kamery: noc do kontynuacji (1–5), najdalsza przetrwana noc (0–6), własna noc 4/20 (0/1)
+    nk: Math.max(1, int(s && s.nk, 5)),
+    nb: int(s && s.nb, 6),
+    nc: int(s && s.nc, 1),
   };
 }
+
+const same = (a, b) => a.krok === b.krok && a.etap === b.etap && a.klucz === b.klucz && a.nk === b.nk && a.nb === b.nb && a.nc === b.nc;
 
 function load() {
   try {
@@ -127,7 +133,7 @@ function emit() {
   });
 }
 
-/** Aktualny stan: { krok, etap, klucz }. */
+/** Aktualny stan: { krok, etap, klucz, nk, nb, nc }. */
 export const get = () => ({ ...state });
 export const step = () => state.krok;
 
@@ -140,14 +146,21 @@ export function onChange(cb) {
 window.addEventListener('storage', (e) => {
   if (e.key !== STORE) return;
   const next = load();
-  if (next.krok !== state.krok || next.etap !== state.etap || next.klucz !== state.klucz) {
+  if (!same(next, state)) {
     state = merge(state, next);
     emit();
   }
 });
 
 function merge(a, b) {
-  return clean({ krok: Math.max(a.krok, b.krok), etap: Math.max(a.etap, b.etap), klucz: a.klucz || b.klucz });
+  return clean({
+    krok: Math.max(a.krok, b.krok),
+    etap: Math.max(a.etap, b.etap),
+    klucz: a.klucz || b.klucz,
+    nk: Math.max(a.nk, b.nk),
+    nb: Math.max(a.nb, b.nb),
+    nc: Math.max(a.nc, b.nc),
+  });
 }
 
 /* ---------- Konto ---------- */
@@ -196,11 +209,11 @@ async function pull() {
     remote = snap.exists() ? clean(snap.data()) : null;
     const before = { ...state };
     if (remote) state = merge(state, remote);
-    if (state.krok !== before.krok || state.etap !== before.etap || state.klucz !== before.klucz) {
+    if (!same(state, before)) {
       save();
       emit();
     }
-    if (!remote || remote.krok < state.krok || remote.etap < state.etap || remote.klucz !== state.klucz) {
+    if (!remote || !same(remote, state)) {
       if (state.krok > 0) push();
     }
   } catch (err) {
@@ -214,7 +227,10 @@ async function push() {
   const { F, db } = fb;
   clearTimeout(retry);
   try {
-    await F.setDoc(F.doc(db, 'noc', me.uid), { krok: state.krok, etap: state.etap, klucz: state.klucz, at: F.serverTimestamp() });
+    const data = { krok: state.krok, etap: state.etap, klucz: state.klucz, at: F.serverTimestamp() };
+    // postęp w grze zapisuje się dopiero, gdy jest co zapisać (starsze reguły bazy go nie znają)
+    if (state.nk > 1 || state.nb > 0 || state.nc > 0) Object.assign(data, { nk: state.nk, nb: state.nb, nc: state.nc });
+    await F.setDoc(F.doc(db, 'noc', me.uid), data);
     remote = { ...state };
     tries = 0;
   } catch (err) {
@@ -255,6 +271,24 @@ export function setKey(hex) {
 export function setStage(n) {
   if (n <= state.etap) return;
   state.etap = Math.min(STAGES, n);
+  save();
+  emit();
+  push();
+}
+
+/** Postęp w grze z kamery: { nk, nb, nc }. */
+export const game = () => ({ nk: state.nk, nb: state.nb, nc: state.nc });
+
+/** Zapisuje postęp w grze. nk może się cofnąć (nowa gra), nb i nc tylko rosną. */
+export function setGame({ nk, nb, nc } = {}) {
+  const next = clean({
+    ...state,
+    nk: nk ?? state.nk,
+    nb: Math.max(state.nb, nb ?? 0),
+    nc: Math.max(state.nc, nc ?? 0),
+  });
+  if (same(next, state)) return;
+  state = next;
   save();
   emit();
   push();

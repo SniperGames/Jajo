@@ -177,6 +177,16 @@ Reguły pilnują, żeby zapis był rozsądny: najwyżej 3 gwiazdki i 150 000 pun
 
 Jeszcze raz wklej reguły: **Firestore Database → Reguły**, usuń wszystko, wklej aktualną zawartość pliku [`firestore.rules`](firestore.rules) i kliknij **Opublikuj**. Dochodzi kolekcja `noc`: prywatny zapis postępu, który widzi i zmienia tylko właściciel konta (nikt inny, także moderator, go nie czyta). Postęp może tylko rosnąć. Bez tych reguł wszystko działa, ale zapisuje się tylko w przeglądarce.
 
+## 15. Gra za kamerą (zapis nocy)
+
+I jeszcze raz wklej reguły (tak samo jak w kroku 14), bo w dokumencie `noc` dochodzą trzy pola gry „Pięć Koszmarnych Nocy u Magdy Gessler”:
+
+- `nk`: noc, od której gra się po kliknięciu „Kontynuuj” (1–5; „Nowa gra” cofa ją do 1),
+- `nb`: najdalsza przetrwana noc (0–6, nie może spaść): po 5. nocy pojawia się 6. noc i pierwsza gwiazdka, po 6. nocy własna noc i druga gwiazdka,
+- `nc`: przetrwana własna noc z wszystkimi na 20 (0 albo 1): trzecia gwiazdka.
+
+Dopóki reguły nie są wklejone, gra działa normalnie, ale noce i gwiazdki zapisują się tylko w przeglądarce.
+
 ## Koszty i limity
 
 Darmowy plan Spark wystarcza z dużym zapasem: 1 GiB danych, 50 000 odczytów i 20 000 zapisów dziennie. Jedno wejście na stronę z przepisami to kilkadziesiąt odczytów (liczniki polubień i przepisy czytelników). Zdjęcia są zmniejszane w przeglądarce i zapisywane w bazie, więc płatny Cloud Storage nie jest potrzebny. Jeśli limit kiedyś się skończy, strona nie przestanie działać: do północy (czasu USA) nie wczytają się tylko przepisy od czytelników.

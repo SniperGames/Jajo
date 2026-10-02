@@ -1,0 +1,772 @@
+/* Pięć Koszmarnych Nocy u Magdy Gessler: menu jak w FNaF 1, HUD w biurze, tablet z kamerami, ekrany z napisami. */
+
+:root {
+  --fn-white: #f2f2ee;
+  --fn-green: #a6cc34;
+  --fn-font: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  color-scheme: dark;
+}
+
+html,
+body.fn-body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: #000;
+  color: var(--fn-white);
+  font-family: var(--fn-font);
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+.fn {
+  position: fixed;
+  inset: 0;
+  touch-action: none;
+}
+
+.fn [hidden] {
+  display: none !important;
+}
+
+.fn button {
+  font-family: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.fn button:focus {
+  outline: none;
+}
+
+.fn button:focus-visible {
+  outline: 2px solid var(--fn-white);
+  outline-offset: 2px;
+}
+
+.fn-view,
+.fn-noise {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.fn-view {
+  z-index: 1;
+}
+
+.fn-noise {
+  z-index: 2;
+  opacity: 0;
+  pointer-events: none;
+  image-rendering: pixelated;
+}
+
+.fn-in-menu .fn-noise {
+  z-index: 5;
+}
+
+/* ---------- Start ---------- */
+
+.fn-boot {
+  position: fixed;
+  inset: 0;
+  z-index: 9;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 18px;
+  padding: 24px;
+  background: #000;
+  text-align: center;
+}
+
+.fn-boot-title {
+  margin: 0;
+  font-size: clamp(24px, 6vh, 52px);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.fn-boot-text {
+  margin: 0;
+  max-width: 34ch;
+  font-size: clamp(14px, 3vh, 22px);
+  line-height: 1.45;
+}
+
+.fn-btn {
+  padding: 12px 22px;
+  border: 2px solid var(--fn-white);
+  background: transparent;
+  font-size: clamp(14px, 2.8vh, 20px);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.fn-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* ---------- Menu ---------- */
+
+.fn-menu {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  overflow: hidden;
+  background: #000;
+}
+
+.fn-face {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: min(68vw, 100vh * 0.8 + 10vw);
+  object-fit: cover;
+  object-position: center top;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 30%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 30%);
+}
+
+.fn-menu-left {
+  position: absolute;
+  top: 7vh;
+  left: max(16px, 6vw);
+  z-index: 1;
+}
+
+.fn-title {
+  margin: 0;
+  font-size: clamp(22px, 6.4vh, 60px);
+  font-weight: 800;
+  line-height: 1.04;
+  letter-spacing: 0.01em;
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+}
+
+.fn-stars {
+  margin: 1.4vh 0 0;
+  font-size: clamp(22px, 6vh, 52px);
+  letter-spacing: 0.25em;
+  line-height: 1;
+}
+
+.fn-items {
+  list-style: none;
+  margin: 7vh 0 0;
+  padding: 0;
+}
+
+.fn-items li {
+  margin: 0 0 2.6vh;
+}
+
+.fn-item {
+  position: relative;
+  display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: clamp(18px, 4.6vh, 42px);
+  font-weight: 800;
+  text-align: left;
+  line-height: 1.1;
+}
+
+.fn-item::before {
+  content: ">>";
+  position: absolute;
+  right: 100%;
+  margin-right: 0.45em;
+  opacity: 0;
+}
+
+.fn-item.is-sel::before {
+  opacity: 1;
+}
+
+.fn-item-sub {
+  display: block;
+  margin-top: 0.4vh;
+  font-size: clamp(11px, 2.4vh, 20px);
+  font-weight: 600;
+  opacity: 0.75;
+}
+
+.fn-ver,
+.fn-copy {
+  position: absolute;
+  bottom: max(10px, 2.4vh);
+  margin: 0;
+  font-size: clamp(10px, 2vh, 16px);
+  z-index: 1;
+}
+
+.fn-ver {
+  left: max(12px, 2vw);
+}
+
+.fn-copy {
+  right: max(12px, 2vw);
+}
+
+.fn-scan {
+  display: none;
+}
+
+.fn-in-menu .fn-scan {
+  display: block;
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: -12vh;
+  height: 10vh;
+  z-index: 6;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+  animation: fn-scan 7s linear infinite;
+}
+
+@keyframes fn-scan {
+  to {
+    transform: translateY(124vh);
+  }
+}
+
+/* ---------- Własna noc ---------- */
+
+.fn-custom {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2.4vh;
+  padding: 16px;
+  background: #000;
+  text-align: center;
+}
+
+.fn-custom-title {
+  margin: 0;
+  font-size: clamp(20px, 5vh, 44px);
+  font-weight: 800;
+}
+
+.fn-custom-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(8px, 2vw, 28px);
+  width: min(100%, 980px);
+}
+
+.fn-cn-face {
+  display: block;
+  width: 100%;
+  max-width: min(200px, 30vh);
+  aspect-ratio: 1;
+  margin: 0 auto;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+}
+
+.fn-cn-name {
+  margin: 1vh 0 0.6vh;
+  font-size: clamp(13px, 2.8vh, 22px);
+  font-weight: 800;
+}
+
+.fn-cn-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.fn-cn-btn {
+  min-width: 44px;
+  min-height: 44px;
+  border: 2px solid var(--fn-white);
+  background: transparent;
+  font-size: 20px;
+}
+
+.fn-cn-btn:active {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.fn-cn-lvl {
+  min-width: 2.2ch;
+  font-size: clamp(22px, 5vh, 40px);
+  font-weight: 800;
+}
+
+.fn-custom-hint {
+  margin: 0;
+  max-width: 60ch;
+  font-size: clamp(11px, 2.2vh, 16px);
+  opacity: 0.75;
+}
+
+.fn-custom-actions {
+  display: flex;
+  gap: 16px;
+}
+
+.fn-btn-go {
+  background: var(--fn-white);
+  color: #000 !important;
+}
+
+.fn-btn-go:hover {
+  background: #fff;
+}
+
+/* ---------- HUD ---------- */
+
+.fn-hud {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  text-shadow: 0 0 6px rgba(0, 0, 0, 0.9);
+}
+
+.fn-hud button {
+  pointer-events: auto;
+}
+
+.fn-pbtn {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  touch-action: none;
+}
+
+.fn-clock {
+  position: absolute;
+  top: max(10px, 3vh);
+  right: max(14px, 3vw);
+  text-align: right;
+}
+
+.fn-time,
+.fn-nightlbl {
+  margin: 0;
+  font-weight: 800;
+  line-height: 1.05;
+}
+
+.fn-time {
+  font-size: clamp(24px, 6vh, 54px);
+}
+
+.fn-nightlbl {
+  font-size: clamp(13px, 2.8vh, 24px);
+}
+
+.fn-power {
+  position: absolute;
+  left: max(14px, 3vw);
+  bottom: max(10px, 3vh);
+  font-size: clamp(12px, 2.8vh, 24px);
+  font-weight: 800;
+}
+
+.fn-power p {
+  margin: 0.25em 0 0;
+}
+
+.fn-usage {
+  display: inline-flex;
+  gap: 0.18em;
+  vertical-align: -0.25em;
+}
+
+.fn-usage i {
+  display: block;
+  width: 0.9em;
+  height: 1.3em;
+  background: #49c43f;
+  visibility: hidden;
+}
+
+.fn-usage i:nth-child(3) {
+  background: #e8c727;
+}
+
+.fn-usage i:nth-child(n + 4) {
+  background: #d8261c;
+}
+
+.fn-usage i.on {
+  visibility: visible;
+}
+
+.fn-mute {
+  position: absolute;
+  top: max(10px, 3vh);
+  left: max(14px, 3vw);
+  padding: 8px 14px;
+  border: 2px solid #ffb3a8;
+  background: #a1150c;
+  font-size: clamp(11px, 2.4vh, 18px);
+  font-weight: 800;
+  text-shadow: none;
+}
+
+.fn-cambar {
+  position: absolute;
+  left: 50%;
+  bottom: max(6px, 1.6vh);
+  width: min(46vw, 620px);
+  height: clamp(30px, 7vh, 56px);
+  transform: translateX(-38%);
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.1);
+  font-size: clamp(16px, 4vh, 30px);
+  line-height: 1;
+}
+
+.fn-cambar:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* ---------- Tablet z kamerami ---------- */
+
+.fn-camui {
+  position: absolute;
+  inset: 0;
+}
+
+.fn-cam-corners span {
+  position: absolute;
+  width: 6vh;
+  height: 6vh;
+  border: 0 solid rgba(255, 255, 255, 0.8);
+}
+
+.fn-cam-corners span:nth-child(1) {
+  top: 2.5vh;
+  left: 2.5vh;
+  border-width: 3px 0 0 3px;
+}
+
+.fn-cam-corners span:nth-child(2) {
+  top: 2.5vh;
+  right: 2.5vh;
+  border-width: 3px 3px 0 0;
+}
+
+.fn-cam-corners span:nth-child(3) {
+  bottom: 2.5vh;
+  left: 2.5vh;
+  border-width: 0 0 3px 3px;
+}
+
+.fn-cam-corners span:nth-child(4) {
+  bottom: 2.5vh;
+  right: 2.5vh;
+  border-width: 0 3px 3px 0;
+}
+
+.fn-rec {
+  position: absolute;
+  top: 5vh;
+  left: 5vh;
+  margin: 0;
+  color: #e3241b;
+  font-size: clamp(22px, 6vh, 46px);
+  line-height: 1;
+  animation: fn-blink 1.2s steps(1) infinite;
+}
+
+@keyframes fn-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.fn-map {
+  position: absolute;
+  right: max(10px, 2.5vw);
+  bottom: calc(max(6px, 1.6vh) + clamp(30px, 7vh, 56px) + 1.5vh);
+  width: min(34vw, 62vh);
+  pointer-events: auto;
+}
+
+.fn-cam-name {
+  margin: 0 0 0.6vh;
+  font-size: clamp(13px, 3.2vh, 26px);
+  font-weight: 800;
+}
+
+.fn-map-box {
+  position: relative;
+  aspect-ratio: 300 / 250;
+}
+
+.fn-map-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.85);
+  stroke-width: 2.4;
+}
+
+.fn-you {
+  position: absolute;
+  left: 50%;
+  top: 89%;
+  transform: translate(-50%, -50%);
+  font-size: clamp(9px, 2vh, 15px);
+  font-weight: 800;
+}
+
+.fn-cam {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  min-width: 15%;
+  padding: 0.25em 0.3em;
+  border: 2px solid #d9d9d9;
+  background: #3c3c3c;
+  font-size: clamp(8px, 1.8vh, 14px);
+  font-weight: 800;
+  line-height: 1.05;
+  text-shadow: none;
+  white-space: nowrap;
+}
+
+.fn-cam[aria-pressed="true"] {
+  background: var(--fn-green);
+  color: #000 !important;
+}
+
+/* ---------- Intro ---------- */
+
+.fn-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 7;
+  background: #000;
+}
+
+.fn-intro video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #000;
+}
+
+.fn-intro.needs-tap::after {
+  content: "Kliknij, aby odtworzyć";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: clamp(16px, 4vh, 28px);
+  font-weight: 800;
+  background: rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+}
+
+.fn-skip {
+  position: absolute;
+  right: max(14px, 3vw);
+  bottom: max(12px, 3vh);
+  z-index: 1;
+  padding: 8px 16px;
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  background: rgba(0, 0, 0, 0.5);
+  font-size: clamp(12px, 2.6vh, 18px);
+  font-weight: 800;
+}
+
+/* ---------- Ekrany z napisami ---------- */
+
+.fn-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 8;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: #000;
+  text-align: center;
+}
+
+.fn-over-screen,
+.fn-card {
+  background: transparent;
+}
+
+.fn-card {
+  background: #000;
+}
+
+.fn-screen-in {
+  display: grid;
+  justify-items: center;
+  gap: 1.6vh;
+}
+
+.fn-screen p {
+  margin: 0;
+}
+
+.fn-card-time {
+  font-size: clamp(26px, 8vh, 72px);
+  font-weight: 800;
+}
+
+.fn-card-night {
+  font-size: clamp(18px, 5vh, 44px);
+  font-weight: 800;
+}
+
+.fn-card-load,
+.fn-small {
+  min-height: 1.4em;
+  font-size: clamp(12px, 2.6vh, 20px);
+  opacity: 0.8;
+}
+
+.fn-load {
+  font-size: clamp(16px, 4vh, 30px);
+  font-weight: 800;
+}
+
+.fn-load-skip {
+  margin-top: 2vh;
+}
+
+.fn-over-screen {
+  background: #000;
+}
+
+.fn-over {
+  font-size: clamp(28px, 9vh, 80px);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.fn-six {
+  display: flex;
+  align-items: baseline;
+  font-size: clamp(40px, 14vh, 130px);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.fn-six-roll {
+  display: inline-block;
+  height: 1em;
+  overflow: hidden;
+}
+
+.fn-six-roll span {
+  display: block;
+  height: 1em;
+  animation: fn-roll 2.2s 1.4s cubic-bezier(0.6, 0, 0.3, 1) forwards;
+}
+
+@keyframes fn-roll {
+  to {
+    transform: translateY(-100%);
+  }
+}
+
+.fn-end-screen {
+  background: #000;
+}
+
+.fn-paper {
+  width: min(92vw, 520px);
+  max-height: 78vh;
+  overflow: auto;
+  padding: clamp(14px, 3.4vh, 30px) clamp(16px, 3vw, 34px);
+  background: #e9e3cf;
+  color: #1b1712;
+  font-size: clamp(12px, 2.5vh, 18px);
+  line-height: 1.45;
+  text-align: left;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+  transform: rotate(-1.2deg);
+}
+
+.fn-paper-pink {
+  background: #f1c8cf;
+}
+
+.fn-paper h2 {
+  margin: 0.3em 0 0.5em;
+  font-size: clamp(20px, 5vh, 36px);
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.fn-paper p {
+  margin: 0.3em 0;
+}
+
+.fn-paper-head {
+  font-size: 0.8em;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+.fn-paper-sum {
+  font-size: 1.8em;
+  font-weight: 800;
+}
+
+.fn-paper-note {
+  margin-top: 0.9em !important;
+  font-weight: 800;
+}
+
+.fn-continue {
+  margin-top: 2.4vh !important;
+}
+
+/* ---------- Telefon trzymany pionowo ---------- */
+
+.fn-rotate {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: #000;
+  font-size: 20px;
+  font-weight: 800;
+  text-align: center;
+}
+
+/* Dotyk: większa mapa i przyciski kamer */
+@media (pointer: coarse) {
+  .fn-map {
+    width: min(40vw, 70vh);
+  }
+
+  .fn-cam {
+    min-width: 21%;
+    padding: 0.5em 0.35em;
+    font-size: 10px;
+  }
+}

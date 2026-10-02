@@ -457,7 +457,7 @@ service cloud.firestore {
     match /noc/{uid} {
       allow read: if isMember() && request.auth.uid == uid;
       allow create, update: if isMember() && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['krok', 'etap', 'klucz', 'at'])
+        && request.resource.data.keys().hasOnly(['krok', 'etap', 'klucz', 'at', 'nk', 'nb', 'nc'])
         && request.resource.data.krok is int
         && request.resource.data.krok >= 0
         && request.resource.data.krok <= 8
@@ -467,9 +467,21 @@ service cloud.firestore {
         && request.resource.data.klucz is string
         && (request.resource.data.klucz == '' || request.resource.data.klucz.matches('^[0-9a-f]{64}$'))
         && request.resource.data.at == request.time
+        // gra z kamery: noc do kontynuacji 1–5, najdalsza przetrwana noc 0–6, własna noc 4/20 0–1
+        && request.resource.data.get('nk', 1) is int
+        && request.resource.data.get('nk', 1) >= 1
+        && request.resource.data.get('nk', 1) <= 5
+        && request.resource.data.get('nb', 0) is int
+        && request.resource.data.get('nb', 0) >= 0
+        && request.resource.data.get('nb', 0) <= 6
+        && request.resource.data.get('nc', 0) is int
+        && request.resource.data.get('nc', 0) >= 0
+        && request.resource.data.get('nc', 0) <= 1
         && (resource == null
             || (request.resource.data.krok >= resource.data.krok
-                && request.resource.data.etap >= resource.data.etap));
+                && request.resource.data.etap >= resource.data.etap
+                && request.resource.data.get('nb', 0) >= resource.data.get('nb', 0)
+                && request.resource.data.get('nc', 0) >= resource.data.get('nc', 0)));
     }
 
     /* ---------- Pomocnicze ---------- */
