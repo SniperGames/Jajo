@@ -128,3 +128,5 @@ html, body { height: 100%; }
 @media (prefers-reduced-motion: reduce) {
   .cam-img, .cam-pan, .cam-rec { animation: none; }
 }
+/* Jumpscare na cały ekran, nad wszystkim */
+.cam-jump { position: fixed; inset: 0; z-index: 50; width: 100%; height: 100%; background: #000; }

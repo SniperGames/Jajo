@@ -1,4 +1,5 @@
-/* Jajo: kamera 05. Odszyfrowuje nagranie (zdjęcie i dźwięk) kluczem z zagadek i pokazuje je na cały ekran jak monitoring. */
+/* Jajo: kamera 05. Odszyfrowuje nagranie (zdjęcia i dźwięk) kluczem z zagadek i pokazuje je na cały ekran jak monitoring.
+   Co jakiś czas obraz zalewa szum, a postać stoi bliżej. Gdy dojdzie do samej kamery, atakuje (jumpscare). */
 import { get, step, whenSynced, staticNoise } from './rdzen.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -14,8 +15,20 @@ const CAMS = [
   ['05', 'SALA', 112, 104],
   ['06', 'ZAPLECZE', 268, 88],
 ];
-const ZOOM = [1, 1.1, 1.22, 1.36, 1.55]; // za każdym powrotem na kamerę 05 postać jest bliżej
-const ALT = 'Kadr z kamery monitoringu: postać z nożem stoi na środku pustej sali restauracji.';
+// Kolejne kadry: postać coraz bliżej kamery.
+const FRAMES = ['noc/05.bin', 'noc/05b.bin', 'noc/05c.bin', 'noc/05d.bin'];
+const WAIT = [[45, 60], [35, 50], [28, 40]]; // ile sekund stoi w miejscu, zanim podejdzie bliżej
+const HOLD = 8; // tyle stoi tuż przy kamerze, zanim zaatakuje
+// Jumpscare: 10 klatek 412 × 308 w arkuszu 5 × 2.
+const JUMP = { url: 'noc/05j.bin', w: 412, h: 308, cols: 5, frames: 10 };
+const SCREAM = 'noc/05s.bin';
+const NEXT_PAGE = 'zmiana.html';
+const ALT = [
+  'Kadr z kamery monitoringu: postać z nożem stoi na środku pustej sali restauracji.',
+  'Kadr z kamery monitoringu: postać z nożem podeszła bliżej.',
+  'Kadr z kamery monitoringu: postać z nożem jest już blisko kamery.',
+  'Kadr z kamery monitoringu: twarz postaci tuż przy kamerze.',
+];
 
 const img = $('#camImg');
 const gate = $('#camGate');
@@ -33,7 +46,17 @@ let audioP = null;
 let audioBuf = null;
 let nextAt = 0;
 let current = '';
-let visits = 0;
+let key = '';
+const urls = []; // odszyfrowane kadry (adresy blob:)
+let stage = 0; // który kadr widać
+let elapsed = 0;
+let due = 0;
+let moving = false;
+let jumping = false;
+let started = false;
+let sheet = null; // arkusz klatek jumpscare'u
+let screamRaw = null;
+let screamBuf = null;
 
 /* ---------- Szum na ekranie i zegar ---------- */
 
@@ -114,8 +137,10 @@ async function startAudio() {
   comp.threshold.value = -6;
   comp.ratio.value = 8;
   master.connect(comp).connect(ac.destination);
+  const decode = (raw) => new Promise((resolve, reject) => ac.decodeAudioData(raw.slice(0), resolve, reject));
+  if (screamRaw) decode(screamRaw).then((b) => { screamBuf = b; }).catch(() => {});
   const raw = await audioP;
-  audioBuf = await new Promise((resolve, reject) => ac.decodeAudioData(raw.slice(0), resolve, reject));
+  audioBuf = await decode(raw);
   nextAt = ac.currentTime + 0.05;
   schedule();
   setInterval(schedule, 1000);
@@ -142,14 +167,17 @@ function switchTo(id) {
   $('#camName').textContent = `CAM ${id}`;
   $('#camRoom').textContent = name;
   map.querySelectorAll('[data-cam]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.cam === id)));
-  if (id === '05') {
-    visits += 1;
-    img.style.setProperty('--zoom', String(ZOOM[Math.min(visits - 1, ZOOM.length - 1)]));
-    img.hidden = false;
-    img.alt = ALT;
+  refresh();
+}
+
+// Co widać na ekranie: kamera 05 (albo sam szum, gdy postać właśnie się przemieszcza) lub brak sygnału.
+function refresh() {
+  if (current === '05') {
+    img.hidden = moving;
+    img.alt = ALT[stage];
     gate.hidden = true;
     rec.hidden = false;
-    noiseLevel = 0.07;
+    noiseLevel = moving ? 1 : 0.07;
   } else {
     img.hidden = true;
     gate.hidden = false;
@@ -160,6 +188,148 @@ function switchTo(id) {
     noiseLevel = 0.85;
   }
 }
+
+/* ---------- Postać podchodzi coraz bliżej ---------- */
+
+const randIn = ([a, b]) => a + Math.random() * (b - a);
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function loadFrame(i) {
+  if (urls[i]) return urls[i];
+  const buf = await decrypt(FRAMES[i], key);
+  const url = URL.createObjectURL(new Blob([buf], { type: 'image/jpeg' }));
+  const pre = new Image();
+  pre.src = url;
+  await pre.decode().catch(() => {});
+  urls[i] = url;
+  return url;
+}
+
+// Kadry, klatki jumpscare'u i krzyk wczytują się w tle, zanim będą potrzebne.
+function preload() {
+  for (let i = 1; i < FRAMES.length; i++) loadFrame(i).catch(() => {});
+  decrypt(JUMP.url, key).then(async (buf) => {
+    const im = new Image();
+    im.src = URL.createObjectURL(new Blob([buf], { type: 'image/jpeg' }));
+    await im.decode().catch(() => {});
+    sheet = im;
+  }).catch(() => {});
+  decrypt(SCREAM, key).then((raw) => {
+    screamRaw = raw;
+    if (ac && !screamBuf) ac.decodeAudioData(raw.slice(0), (b) => { screamBuf = b; }, () => {});
+  }).catch(() => {});
+}
+
+// Licznik stoi, gdy karta jest w tle: postać nie zaatakuje, kiedy nikt nie patrzy na ekran.
+setInterval(() => {
+  if (!started || moving || jumping || document.hidden) return;
+  elapsed += 0.25;
+  if (elapsed < due) return;
+  elapsed = 0;
+  if (stage < FRAMES.length - 1) move();
+  else jumpscare();
+}, 250);
+
+async function move() {
+  if (!urls[stage + 1]) {
+    // następny kadr jeszcze się nie wczytał: spróbuj za chwilę
+    due = 3;
+    loadFrame(stage + 1).catch(() => {});
+    return;
+  }
+  moving = true;
+  const dur = 1700 + Math.random() * 900;
+  if (current === '05') {
+    staticNoise(dur / 1000, 0.16);
+    flash = 1;
+  }
+  refresh();
+  await wait(dur / 2);
+  stage += 1;
+  img.src = urls[stage];
+  await wait(dur / 2);
+  moving = false;
+  if (current === '05') flash = 1;
+  refresh();
+  due = stage < FRAMES.length - 1 ? randIn(WAIT[stage]) : HOLD;
+}
+
+/* ---------- Jumpscare ---------- */
+
+function jumpscare() {
+  jumping = true;
+  const cv = document.createElement('canvas');
+  cv.className = 'cam-jump';
+  document.body.appendChild(cv);
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  cv.width = Math.round(innerWidth * dpr);
+  cv.height = Math.round(innerHeight * dpr);
+  const ctx = cv.getContext('2d');
+  ctx.imageSmoothingQuality = 'high';
+  if (ac) {
+    master.gain.setTargetAtTime(0, ac.currentTime, 0.03); // szum kamery cichnie
+    if (screamBuf) {
+      const src = ac.createBufferSource();
+      src.buffer = screamBuf;
+      const g = ac.createGain();
+      g.gain.value = 1.4;
+      src.connect(g).connect(ac.destination);
+      src.start();
+    }
+  }
+  const t0 = performance.now();
+  const END = 1.75;
+  const draw = (now) => {
+    const t = (now - t0) / 1000;
+    const W = cv.width;
+    const H = cv.height;
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, W, H);
+    if (t < END && sheet) {
+      // najpierw po kolei wszystkie klatki, potem ostatnie cztery w kółko
+      const k = t < 0.9 ? Math.min(JUMP.frames - 1, Math.floor(t / 0.09)) : 6 + (Math.floor((t - 0.9) / 0.06) % 4);
+      const sx = (k % JUMP.cols) * JUMP.w;
+      const sy = Math.floor(k / JUMP.cols) * JUMP.h;
+      const shake = t < 0.3 ? 0.012 : 0.035;
+      const scale = Math.max(W / JUMP.w, H / JUMP.h) * (1.06 + Math.min(0.12, t * 0.08) + Math.random() * 0.03);
+      const dw = JUMP.w * scale;
+      const dh = JUMP.h * scale;
+      const dx = (W - dw) / 2 + (Math.random() - 0.5) * W * shake * 2;
+      const dy = (H - dh) / 2 + (Math.random() - 0.5) * H * shake * 2;
+      ctx.drawImage(sheet, sx, sy, JUMP.w, JUMP.h, dx, dy, dw, dh);
+      if (Math.random() < 0.18) {
+        ctx.fillStyle = Math.random() < 0.5 ? 'rgba(255,255,255,.22)' : 'rgba(160,0,0,.25)';
+        ctx.fillRect(0, 0, W, H);
+      }
+    }
+    if (t < END + 0.45) {
+      requestAnimationFrame(draw);
+    } else {
+      location.href = NEXT_PAGE;
+    }
+  };
+  requestAnimationFrame(draw);
+}
+
+/* ---------- Pełny ekran ---------- */
+
+function fullscreen() {
+  if (document.fullscreenElement || document.webkitFullscreenElement) return;
+  const el = document.documentElement;
+  const req = el.requestFullscreen || el.webkitRequestFullscreen;
+  if (!req) return; // np. iPhone: strona i tak zajmuje cały ekran
+  try {
+    const p = req.call(el, { navigationUI: 'hide' });
+    if (p && p.catch) p.catch(() => {});
+  } catch {
+    /* przeglądarka nie pozwoliła */
+  }
+}
+
+// Po wyjściu z pełnego ekranu (np. Esc) wraca on przy następnym kliknięciu albo stuknięciu.
+document.addEventListener('pointerdown', () => {
+  if (started) fullscreen();
+});
 
 /* ---------- Start ---------- */
 
@@ -176,9 +346,9 @@ function locked(text) {
     locked('Ta kamera jest wyłączona.');
     return;
   }
+  key = st.klucz;
   try {
-    const buf = await decrypt('noc/05.bin', st.klucz);
-    img.src = URL.createObjectURL(new Blob([buf], { type: 'image/jpeg' }));
+    img.src = await loadFrame(0);
     await img.decode().catch(() => {});
   } catch (err) {
     console.error(err);
@@ -187,6 +357,7 @@ function locked(text) {
   }
   audioP = decrypt('noc/05a.bin', st.klucz);
   audioP.catch(() => {});
+  preload();
   gateTitle.textContent = 'KAMERA 05 · SALA';
   gateText.textContent = 'Nagranie z 28.10.2023, godz. 02:37:21.';
   connect.hidden = false;
@@ -195,9 +366,12 @@ function locked(text) {
 
 connect.addEventListener('click', async () => {
   connect.disabled = true;
+  fullscreen();
   renderMap();
   map.hidden = false;
   switchTo('05');
+  started = true;
+  due = randIn(WAIT[0]);
   try {
     await startAudio();
   } catch (err) {
