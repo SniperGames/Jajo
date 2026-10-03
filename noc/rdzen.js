@@ -2,7 +2,7 @@
 import { connect, isMember, watchUser } from '../jajo-firebase.js';
 
 const STORE = 'jajo:noc';
-export const LAST = 8; // 7 zagadek i ukończona gra
+export const LAST = 9; // 7 zagadek, ukończona gra Pip (8) i pierwsze wejście do gry za kamerą (9)
 export const STAGES = 5; // etapy sekretnej gry
 
 // Teksty zagadek są zakodowane, żeby nie dało się ich przeczytać w źródle strony jednym rzutem oka.
@@ -99,10 +99,12 @@ function clean(s) {
     nk: Math.max(1, int(s && s.nk, 5)),
     nb: int(s && s.nb, 6),
     nc: int(s && s.nc, 1),
+    nr: int(s && s.nr, 1000), // ile razy zresetowano grę
   };
 }
 
-const same = (a, b) => a.krok === b.krok && a.etap === b.etap && a.klucz === b.klucz && a.nk === b.nk && a.nb === b.nb && a.nc === b.nc;
+const same = (a, b) =>
+  a.krok === b.krok && a.etap === b.etap && a.klucz === b.klucz && a.nk === b.nk && a.nb === b.nb && a.nc === b.nc && a.nr === b.nr;
 
 function load() {
   try {
@@ -133,7 +135,7 @@ function emit() {
   });
 }
 
-/** Aktualny stan: { krok, etap, klucz, nk, nb, nc }. */
+/** Aktualny stan: { krok, etap, klucz, nk, nb, nc, nr }. */
 export const get = () => ({ ...state });
 export const step = () => state.krok;
 
@@ -153,13 +155,18 @@ window.addEventListener('storage', (e) => {
 });
 
 function merge(a, b) {
+  // Po resecie gry liczy się stan z nowszym resetem, a nie większe liczby.
+  const g = a.nr === b.nr
+    ? { nk: Math.max(a.nk, b.nk), nb: Math.max(a.nb, b.nb), nc: Math.max(a.nc, b.nc), nr: a.nr }
+    : a.nr > b.nr ? a : b;
   return clean({
     krok: Math.max(a.krok, b.krok),
     etap: Math.max(a.etap, b.etap),
     klucz: a.klucz || b.klucz,
-    nk: Math.max(a.nk, b.nk),
-    nb: Math.max(a.nb, b.nb),
-    nc: Math.max(a.nc, b.nc),
+    nk: g.nk,
+    nb: g.nb,
+    nc: g.nc,
+    nr: g.nr,
   });
 }
 
@@ -229,7 +236,7 @@ async function push() {
   try {
     const data = { krok: state.krok, etap: state.etap, klucz: state.klucz, at: F.serverTimestamp() };
     // postęp w grze zapisuje się dopiero, gdy jest co zapisać (starsze reguły bazy go nie znają)
-    if (state.nk > 1 || state.nb > 0 || state.nc > 0) Object.assign(data, { nk: state.nk, nb: state.nb, nc: state.nc });
+    if (state.nk > 1 || state.nb > 0 || state.nc > 0 || state.nr > 0) Object.assign(data, { nk: state.nk, nb: state.nb, nc: state.nc, nr: state.nr });
     await F.setDoc(F.doc(db, 'noc', me.uid), data);
     remote = { ...state };
     tries = 0;
@@ -276,8 +283,8 @@ export function setStage(n) {
   push();
 }
 
-/** Postęp w grze z kamery: { nk, nb, nc }. */
-export const game = () => ({ nk: state.nk, nb: state.nb, nc: state.nc });
+/** Postęp w grze z kamery: { nk, nb, nc, nr }. */
+export const game = () => ({ nk: state.nk, nb: state.nb, nc: state.nc, nr: state.nr });
 
 /** Zapisuje postęp w grze. nk może się cofnąć (nowa gra), nb i nc tylko rosną. */
 export function setGame({ nk, nb, nc } = {}) {
@@ -289,6 +296,14 @@ export function setGame({ nk, nb, nc } = {}) {
   });
   if (same(next, state)) return;
   state = next;
+  save();
+  emit();
+  push();
+}
+
+/** Kasuje postęp w grze z kamery (noce i gwiazdki). Sama gra zostaje odblokowana. */
+export function resetGame() {
+  state = clean({ ...state, nk: 1, nb: 0, nc: 0, nr: state.nr + 1 });
   save();
   emit();
   push();

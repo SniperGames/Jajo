@@ -59,6 +59,66 @@ function pipCardHtml() {
     </article>`;
 }
 
+// Gra za kamerą 05: pojawia się na liście, gdy ktoś choć raz do niej wszedł przez zagadki (krok 9).
+const MAGDA_ART = `
+  <svg viewBox="0 0 320 200" aria-hidden="true">
+    <defs>
+      <filter id="thNoiseMagda"><feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="1" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter>
+      <radialGradient id="thFaceMagda" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="#4A463E"/><stop offset="1" stop-color="#1E1C19"/></radialGradient>
+      <filter id="thGlowMagda"><feGaussianBlur stdDeviation="1.6"/></filter>
+    </defs>
+    <rect width="320" height="200" fill="#050506"/>
+    <g class="magda-face">
+      <g fill="#2B2823">
+        <circle cx="222" cy="70" r="16"/><circle cx="240" cy="56" r="17"/><circle cx="262" cy="52" r="18"/><circle cx="284" cy="60" r="16"/>
+        <circle cx="298" cy="80" r="15"/><circle cx="214" cy="92" r="15"/><circle cx="302" cy="104" r="15"/><circle cx="212" cy="116" r="14"/>
+        <circle cx="300" cy="128" r="14"/><circle cx="218" cy="138" r="13"/><circle cx="294" cy="148" r="12"/>
+      </g>
+      <path d="M200 200c4-34 26-46 58-46s54 12 58 46z" fill="#2E2B27"/>
+      <ellipse cx="258" cy="104" rx="30" ry="38" fill="url(#thFaceMagda)"/>
+      <g fill="#F3F0D7" filter="url(#thGlowMagda)"><ellipse cx="246" cy="98" rx="4.2" ry="2.6"/><ellipse cx="271" cy="98" rx="4.2" ry="2.6"/></g>
+      <g fill="#F3F0D7"><circle cx="246" cy="98" r="1.6"/><circle cx="271" cy="98" r="1.6"/></g>
+      <path d="M244 124q14 9 28 0" stroke="#100E0C" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M206 196l18-52 6 2-14 52z" fill="#8E949A" opacity=".75"/>
+    </g>
+    <rect width="320" height="200" filter="url(#thNoiseMagda)" opacity=".18"/>
+    <g font-family="JetBrains Mono, monospace" font-weight="800" fill="#F2F2EE">
+      <text x="16" y="40" font-size="17">Pięć</text>
+      <text x="16" y="60" font-size="17">Koszmarnych</text>
+      <text x="16" y="80" font-size="17">Nocy u</text>
+      <text x="16" y="100" font-size="17">Magdy Gessler</text>
+      <text x="16" y="140" font-size="11">&gt;&gt; Nowa gra</text>
+      <text x="34" y="158" font-size="11" opacity=".8">Kontynuuj</text>
+    </g>
+  </svg>`;
+
+function magdaCardHtml() {
+  const g = noc.game ? noc.game() : { nk: 1, nb: 0, nc: 0, nr: 0 };
+  let started = g.nk > 1 || g.nb > 0 || g.nc > 0;
+  try {
+    started = started || localStorage.getItem('jajo:magda-start') === `r${g.nr || 0}`;
+  } catch {
+    /* pamięć niedostępna */
+  }
+  const stars = (g.nb >= 5 ? 1 : 0) + (g.nb >= 6 ? 1 : 0) + (g.nc ? 1 : 0);
+  return `
+    <article class="game-card game-card-noc" data-game="magda">
+      <a class="game-thumb" href="zmiana.html" tabindex="-1" aria-hidden="true">${MAGDA_ART}</a>
+      <div class="game-card-body">
+        <p class="eyebrow">Za kamerą 05</p>
+        <h2 class="game-card-title"><a href="zmiana.html">Pięć Koszmarnych Nocy u&nbsp;Magdy Gessler</a></h2>
+        <p class="game-card-text">Przetrwaj noce w&nbsp;biurze ochrony. Drzwi, światła, kamery i&nbsp;za mało prądu.</p>
+        <dl class="game-facts">
+          <div><dt>Noc</dt><dd>${started ? g.nk : '–'}</dd></div>
+          <div><dt>Gwiazdki</dt><dd aria-label="${stars} z 3">${'★'.repeat(stars)}${'☆'.repeat(3 - stars)}</dd></div>
+        </dl>
+        <div class="noc-card-actions">
+          <a class="btn btn-primary game-card-play" href="zmiana.html">${started ? 'Graj dalej' : 'Graj'}</a>
+        </div>
+      </div>
+    </article>`;
+}
+
 const ART = {
   'kury-z-procy': `
     <svg viewBox="0 0 320 200" aria-hidden="true">
@@ -244,7 +304,7 @@ function procyStars() {
 /* ---------- Lista gier ---------- */
 
 function renderHub() {
-  $('#gamesGrid').innerHTML = (noc && noc.step() >= 7 ? pipCardHtml() : '') + GAMES.map((g) => {
+  $('#gamesGrid').innerHTML = (noc && noc.step() >= 9 ? magdaCardHtml() : '') + (noc && noc.step() >= 7 ? pipCardHtml() : '') + GAMES.map((g) => {
     const best = bestOf(g.id);
     const lead = leaders[g.id];
     const href = g.href || `#${g.id}`;
@@ -714,9 +774,9 @@ window.addEventListener('hashchange', () => route(true));
 renderHub();
 route(false);
 
-import('./noc/rdzen.js').then(async (m) => {
+import('./noc/rdzen.js?v=20261005').then(async (m) => {
   noc = m;
-  if (m.step() < 8) await m.whenSynced();
+  if (m.step() < 9) await m.whenSynced();
   if (!hub.hidden) renderHub();
   m.onChange(() => {
     if (!hub.hidden) renderHub();

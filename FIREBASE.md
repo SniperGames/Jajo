@@ -187,6 +187,13 @@ I jeszcze raz wklej reguły (tak samo jak w kroku 14), bo w dokumencie `noc` doc
 
 Dopóki reguły nie są wklejone, gra działa normalnie, ale noce i gwiazdki zapisują się tylko w przeglądarce.
 
+## 16. Gra w „Grach” i reset postępu
+
+Znowu wklej reguły (tak samo jak w kroku 14). Dochodzą dwie rzeczy:
+
+- `krok` może mieć wartość 9: tak zapisuje się pierwsze wejście do gry za kamerą. Od tej chwili gra ma swoją kartę na stronie „Gry” (także na innych urządzeniach po zalogowaniu), więc nie trzeba za każdym razem przechodzić przez kamerę,
+- `nr`: licznik resetów. Przycisk „Resetuj postęp” w menu gry kasuje noce i gwiazdki. Reguły pozwalają cofnąć `nb` i `nc` tylko razem ze zwiększeniem `nr`, więc reset przechodzi też na inne urządzenia, a zwykły zapis dalej nie może niczego cofnąć.
+
 ## Koszty i limity
 
 Darmowy plan Spark wystarcza z dużym zapasem: 1 GiB danych, 50 000 odczytów i 20 000 zapisów dziennie. Jedno wejście na stronę z przepisami to kilkadziesiąt odczytów (liczniki polubień i przepisy czytelników). Zdjęcia są zmniejszane w przeglądarce i zapisywane w bazie, więc płatny Cloud Storage nie jest potrzebny. Jeśli limit kiedyś się skończy, strona nie przestanie działać: do północy (czasu USA) nie wczytają się tylko przepisy od czytelników.

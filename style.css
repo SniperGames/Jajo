@@ -3488,16 +3488,18 @@ html.noc-flicker body { animation: noc-flicker 1.3s steps(1) both; }
 .game-card-noc .eyebrow { color: #E0161B; }
 .game-card-noc .game-card-title a { color: inherit; }
 .game-card-noc .game-card-text, .game-card-noc .game-facts dt { color: #A39C88; }
+.game-card-noc .game-facts div { background: #1B1C21; }
 .game-card-noc .game-thumb { background: #0A0A0C; }
 .game-card-noc .pip-tear { animation: noc-tear 3.7s steps(1) infinite; }
 .game-card-noc .pip-walk { animation: noc-jitter 3.1s steps(1) infinite; }
+.game-card-noc .magda-face { animation: noc-jitter 2.7s steps(1) infinite; }
 @keyframes noc-tear { 0%, 90%, 100% { opacity: 0; } 91% { opacity: .55; transform: translateY(-30px); } 94% { opacity: .35; transform: translateY(24px); } }
 .noc-card-actions { display: flex; flex-wrap: wrap; gap: .6rem; }
 .noc-card-actions .game-card-play { margin: 0; }
 .noc-cam-btn { color: #FF5A5F; border-color: #4A2326; }
 @media (prefers-reduced-motion: reduce) {
   .egg-void-eye, .decoded.is-noc .st b, dialog.noc-note[open], html.noc-flicker body,
-  .noc-banner-rec, .game-card-noc .pip-tear, .game-card-noc .pip-walk { animation: none; }
+  .noc-banner-rec, .game-card-noc .pip-tear, .game-card-noc .pip-walk, .game-card-noc .magda-face { animation: none; }
 }
 
 /* Gra „Pip wraca do domu” */

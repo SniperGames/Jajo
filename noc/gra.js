@@ -1,10 +1,10 @@
 /* Pięć Koszmarnych Nocy u Magdy Gessler. Gra za kamerą 05: menu jak w FNaF 1, intro, noce 1–6, własna noc, gwiazdki i zapis postępu.
    Obrazki, dźwięki i film są zaszyfrowane tym samym kluczem co nagranie z kamery (odblokowuje go rozwiązanie zagadek). */
-import { get, whenSynced, game, setGame, onChange, savedOnAccount } from './rdzen.js?v=20261004';
-import { Dzwiek } from './gra-dzwiek.js?v=20261004';
-import { Night, prepareArt, CAMS, LEVELS, NAMES } from './gra-noc.js?v=20261004';
+import { get, whenSynced, game, setGame, resetGame, advance, onChange, savedOnAccount } from './rdzen.js?v=20261005';
+import { Dzwiek } from './gra-dzwiek.js?v=20261005';
+import { Night, prepareArt, CAMS, LEVELS, NAMES } from './gra-noc.js?v=20261005';
 
-const V = '20261004';
+const V = '20261005';
 const $ = (sel, root = document) => root.querySelector(sel);
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -215,19 +215,20 @@ let twitchTimer = 0;
 let faces = [];
 
 // „Kontynuuj” pojawia się dopiero, gdy ktoś choć raz zaczął nową grę (żeby każdy najpierw zobaczył intro).
+// Znacznik pamięta numer resetu, więc reset na innym urządzeniu też go unieważnia.
 const STARTED_KEY = 'jajo:magda-start';
 function started() {
   const g = game();
   if (g.nk > 1 || g.nb > 0 || g.nc > 0) return true;
   try {
-    return localStorage.getItem(STARTED_KEY) === '1';
+    return localStorage.getItem(STARTED_KEY) === `r${g.nr}`;
   } catch {
     return false;
   }
 }
 function markStarted() {
   try {
-    localStorage.setItem(STARTED_KEY, '1');
+    localStorage.setItem(STARTED_KEY, `r${game().nr}`);
   } catch {
     /* pamięć niedostępna */
   }
@@ -237,6 +238,7 @@ function markStarted() {
 function updateMenu() {
   const g = game();
   $('#fnContItem').hidden = !started();
+  $('#fnResetItem').hidden = !started();
   $('#fnContNight').textContent = `Noc ${g.nk}`;
   $('#fnSixthItem').hidden = g.nb < 5;
   $('#fnCustomItem').hidden = g.nb < 6;
@@ -310,7 +312,7 @@ function select(btn, withSound) {
 items.addEventListener('pointerover', (e) => select(e.target.closest('.fn-item'), true));
 items.addEventListener('focusin', (e) => select(e.target.closest('.fn-item'), true));
 menu.addEventListener('keydown', (e) => {
-  if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+  if (mode !== 'menu' || (e.key !== 'ArrowDown' && e.key !== 'ArrowUp')) return;
   const list = [...items.querySelectorAll('li:not([hidden]) .fn-item')];
   const i = list.indexOf(document.activeElement);
   const next = list[(i + (e.key === 'ArrowDown' ? 1 : -1) + list.length) % list.length];
@@ -321,9 +323,19 @@ menu.addEventListener('keydown', (e) => {
 items.addEventListener('click', async (e) => {
   const b = e.target.closest('.fn-item');
   if (!b || mode !== 'menu') return;
+  const act = b.dataset.act;
+  if (act === 'exit') {
+    // powrót na stronę główną z jajkami
+    sound.stopAll(0.2);
+    location.href = 'index.html';
+    return;
+  }
+  if (act === 'reset') {
+    askReset();
+    return;
+  }
   sound.init();
   fullscreen();
-  const act = b.dataset.act;
   if (act === 'new') {
     markStarted();
     setGame({ nk: 1 });
@@ -339,6 +351,62 @@ items.addEventListener('click', async (e) => {
   } else if (act === 'custom') {
     hideMenu();
     showCustom();
+  }
+});
+
+/* ---------- Reset postępu ---------- */
+
+const confirmBox = $('#fnConfirm');
+
+function askReset() {
+  mode = 'confirm';
+  confirmBox.hidden = false;
+  sound.play('blip', { gain: 0.5 });
+  confirmBox.querySelector('[data-confirm="no"]').focus({ preventScroll: true });
+}
+
+function closeConfirm(focusSel) {
+  confirmBox.hidden = true;
+  mode = 'menu';
+  const b = items.querySelector(focusSel) || items.querySelector('.fn-item');
+  select(b);
+  b.focus({ preventScroll: true });
+}
+
+confirmBox.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-confirm]');
+  if (!b || mode !== 'confirm') return;
+  if (b.dataset.confirm === 'yes') {
+    resetGame();
+    for (const k of [STARTED_KEY, CUSTOM_KEY]) {
+      try {
+        localStorage.removeItem(k);
+      } catch {
+        /* pamięć niedostępna */
+      }
+    }
+    customLv = { ...CUSTOM_DEFAULT };
+    sound.play('static', { gain: 0.3 }).stop(0.6);
+    setNoise(1);
+    setTimeout(() => setNoise(0), 350);
+    updateMenu();
+    closeConfirm('[data-act="new"]');
+  } else {
+    closeConfirm('[data-act="reset"]');
+  }
+});
+
+confirmBox.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    closeConfirm('[data-act="reset"]');
+  }
+  // fokus zostaje w okienku
+  if (e.key === 'Tab') {
+    const btns = [...confirmBox.querySelectorAll('button')];
+    const i = btns.indexOf(document.activeElement);
+    btns[(i + (e.shiftKey ? -1 : 1) + btns.length) % btns.length].focus();
+    e.preventDefault();
   }
 });
 
@@ -543,7 +611,8 @@ async function ending(n, hard) {
 /* ---------- Własna noc ---------- */
 
 const CUSTOM_KEY = 'jajo:magda-wlasna';
-let customLv = { magda: 1, mateusz: 3, michel: 3, robert: 1 };
+const CUSTOM_DEFAULT = { magda: 1, mateusz: 3, michel: 3, robert: 1 };
+let customLv = { ...CUSTOM_DEFAULT };
 try {
   const saved = JSON.parse(localStorage.getItem(CUSTOM_KEY));
   if (saved) for (const k of Object.keys(customLv)) customLv[k] = Math.max(0, Math.min(20, Math.floor(Number(saved[k]) || 0)));
@@ -647,6 +716,7 @@ const startBtn = $('#fnStart');
     return;
   }
   key = st.klucz;
+  advance(9); // gra pojawi się na liście w „Grach”, żeby nie trzeba było wchodzić przez kamerę
   try {
     await pack('m');
   } catch (err) {
