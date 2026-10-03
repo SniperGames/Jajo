@@ -1,8 +1,8 @@
 /* Pięć Koszmarnych Nocy u Magdy Gessler. Gra za kamerą 05: menu jak w FNaF 1, intro, noce 1–6, własna noc, gwiazdki i zapis postępu.
    Obrazki, dźwięki i film są zaszyfrowane tym samym kluczem co nagranie z kamery (odblokowuje go rozwiązanie zagadek). */
-import { get, whenSynced, game, setGame, resetGame, advance, onChange, savedOnAccount } from './rdzen.js?v=20261007';
-import { Dzwiek } from './gra-dzwiek.js?v=20261007';
-import { Night, prepareArt, CAMS, LEVELS, NAMES } from './gra-noc.js?v=20261007';
+import { get, whenSynced, game, setGame, resetGame, advance, onChange, savedOnAccount } from './rdzen.js?v=20261008';
+import { Dzwiek } from './gra-dzwiek.js?v=20261008';
+import { Night, prepareArt, CAMS, LEVELS, NAMES } from './gra-noc.js?v=20261008';
 
 const V = '20261005';
 const $ = (sel, root = document) => root.querySelector(sel);

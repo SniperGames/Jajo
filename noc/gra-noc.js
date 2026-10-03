@@ -57,11 +57,11 @@ export const LEVELS = {
   5: { magda: 3, mateusz: 5, michel: 7, robert: 5 },
   6: { magda: 4, mateusz: 10, michel: 12, robert: 16 },
 };
-// Prąd: każdy pasek zużycia zabiera tyle procent na sekundę, a w kolejnych nocach ucieka jeszcze trochę.
-// (Liczby dobrane symulacją: dobry gracz kończy 1. noc z ok. 50% prądu, 5. noc z ok. 10%,
-//  a kto przesiedzi noc za dwojgiem zamkniętych drzwi, zostaje bez prądu ok. 3:30.)
+// Prąd: każda kreska zużycia zabiera tyle procent na sekundę, a do tego każda noc ma własny stały ubytek
+// (PASSIVE, %/s). Liczby dobrane symulacją: dobry gracz kończy 1. noc z ok. 30% prądu, 2. z ok. 22%,
+// 3. z ok. 15%, 4. i 5. z ok. 10%, a kto przesiedzi noc za dwojgiem zamkniętych drzwi, zostaje bez prądu przed 4:00.
 const DRAIN = 0.068;
-const PASSIVE = { 1: 0, 2: 0.003, 3: 0.005, 4: 0.007, 5: 0.009, 6: 0.004, 7: 0.008 };
+const PASSIVE = { 1: 0.04, 2: 0.036, 3: 0.04, 4: 0.012, 5: 0.009, 6: 0.004, 7: 0.008 };
 const KNOCK = 2; // walenie Makłowicza w drzwi: 1%, potem o tyle więcej za każdym razem
 const BOTH_DOORS = 1.5; // oba drzwi zamknięte naraz zabierają dodatkowo tyle „kresek” (żeby nie dało się przesiedzieć nocy za zamkniętymi drzwiami)
 
