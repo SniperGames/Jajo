@@ -1,10 +1,10 @@
 /* Pięć Koszmarnych Nocy u Magdy Gessler. Gra za kamerą 05: menu jak w FNaF 1, intro, noce 1–6, własna noc, gwiazdki i zapis postępu.
    Obrazki, dźwięki i film są zaszyfrowane tym samym kluczem co nagranie z kamery (odblokowuje go rozwiązanie zagadek). */
-import { get, step, whenSynced, game, setGame } from './rdzen.js?v=20261003';
-import { Dzwiek } from './gra-dzwiek.js?v=20261003';
-import { Night, prepareArt, CAMS, LEVELS, NAMES } from './gra-noc.js?v=20261003';
+import { get, whenSynced, game, setGame, onChange, savedOnAccount } from './rdzen.js?v=20261004';
+import { Dzwiek } from './gra-dzwiek.js?v=20261004';
+import { Night, prepareArt, CAMS, LEVELS, NAMES } from './gra-noc.js?v=20261004';
 
-const V = '20261003';
+const V = '20261004';
 const $ = (sel, root = document) => root.querySelector(sel);
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -135,7 +135,8 @@ async function need(names, show) {
 async function preload() {
   const g = game();
   const order = ['o', 's'];
-  if (g.nk <= 1 && g.nb === 0) order.push('i');
+  if (!started()) order.push('i'); // ktoś pierwszy raz: zaraz zobaczy intro
+  else if (g.nk <= 1 && g.nb === 0) order.push('i');
   order.push(`t${g.nk}`);
   for (const n of order) await pack(n).catch(() => {});
 }
@@ -213,11 +214,29 @@ let faceTimer = 0;
 let twitchTimer = 0;
 let faces = [];
 
-function showMenu() {
-  mode = 'menu';
-  hideScreen();
-  document.body.classList.add('fn-in-menu');
+// „Kontynuuj” pojawia się dopiero, gdy ktoś choć raz zaczął nową grę (żeby każdy najpierw zobaczył intro).
+const STARTED_KEY = 'jajo:magda-start';
+function started() {
   const g = game();
+  if (g.nk > 1 || g.nb > 0 || g.nc > 0) return true;
+  try {
+    return localStorage.getItem(STARTED_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+function markStarted() {
+  try {
+    localStorage.setItem(STARTED_KEY, '1');
+  } catch {
+    /* pamięć niedostępna */
+  }
+}
+
+// Pozycje menu, gwiazdki i napis, gdzie zapisuje się postęp (odświeżane też po wczytaniu postępu z konta).
+function updateMenu() {
+  const g = game();
+  $('#fnContItem').hidden = !started();
   $('#fnContNight').textContent = `Noc ${g.nk}`;
   $('#fnSixthItem').hidden = g.nb < 5;
   $('#fnCustomItem').hidden = g.nb < 6;
@@ -225,6 +244,22 @@ function showMenu() {
   $('#fnStars').hidden = stars === 0;
   $('#fnStars').textContent = '★'.repeat(stars);
   $('#fnStars').setAttribute('aria-label', `Gwiazdki: ${stars}`);
+  $('#fnSaveNote').textContent = savedOnAccount()
+    ? 'Postęp zapisuje się na Twoim koncie.'
+    : 'Postęp zapisuje się tylko w tej przeglądarce. Zaloguj się na stronie Jajo, żeby grać dalej na innym urządzeniu.';
+  const sel = items.querySelector('.fn-item.is-sel');
+  if (!sel || sel.closest('li').hidden) select(items.querySelector('.fn-item'));
+}
+
+onChange(() => {
+  if (mode === 'menu') updateMenu();
+});
+
+function showMenu() {
+  mode = 'menu';
+  hideScreen();
+  document.body.classList.add('fn-in-menu');
+  updateMenu();
   if (!faces.length) {
     faces = ['menu-0', 'menu-1', 'menu-2'].map((id) => img.get(id).src);
     face.src = faces[0];
@@ -290,6 +325,7 @@ items.addEventListener('click', async (e) => {
   fullscreen();
   const act = b.dataset.act;
   if (act === 'new') {
+    markStarted();
     setGame({ nk: 1 });
     hideMenu();
     await playIntro();
@@ -343,28 +379,22 @@ function waitInput(ms = 0, minMs = 600) {
 
 async function playIntro() {
   mode = 'intro';
-  let skipped = false;
-  if (!videoUrl) {
-    showScreen('<p class="fn-load" id="fnLoadText">Ładowanie… 0%</p><button type="button" class="fn-btn fn-load-skip" id="fnLoadSkip">Pomiń intro</button>');
-    const skip = new Promise((resolve) => {
-      $('#fnLoadSkip').addEventListener('click', () => {
-        skipped = true;
-        resolve();
+  // Intro trzeba obejrzeć w całości (nie da się go pominąć). Najpierw musi się pobrać.
+  while (!videoUrl) {
+    showScreen('<p class="fn-load" id="fnLoadText">Ładowanie… 0%</p>');
+    try {
+      await need(['i'], (p) => {
+        const el = $('#fnLoadText');
+        if (el) el.textContent = `Ładowanie… ${p}%`;
       });
-    });
-    const load = need(['i'], (p) => {
-      const el = $('#fnLoadText');
-      if (el) el.textContent = `Ładowanie… ${p}%`;
-    }).catch(() => {
-      skipped = true;
-    });
-    await Promise.race([load, skip]);
-    hideScreen();
+    } catch {
+      showScreen('<p class="fn-load">Nie udało się wczytać intro.</p><p class="fn-small">Sprawdź internet.</p><button type="button" class="fn-btn fn-load-retry" id="fnLoadRetry">Spróbuj jeszcze raz</button>');
+      await new Promise((resolve) => $('#fnLoadRetry').addEventListener('click', resolve, { once: true }));
+    }
   }
-  if (skipped || !videoUrl) return;
+  hideScreen();
   const box = $('#fnIntro');
   const video = $('#fnVideo');
-  const skipBtn = $('#fnSkip');
   box.hidden = false;
   video.src = videoUrl;
   video.currentTime = 0;
@@ -377,19 +407,10 @@ async function playIntro() {
       video.removeAttribute('src');
       video.load();
       box.hidden = true;
-      window.removeEventListener('keydown', onKey);
       resolve();
     };
-    const onKey = (e) => {
-      if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        finish();
-      }
-    };
     video.onended = finish;
-    video.onerror = finish;
-    skipBtn.onclick = finish;
-    window.addEventListener('keydown', onKey);
+    video.onerror = finish; // przeglądarka nie umie odtworzyć filmu: nie ma na co czekać
     video.play().catch(() => {
       // przeglądarka nie pozwoliła odtworzyć z dźwiękiem: wystarczy kliknąć
       box.classList.add('needs-tap');
@@ -398,7 +419,6 @@ async function playIntro() {
         video.play().catch(finish);
       }, { once: true });
     });
-    skipBtn.focus({ preventScroll: true });
   });
 }
 
@@ -434,7 +454,7 @@ async function startNight(n, levels = null) {
   const el = $('#fnCardLoad');
   if (el) el.textContent = '';
   if (!art) art = prepareArt(img);
-  await sound.ready(['amb', 'fan', 'blip', 'door', 'camup', 'camdown', 'camloop', 'hum', 'js-magda', 'js-mateusz', 'js-michel', 'js-robert', 'scream']);
+  await sound.ready(['amb', 'fan', 'blip', 'door', 'camup', 'camdown', 'camloop', 'hum', 'js-magda', 'js-mateusz', 'js-michel', 'js-robert']);
   sound.ready(['eerie', 'cold', 'musicbox', 'powerdown', 'chimes', 'crowd', 'static2']);
   const left = 3000 - (Date.now() - t0);
   if (left > 0) await wait(left);
@@ -619,7 +639,8 @@ const bootText = $('#fnBootText');
 const startBtn = $('#fnStart');
 
 (async function init() {
-  if (step() < 8) await whenSynced();
+  // Zawsze łączymy się z kontem (najwyżej kilka sekund), żeby noce przechodziły między urządzeniami.
+  await whenSynced();
   const st = get();
   if (st.krok < 8 || !st.klucz) {
     bootTitle.textContent = 'Tu nic nie ma.';

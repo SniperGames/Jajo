@@ -199,6 +199,14 @@ body.fn-body {
   opacity: 0.75;
 }
 
+.fn-save {
+  max-width: 34ch;
+  margin: 1vh 0 0;
+  font-size: clamp(10px, 1.9vh, 14px);
+  line-height: 1.4;
+  opacity: 0.55;
+}
+
 .fn-ver,
 .fn-copy {
   position: absolute;
@@ -582,18 +590,6 @@ body.fn-body {
   cursor: pointer;
 }
 
-.fn-skip {
-  position: absolute;
-  right: max(14px, 3vw);
-  bottom: max(12px, 3vh);
-  z-index: 1;
-  padding: 8px 16px;
-  border: 2px solid rgba(255, 255, 255, 0.7);
-  background: rgba(0, 0, 0, 0.5);
-  font-size: clamp(12px, 2.6vh, 18px);
-  font-weight: 800;
-}
-
 /* ---------- Ekrany z napisami ---------- */
 
 .fn-screen {
@@ -648,7 +644,7 @@ body.fn-body {
   font-weight: 800;
 }
 
-.fn-load-skip {
+.fn-load-retry {
   margin-top: 2vh;
 }
 

@@ -37,7 +37,7 @@ const SPOTS = {
   '2A': [[0.75, 0.44, 0.26], [0.56, 0.68, 0.48]],
   '4A': [[0.24, 0.43, 0.22], [0.42, 0.64, 0.42], [0.56, 0.93, 0.7]],
   5: [[0.33, 0.5, 0.34], [0.47, 0.88, 0.66], [0.8, 0.72, 0.5]],
-  6: [[0.4, 0.53, 0.3], [0.2, 0.88, 0.6], [0.82, 0.76, 0.5]],
+  6: [[0.34, 0.565, 0.29], [0.2, 0.88, 0.6], [0.82, 0.76, 0.5]],
   7: [[0.53, 0.52, 0.3], [0.63, 0.8, 0.55], [0.3, 0.74, 0.46]],
 };
 const STAGE_SPOT = { mateusz: 0, magda: 1, michel: 2 };
@@ -823,11 +823,10 @@ export class Night {
     this.ui.hud.hidden = true;
     const s = this.sound;
     s.stopAll(0.05);
+    // jumpscare trwa tyle, ile dźwięk danej postaci (cały, bez ucinania)
     const clip = `js-${n}`;
-    const dur = clamp(s.duration(clip) || 3, 2.2, 9);
-    this.jumpClip = s.play(clip, { loud: true, gain: 1 });
-    const scream = s.play('scream', { loud: true, gain: 0.35 });
-    setTimeout(() => scream.stop(0.5), 1100);
+    const dur = Math.max(2.2, (s.duration(clip) || 3) + 0.15);
+    this.jumpClip = s.play(clip, { loud: true, gain: 0.92 });
     const meta = this.meta[`j-${n}`];
     const frames = meta.frames;
     const figs = frames.filter((f) => f[4] === 'f').length;
