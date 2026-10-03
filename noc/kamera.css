@@ -1,4 +1,4 @@
-/* Jajo: kamera 05. Obraz na cały ekran, napisy i mapa kamer na obrazie (jak w monitoringu z FNaF 1).
+/* Jajo: kamera 05. Obraz na cały ekran i napisy na obrazie (jak w monitoringu z FNaF 1).
    Osobny plik, żeby strona kamery nie zależała od reszty stylów. */
 :root { --f-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 *, *::before, *::after { box-sizing: border-box; }
@@ -48,8 +48,6 @@ html, body { height: 100%; }
 .cam-rec[hidden] { display: none; }
 .cam-sys { font-size: clamp(.68rem, .6rem + .35vw, .9rem); color: rgba(232, 228, 212, .8); }
 .cam-sys span { color: rgba(232, 228, 212, .5); }
-.cam-exit { width: max-content; color: rgba(232, 228, 212, .55); font-size: clamp(.68rem, .6rem + .35vw, .9rem); text-decoration: none; letter-spacing: .08em; }
-.cam-exit:hover, .cam-exit:focus-visible { color: #fff; }
 .cam-gate { position: absolute; inset: 0; z-index: 3; display: grid; place-content: center; justify-items: center; gap: .7rem; padding: 1rem; text-align: center; }
 .cam-gate[hidden] { display: none; }
 .cam-gate p { margin: 0; text-shadow: 0 0 6px #000, 0 0 2px #000; }
@@ -69,61 +67,8 @@ html, body { height: 100%; }
 }
 .cam-connect:hover, .cam-connect:focus-visible { background: #A6CC34; border-color: #fff; color: #10140A; }
 .cam-connect[hidden] { display: none; }
-/* Mapa budynku z przyciskami kamer */
-.cam-map {
-  position: absolute;
-  z-index: 4;
-  right: calc(3vmin + 10px);
-  bottom: calc(3vmin + 10px);
-  width: clamp(230px, 30vw, 400px);
-  aspect-ratio: 300 / 250;
-  padding: 0;
-}
-.cam-map[hidden] { display: none; }
-.cam-map-lines { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.cam-map-lines path { fill: none; stroke: rgba(235, 235, 235, .92); stroke-width: 3; stroke-linejoin: miter; }
-.cam-map-lines path:first-child { fill: rgba(0, 0, 0, .22); }
-.cam-cam {
-  position: absolute;
-  display: grid;
-  place-content: center;
-  width: 17%;
-  height: 15%;
-  padding: 0;
-  border: 2px solid #F2F2F2;
-  border-radius: 0;
-  color: #F2F2F2;
-  background: #4A4A4A;
-  font: 800 clamp(.55rem, .45rem + .45vw, .85rem) var(--f-mono);
-  line-height: 1;
-  letter-spacing: .04em;
-  text-align: left;
-  transform: translate(-50%, -50%);
-  cursor: pointer;
-  box-shadow: 0 0 0 2px rgba(0, 0, 0, .35);
-}
-.cam-cam span { display: block; }
-.cam-cam:hover { background: #626262; }
-.cam-cam[aria-pressed="true"] { color: #F7FFE6; background: #A6CC34; border-color: #FFFFFF; }
-.cam-cam:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
-.cam-you {
-  position: absolute;
-  left: 50%;
-  top: 91.6%;
-  display: flex;
-  align-items: center;
-  gap: .3rem;
-  color: #F2F2F2;
-  font: 800 clamp(.55rem, .45rem + .4vw, .8rem) var(--f-mono);
-  transform: translate(-50%, -50%);
-}
-.cam-you::after { content: ""; width: .55em; height: .55em; background: #F2F2F2; }
 @keyframes cam-pan { from { transform: translateX(-2.5%); } to { transform: translateX(2.5%); } }
 @keyframes cam-flicker { 0%, 96%, 100% { opacity: 1; } 97% { opacity: .82; } 98% { opacity: .95; } 99% { opacity: .7; } }
-@media (max-width: 640px) {
-  .cam-map { width: min(62vw, 300px); }
-  .cam-hud-bl { bottom: auto; top: calc(3vmin + 14px + 3.4em); }
-}
 @keyframes noc-rec { 50% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) {
   .cam-img, .cam-pan, .cam-rec { animation: none; }

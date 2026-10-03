@@ -6,15 +6,6 @@ const $ = (sel, root = document) => root.querySelector(sel);
 const PERIOD = 114.6146; // dźwięk w nagraniu powtarza się co tyle sekund
 const FADE = 2; // płynne przejście między kolejnymi pętlami
 const VOLUME = 1.2;
-// Kamery na mapie budynku: [numer, pomieszczenie, x, y] (współrzędne mapy 300 × 250).
-const CAMS = [
-  ['01', 'KURNIK', 150, 34],
-  ['02', 'PODWÓRKO', 32, 88],
-  ['03', 'KUCHNIA', 268, 181],
-  ['04', 'MAGAZYN', 32, 182],
-  ['05', 'SALA', 112, 104],
-  ['06', 'ZAPLECZE', 268, 88],
-];
 // Kolejne kadry: postać coraz bliżej kamery.
 const FRAMES = ['noc/05.bin', 'noc/05b.bin', 'noc/05c.bin', 'noc/05d.bin'];
 const WAIT = [[45, 60], [35, 50], [28, 40]]; // ile sekund stoi w miejscu, zanim podejdzie bliżej
@@ -35,7 +26,6 @@ const gate = $('#camGate');
 const gateTitle = $('#camGateTitle');
 const gateText = $('#camGateText');
 const connect = $('#camConnect');
-const map = $('#camMap');
 const rec = $('#camRec');
 const noiseCanvas = $('#camNoise');
 let noiseLevel = 0.85;
@@ -45,7 +35,6 @@ let master = null;
 let audioP = null;
 let audioBuf = null;
 let nextAt = 0;
-let current = '';
 let key = '';
 const urls = []; // odszyfrowane kadry (adresy blob:)
 let stage = 0; // który kadr widać
@@ -150,43 +139,22 @@ async function startAudio() {
   });
 }
 
-/* ---------- Mapa i przełączanie kamer ---------- */
+/* ---------- Obraz z kamery ---------- */
 
-function renderMap() {
-  map.insertAdjacentHTML('beforeend', CAMS.map(([id, name, x, y]) => `
-    <button type="button" class="cam-cam" data-cam="${id}" aria-pressed="false" aria-label="Kamera ${id}: ${name.toLowerCase()}"
-      style="left:${(x / 300) * 100}%;top:${(y / 250) * 100}%"><span>CAM</span><span>${id}</span></button>`).join(''));
-}
-
-function switchTo(id) {
-  if (id === current) return;
-  current = id;
+// Jest tylko kamera 05: nie da się jej przełączyć ani wyjść, trzeba patrzeć do końca.
+function showCam() {
   flash = 1;
   staticNoise(0.28, 0.09);
-  const name = CAMS.find(([c]) => c === id)[1];
-  $('#camName').textContent = `CAM ${id}`;
-  $('#camRoom').textContent = name;
-  map.querySelectorAll('[data-cam]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.cam === id)));
   refresh();
 }
 
-// Co widać na ekranie: kamera 05 (albo sam szum, gdy postać właśnie się przemieszcza) lub brak sygnału.
+// Co widać na ekranie: obraz z kamery 05 albo sam szum, gdy postać właśnie się przemieszcza.
 function refresh() {
-  if (current === '05') {
-    img.hidden = moving;
-    img.alt = ALT[stage];
-    gate.hidden = true;
-    rec.hidden = false;
-    noiseLevel = moving ? 1 : 0.07;
-  } else {
-    img.hidden = true;
-    gate.hidden = false;
-    gateTitle.textContent = 'BRAK SYGNAŁU';
-    gateText.textContent = '';
-    connect.hidden = true;
-    rec.hidden = true;
-    noiseLevel = 0.85;
-  }
+  img.hidden = moving;
+  img.alt = ALT[stage];
+  gate.hidden = true;
+  rec.hidden = false;
+  noiseLevel = moving ? 1 : 0.07;
 }
 
 /* ---------- Postać podchodzi coraz bliżej ---------- */
@@ -239,17 +207,15 @@ async function move() {
   }
   moving = true;
   const dur = 1700 + Math.random() * 900;
-  if (current === '05') {
-    staticNoise(dur / 1000, 0.16);
-    flash = 1;
-  }
+  staticNoise(dur / 1000, 0.16);
+  flash = 1;
   refresh();
   await wait(dur / 2);
   stage += 1;
   img.src = urls[stage];
   await wait(dur / 2);
   moving = false;
-  if (current === '05') flash = 1;
+  flash = 1;
   refresh();
   due = stage < FRAMES.length - 1 ? randIn(WAIT[stage]) : HOLD;
 }
@@ -367,9 +333,7 @@ function locked(text) {
 connect.addEventListener('click', async () => {
   connect.disabled = true;
   fullscreen();
-  renderMap();
-  map.hidden = false;
-  switchTo('05');
+  showCam();
   started = true;
   due = randIn(WAIT[0]);
   try {
@@ -377,15 +341,4 @@ connect.addEventListener('click', async () => {
   } catch (err) {
     console.error(err);
   }
-});
-
-map.addEventListener('click', (e) => {
-  const b = e.target.closest('[data-cam]');
-  if (b) switchTo(b.dataset.cam);
-});
-
-window.addEventListener('keydown', (e) => {
-  if (map.hidden) return;
-  const n = Number(e.key);
-  if (n >= 1 && n <= CAMS.length) switchTo(String(n).padStart(2, '0'));
 });
