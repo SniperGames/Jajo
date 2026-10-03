@@ -60,37 +60,92 @@ function pipCardHtml() {
 }
 
 // Gra za kamerą 05: pojawia się na liście, gdy ktoś choć raz do niej wszedł przez zagadki (krok 9).
-const MAGDA_ART = `
-  <svg viewBox="0 0 320 200" aria-hidden="true">
-    <defs>
-      <filter id="thNoiseMagda"><feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="1" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter>
-      <radialGradient id="thFaceMagda" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="#4A463E"/><stop offset="1" stop-color="#1E1C19"/></radialGradient>
-      <filter id="thGlowMagda"><feGaussianBlur stdDeviation="1.6"/></filter>
-    </defs>
-    <rect width="320" height="200" fill="#050506"/>
-    <g class="magda-face">
-      <g fill="#2B2823">
-        <circle cx="222" cy="70" r="16"/><circle cx="240" cy="56" r="17"/><circle cx="262" cy="52" r="18"/><circle cx="284" cy="60" r="16"/>
-        <circle cx="298" cy="80" r="15"/><circle cx="214" cy="92" r="15"/><circle cx="302" cy="104" r="15"/><circle cx="212" cy="116" r="14"/>
-        <circle cx="300" cy="128" r="14"/><circle cx="218" cy="138" r="13"/><circle cx="294" cy="148" r="12"/>
-      </g>
-      <path d="M200 200c4-34 26-46 58-46s54 12 58 46z" fill="#2E2B27"/>
-      <ellipse cx="258" cy="104" rx="30" ry="38" fill="url(#thFaceMagda)"/>
-      <g fill="#F3F0D7" filter="url(#thGlowMagda)"><ellipse cx="246" cy="98" rx="4.2" ry="2.6"/><ellipse cx="271" cy="98" rx="4.2" ry="2.6"/></g>
-      <g fill="#F3F0D7"><circle cx="246" cy="98" r="1.6"/><circle cx="271" cy="98" r="1.6"/></g>
-      <path d="M244 124q14 9 28 0" stroke="#100E0C" stroke-width="3" fill="none" stroke-linecap="round"/>
-      <path d="M206 196l18-52 6 2-14 52z" fill="#8E949A" opacity=".75"/>
-    </g>
-    <rect width="320" height="200" filter="url(#thNoiseMagda)" opacity=".18"/>
-    <g font-family="JetBrains Mono, monospace" font-weight="800" fill="#F2F2EE">
-      <text x="16" y="40" font-size="17">Pięć</text>
-      <text x="16" y="60" font-size="17">Koszmarnych</text>
-      <text x="16" y="80" font-size="17">Nocy u</text>
-      <text x="16" y="100" font-size="17">Magdy Gessler</text>
-      <text x="16" y="140" font-size="11">&gt;&gt; Nowa gra</text>
-      <text x="34" y="158" font-size="11" opacity=".8">Kontynuuj</text>
-    </g>
-  </svg>`;
+// Miniaturka to zrzut prawdziwego menu gry (zaszyfrowany kluczem z zagadek) z ruchomym szumem jak w menu.
+const MAGDA_THUMB = `
+  <span class="magda-thumb">
+    <span class="magda-thumb-fallback">Pięć<br>Koszmarnych<br>Nocy u<br>Magdy Gessler</span>
+    <img class="magda-thumb-a" alt="">
+    <img class="magda-thumb-b" alt="">
+    <canvas class="magda-thumb-noise" width="192" height="120"></canvas>
+  </span>`;
+
+let magdaImgs = null;
+let magdaUrls = null; // już odszyfrowane (lista gier przerysowuje się, a obrazek ma się pokazać od razu)
+let magdaLoop = 0;
+let twitchAt = 0;
+const hexBytes = (h) => Uint8Array.from(h.match(/../g), (x) => parseInt(x, 16));
+
+function loadMagdaThumb() {
+  if (!magdaImgs) {
+    magdaImgs = (async () => {
+      const key = noc.get().klucz;
+      if (!/^[0-9a-f]{64}$/.test(key)) return null;
+      const res = await fetch('noc/g/k.bin?v=20261006');
+      if (!res.ok) return null;
+      const data = new Uint8Array(await res.arrayBuffer());
+      const k = await crypto.subtle.importKey('raw', hexBytes(key), 'AES-GCM', false, ['decrypt']);
+      const plain = new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: data.slice(0, 12) }, k, data.slice(12)));
+      const hl = new DataView(plain.buffer).getUint32(0, true);
+      const head = JSON.parse(new TextDecoder().decode(plain.subarray(4, 4 + hl)));
+      const url = (id) => {
+        const f = head.find((x) => x.id === id);
+        return URL.createObjectURL(new Blob([plain.subarray(4 + hl + f.off, 4 + hl + f.off + f.len)], { type: f.type }));
+      };
+      magdaUrls = [url('kafel-a'), url('kafel-b')];
+      return magdaUrls;
+    })().catch(() => null);
+  }
+  return magdaImgs;
+}
+
+// Szum, migotanie twarzy i co jakiś czas „drgnięcie” w krzyk (jak w menu gry).
+function startMagdaThumb() {
+  const box = $('[data-game="magda"] .magda-thumb');
+  cancelAnimationFrame(magdaLoop);
+  if (!box) return;
+  const [a, b] = box.querySelectorAll('img');
+  if (magdaUrls) {
+    [a.src, b.src] = magdaUrls;
+    box.classList.add('is-ready');
+  } else {
+    loadMagdaThumb().then((urls) => {
+      if (!urls || !box.isConnected) return;
+      [a.src, b.src] = urls;
+      a.decode().catch(() => {}).then(() => box.classList.add('is-ready'));
+    });
+  }
+  const cv = box.querySelector('canvas');
+  const x = cv.getContext('2d');
+  const frame = x.createImageData(cv.width, cv.height);
+  const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let last = 0;
+  if (!twitchAt) twitchAt = performance.now() + 2500 + Math.random() * 3500;
+  let twitchEnd = 0;
+  const draw = (t) => {
+    if (!box.isConnected) return;
+    if (!still) magdaLoop = requestAnimationFrame(draw);
+    if (t - last < 60 && !still) return;
+    last = t;
+    for (let i = 0; i < frame.data.length; i += 4) {
+      const v = Math.random() * 255;
+      frame.data[i] = frame.data[i + 1] = frame.data[i + 2] = v;
+      frame.data[i + 3] = 255;
+    }
+    x.putImageData(frame, 0, 0);
+    if (still) return;
+    cv.style.opacity = String(0.14 + Math.random() * 0.14 + (Math.random() < 0.05 ? 0.3 : 0));
+    a.style.opacity = String(Math.random() < 0.85 ? 0.8 + Math.random() * 0.2 : 0.35 + Math.random() * 0.3);
+    if (t >= twitchAt) {
+      box.classList.add('is-twitch');
+      twitchEnd = t + 70 + Math.random() * 110;
+      twitchAt = t + 2500 + Math.random() * 4500;
+    } else if (twitchEnd && t >= twitchEnd) {
+      box.classList.remove('is-twitch');
+      twitchEnd = 0;
+    }
+  };
+  magdaLoop = requestAnimationFrame(draw);
+}
 
 function magdaCardHtml() {
   const g = noc.game ? noc.game() : { nk: 1, nb: 0, nc: 0, nr: 0 };
@@ -103,7 +158,7 @@ function magdaCardHtml() {
   const stars = (g.nb >= 5 ? 1 : 0) + (g.nb >= 6 ? 1 : 0) + (g.nc ? 1 : 0);
   return `
     <article class="game-card game-card-noc" data-game="magda">
-      <a class="game-thumb" href="zmiana.html" tabindex="-1" aria-hidden="true">${MAGDA_ART}</a>
+      <a class="game-thumb" href="zmiana.html" tabindex="-1" aria-hidden="true">${MAGDA_THUMB}</a>
       <div class="game-card-body">
         <p class="eyebrow">Za kamerą 05</p>
         <h2 class="game-card-title"><a href="zmiana.html">Pięć Koszmarnych Nocy u&nbsp;Magdy Gessler</a></h2>
@@ -326,6 +381,7 @@ function renderHub() {
         </div>
       </article>`;
   }).join('');
+  startMagdaThumb();
 }
 
 async function loadLeaders() {
@@ -774,7 +830,7 @@ window.addEventListener('hashchange', () => route(true));
 renderHub();
 route(false);
 
-import('./noc/rdzen.js?v=20261005').then(async (m) => {
+import('./noc/rdzen.js?v=20261006').then(async (m) => {
   noc = m;
   if (m.step() < 9) await m.whenSynced();
   if (!hub.hidden) renderHub();

@@ -3492,14 +3492,24 @@ html.noc-flicker body { animation: noc-flicker 1.3s steps(1) both; }
 .game-card-noc .game-thumb { background: #0A0A0C; }
 .game-card-noc .pip-tear { animation: noc-tear 3.7s steps(1) infinite; }
 .game-card-noc .pip-walk { animation: noc-jitter 3.1s steps(1) infinite; }
-.game-card-noc .magda-face { animation: noc-jitter 2.7s steps(1) infinite; }
+/* Miniaturka gry za kamerą: zrzut menu gry, szum i „drgnięcia” twarzy (animuje je gry.js) */
+.magda-thumb { position: relative; display: block; width: 100%; height: 100%; overflow: hidden; background: #000; }
+.magda-thumb img, .magda-thumb canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.magda-thumb img { opacity: 0; transition: opacity .3s; }
+.magda-thumb.is-ready .magda-thumb-a { opacity: 1; transition: none; }
+.magda-thumb .magda-thumb-b { opacity: 1; visibility: hidden; }
+.magda-thumb.is-ready.is-twitch .magda-thumb-b { visibility: visible; }
+.magda-thumb.is-ready.is-twitch .magda-thumb-a { visibility: hidden; }
+.magda-thumb canvas { opacity: .2; image-rendering: pixelated; pointer-events: none; }
+.magda-thumb-fallback { position: absolute; top: 9%; left: 6%; font: 800 clamp(12px, 3.4vw, 22px)/1.05 var(--f-mono); color: #F2F2EE; }
+.magda-thumb.is-ready .magda-thumb-fallback { visibility: hidden; }
 @keyframes noc-tear { 0%, 90%, 100% { opacity: 0; } 91% { opacity: .55; transform: translateY(-30px); } 94% { opacity: .35; transform: translateY(24px); } }
 .noc-card-actions { display: flex; flex-wrap: wrap; gap: .6rem; }
 .noc-card-actions .game-card-play { margin: 0; }
 .noc-cam-btn { color: #FF5A5F; border-color: #4A2326; }
 @media (prefers-reduced-motion: reduce) {
   .egg-void-eye, .decoded.is-noc .st b, dialog.noc-note[open], html.noc-flicker body,
-  .noc-banner-rec, .game-card-noc .pip-tear, .game-card-noc .pip-walk, .game-card-noc .magda-face { animation: none; }
+  .noc-banner-rec, .game-card-noc .pip-tear, .game-card-noc .pip-walk { animation: none; }
 }
 
 /* Gra „Pip wraca do domu” */
