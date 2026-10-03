@@ -58,10 +58,12 @@ export const LEVELS = {
   6: { magda: 4, mateusz: 10, michel: 12, robert: 16 },
 };
 // Prąd: każdy pasek zużycia zabiera tyle procent na sekundę, a w kolejnych nocach ucieka jeszcze trochę.
-// (Liczby dobrane symulacją: dobry gracz kończy 1. noc z ok. 50% prądu, 5. noc z ok. 20%.)
-const DRAIN = 0.062;
-const PASSIVE = { 1: 0, 2: 0.003, 3: 0.005, 4: 0.007, 5: 0.009, 6: 0.006, 7: 0.011 };
+// (Liczby dobrane symulacją: dobry gracz kończy 1. noc z ok. 50% prądu, 5. noc z ok. 10%,
+//  a kto przesiedzi noc za dwojgiem zamkniętych drzwi, zostaje bez prądu ok. 3:30.)
+const DRAIN = 0.068;
+const PASSIVE = { 1: 0, 2: 0.003, 3: 0.005, 4: 0.007, 5: 0.009, 6: 0.004, 7: 0.008 };
 const KNOCK = 2; // walenie Makłowicza w drzwi: 1%, potem o tyle więcej za każdym razem
+const BOTH_DOORS = 1.5; // oba drzwi zamknięte naraz zabierają dodatkowo tyle „kresek” (żeby nie dało się przesiedzieć nocy za zamkniętymi drzwiami)
 
 const rand = (a, b) => a + Math.random() * (b - a);
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
@@ -478,7 +480,7 @@ export class Night {
       this.updateOut(dt);
     } else {
       // prąd
-      this.power -= dt * (this.usage() * DRAIN + PASSIVE[this.night]);
+      this.power -= dt * this.drain();
       if (this.power <= 0) {
         this.power = 0;
         this.powerOut();
@@ -500,9 +502,16 @@ export class Night {
     this.updateHud();
   }
 
+  // Prąd na sekundę: każda „kreska” zużycia plus stały ubytek danej nocy.
+  drain() {
+    return DRAIN * this.usage() + PASSIVE[this.night];
+  }
+
+  // Kreski zużycia: podstawa, drzwi, światło i kamery. Oba drzwi naraz kosztują dodatkowo.
   usage() {
     if (this.out) return 0;
-    return 1 + (this.door.L ? 1 : 0) + (this.door.R ? 1 : 0) + (this.light.L || this.light.R ? 1 : 0) + (this.cam ? 1 : 0);
+    const doors = (this.door.L ? 1 : 0) + (this.door.R ? 1 : 0);
+    return 1 + doors + (doors === 2 ? BOTH_DOORS : 0) + (this.light.L || this.light.R ? 1 : 0) + (this.cam ? 1 : 0);
   }
 
   updatePan(dt) {
