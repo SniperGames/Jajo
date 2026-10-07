@@ -2,7 +2,7 @@
    Obrazki, dźwięki i film są zaszyfrowane tym samym kluczem co nagranie z kamery (odblokowuje go rozwiązanie zagadek). */
 import { get, whenSynced, game, setGame, resetGame, advance, onChange, savedOnAccount } from './rdzen.js?v=20261009';
 import { Dzwiek } from './gra-dzwiek.js?v=20261009';
-import { Night, prepareArt, CAMS, LEVELS, NAMES } from './gra-noc.js?v=20261019';
+import { Night, prepareArt, CAMS, LEVELS, NAMES } from './gra-noc.js?v=20261020';
 
 const V = '20261005';
 // Paczki zmienione później dostają własną wersję (reszta, np. 11 MB intra, zostaje w pamięci przeglądarki)
