@@ -116,54 +116,138 @@ export function prepareArt(img) {
   const run = img.get('r-robert');
   art.runCam = tint(run, 'rgb(160,138,112)', 'rgb(122,104,84)', run.height);
   art.runLit = tint(run, 'rgb(236,218,190)', 'rgb(206,188,160)', run.height);
-  art.shutter = shutterTexture();
+  art.shutter = shutterTexture(300, 1100, 42, 96); // drzwi
+  art.shutterWin = shutterTexture(720, 330, 30, 40); // okno
   return art;
 }
 
-// Metalowa roleta drzwi: poziome żeberka i żółto-czarny pas na dole.
-function shutterTexture() {
-  const W = 220;
-  const H = 820;
+// Metalowa roleta: lamele z połyskiem na górnej krawędzi, ziarno i rysy stali, brud, rdza i zacieki,
+// na dole stalowa listwa w żółto-czarne pasy z uchwytem. Kolory ciepłe jak światło w biurze.
+function shutterTexture(W, H, slat, bar) {
   const c = document.createElement('canvas');
   c.width = W;
   c.height = H;
   const x = c.getContext('2d');
-  const g = x.createLinearGradient(0, 0, W, 0);
-  g.addColorStop(0, '#1d1d1b');
-  g.addColorStop(0.5, '#3b3a36');
-  g.addColorStop(1, '#1a1a18');
-  x.fillStyle = g;
-  x.fillRect(0, 0, W, H);
-  for (let y = 4; y < H - 40; y += 24) {
-    x.fillStyle = 'rgba(255,255,255,.07)';
-    x.fillRect(0, y, W, 3);
-    x.fillStyle = 'rgba(0,0,0,.45)';
-    x.fillRect(0, y + 17, W, 5);
+  const body = H - bar;
+  for (let y = 0; y < body; y += slat) {
+    const g = x.createLinearGradient(0, y, 0, y + slat);
+    g.addColorStop(0, '#120e0a');
+    g.addColorStop(0.07, '#77624a');
+    g.addColorStop(0.2, '#5b4a38');
+    g.addColorStop(0.55, '#41352a');
+    g.addColorStop(0.86, '#2a221b');
+    g.addColorStop(0.95, '#18130f');
+    g.addColorStop(1, '#0b0907');
+    x.fillStyle = g;
+    x.fillRect(0, y, W, Math.min(slat, body - y));
   }
-  for (let i = 0; i < 70; i++) {
-    x.fillStyle = `rgba(${90 + Math.random() * 40},${50 + Math.random() * 20},20,${Math.random() * 0.18})`;
-    x.beginPath();
-    x.arc(Math.random() * W, Math.random() * (H - 40), 2 + Math.random() * 10, 0, Math.PI * 2);
-    x.fill();
+  // szczotkowana stal: krótkie poziome rysy
+  for (let i = 0; i < (W * body) / 70; i++) {
+    x.fillStyle = Math.random() < 0.6 ? `rgba(255,236,200,${Math.random() * 0.05})` : `rgba(0,0,0,${Math.random() * 0.12})`;
+    x.fillRect(Math.random() * W, Math.random() * body, 8 + Math.random() * 70, 1);
   }
+  // ziarno
+  const id = x.getImageData(0, 0, W, body);
+  const d = id.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const n = (Math.random() - 0.5) * 16;
+    d[i] += n;
+    d[i + 1] += n;
+    d[i + 2] += n;
+  }
+  x.putImageData(id, 0, 0);
+  // rdza i plamy, więcej przy dole
+  for (let i = 0; i < (W * body) / 2600; i++) {
+    const px = Math.random() * W;
+    const py = body * Math.sqrt(Math.random());
+    const r = 4 + Math.random() * (W / 9);
+    const g = x.createRadialGradient(px, py, 0, px, py, r);
+    const a = 0.08 + Math.random() * 0.22;
+    g.addColorStop(0, `rgba(${110 + Math.random() * 40},${52 + Math.random() * 20},${18 + Math.random() * 10},${a})`);
+    g.addColorStop(1, 'rgba(90,45,15,0)');
+    x.fillStyle = g;
+    x.fillRect(px - r, py - r, r * 2, r * 2);
+  }
+  // zacieki spod szczelin
+  for (let i = 0; i < W / 6; i++) {
+    const px = Math.random() * W;
+    const py = Math.floor((Math.random() * body) / slat) * slat + slat * 0.9;
+    const len = slat * (0.4 + Math.random() * 2.5);
+    const g = x.createLinearGradient(0, py, 0, py + len);
+    g.addColorStop(0, `rgba(55,32,14,${0.25 + Math.random() * 0.3})`);
+    g.addColorStop(1, 'rgba(55,32,14,0)');
+    x.fillStyle = g;
+    x.fillRect(px, py, 1 + Math.random() * 3, len);
+  }
+  // brud: ciemniej u góry (cień futryny) i przy samym dole
+  const dirt = x.createLinearGradient(0, 0, 0, body);
+  dirt.addColorStop(0, 'rgba(0,0,0,.55)');
+  dirt.addColorStop(0.12, 'rgba(0,0,0,.12)');
+  dirt.addColorStop(0.7, 'rgba(0,0,0,0)');
+  dirt.addColorStop(1, 'rgba(30,18,8,.4)');
+  x.fillStyle = dirt;
+  x.fillRect(0, 0, W, body);
+  // boczne prowadnice
+  const rw = Math.max(4, W * 0.035);
+  for (const [rx, dir] of [[0, 1], [W - rw, -1]]) {
+    const rg = x.createLinearGradient(rx, 0, rx + rw, 0);
+    rg.addColorStop(0, dir > 0 ? '#060504' : '#2b241d');
+    rg.addColorStop(0.5, '#3a3027');
+    rg.addColorStop(1, dir > 0 ? '#2b241d' : '#060504');
+    x.fillStyle = rg;
+    x.fillRect(rx, 0, rw, body);
+  }
+  // dolna listwa: stal, pasy ostrzegawcze, uchwyt, gumowa uszczelka
+  const sg = x.createLinearGradient(0, body, 0, H);
+  sg.addColorStop(0, '#0b0a09');
+  sg.addColorStop(0.08, '#806b52');
+  sg.addColorStop(0.25, '#51432f');
+  sg.addColorStop(1, '#241d16');
+  x.fillStyle = sg;
+  x.fillRect(0, body, W, bar);
+  const sy = body + bar * 0.18;
+  const sh = bar * 0.5;
   x.save();
   x.beginPath();
-  x.rect(0, H - 40, W, 34);
+  x.rect(0, sy, W, sh);
   x.clip();
-  x.fillStyle = '#c9a01a';
-  x.fillRect(0, H - 40, W, 34);
-  x.fillStyle = '#111';
-  for (let i = -40; i < W + 40; i += 28) {
+  x.fillStyle = '#b8901c';
+  x.fillRect(0, sy, W, sh);
+  x.fillStyle = '#121110';
+  const step = sh * 1.6;
+  for (let i = -sh * 2; i < W + sh * 2; i += step) {
     x.beginPath();
-    x.moveTo(i, H - 6);
-    x.lineTo(i + 14, H - 6);
-    x.lineTo(i + 48, H - 40);
-    x.lineTo(i + 34, H - 40);
+    x.moveTo(i, sy + sh);
+    x.lineTo(i + step / 2, sy + sh);
+    x.lineTo(i + step / 2 + sh, sy);
+    x.lineTo(i + sh, sy);
     x.fill();
   }
+  const wear = x.createLinearGradient(0, sy, 0, sy + sh);
+  wear.addColorStop(0, 'rgba(255,240,200,.18)');
+  wear.addColorStop(0.5, 'rgba(0,0,0,0)');
+  wear.addColorStop(1, 'rgba(0,0,0,.35)');
+  x.fillStyle = wear;
+  x.fillRect(0, sy, W, sh);
+  for (let i = 0; i < W / 3; i++) {
+    x.fillStyle = `rgba(20,16,12,${Math.random() * 0.5})`;
+    x.fillRect(Math.random() * W, sy + Math.random() * sh, 1 + Math.random() * 6, 1 + Math.random() * 2);
+  }
   x.restore();
-  x.fillStyle = '#0c0c0b';
-  x.fillRect(0, H - 6, W, 6);
+  // uchwyt na środku
+  const hw = Math.min(W * 0.22, bar * 2.2);
+  const hx = (W - hw) / 2;
+  const hy = sy + sh + bar * 0.06;
+  const hh = bar * 0.16;
+  x.fillStyle = '#0e0d0b';
+  x.fillRect(hx - 2, hy - 1, hw + 4, hh + 3);
+  const hg = x.createLinearGradient(0, hy, 0, hy + hh);
+  hg.addColorStop(0, '#9a8f7c');
+  hg.addColorStop(1, '#3a342c');
+  x.fillStyle = hg;
+  x.fillRect(hx, hy, hw, hh);
+  x.fillStyle = '#080807';
+  x.fillRect(0, H - bar * 0.1, W, bar * 0.1);
   return c;
 }
 
@@ -1099,7 +1183,7 @@ export class Night {
     }
     const k = this.oknoAnim;
     if (k > 0) {
-      const tex = this.art.shutter;
+      const tex = this.art.shutterWin;
       const vis = tex.height * k;
       ctx.save();
       this.polyPath(WIN.glass, S, ox, oy);
@@ -1125,24 +1209,64 @@ export class Night {
     }
   }
 
+  // Roleta w drzwiach: rysowana pionowymi paskami z perspektywą (bliższa krawędź otworu jest wyższa),
+  // zjeżdża z góry; dalsza krawędź i góra są ciemniejsze.
   renderShutter(side, S, ox, oy) {
     const k = this.doorAnim[side];
     if (k <= 0) return;
     const ctx = this.ctx;
-    const d = SIDE[side];
-    const [x0, y0, x1, y1] = this.bbox(d.poly);
-    const bx = ox + x0 * S;
-    const by = oy + y0 * S;
-    const bw = (x1 - x0) * S;
-    const bh = (y1 - y0) * S;
+    const [TL, TR, BR, BL] = SIDE[side].poly;
+    const hL = BL[1] - TL[1];
+    const hR = BR[1] - TR[1];
+    const at = (t) => {
+      const a = (1 - t) / hL;
+      const b = t / hR;
+      const w = a + b;
+      return [(TL[0] * a + TR[0] * b) / w, (TL[1] * a + TR[1] * b) / w, (BL[1] * a + BR[1] * b) / w];
+    };
     const tex = this.art.shutter;
-    const vis = tex.height * k; // roleta zjeżdża z góry
+    const n = Math.max(24, Math.ceil((Math.abs(TR[0] - TL[0]) * S) / 3));
+    const near = hL > hR ? 0 : 1; // bliższa krawędź jest wyższa
     ctx.save();
-    this.polyPath(d.poly, S, ox, oy);
+    this.polyPath(SIDE[side].poly, S, ox, oy);
     ctx.clip();
-    ctx.drawImage(tex, 0, tex.height - vis, tex.width, vis, bx, by, bw, bh * k);
-    ctx.fillStyle = 'rgba(0,0,0,.25)';
-    ctx.fillRect(bx, by, bw, bh * k);
+    let prev = at(0);
+    for (let i = 0; i < n; i++) {
+      const t0 = i / n;
+      const t1 = (i + 1) / n;
+      const cur = at(t1);
+      const x0 = ox + prev[0] * S;
+      const x1 = ox + cur[0] * S;
+      const top = oy + Math.min(prev[1], cur[1]) * S;
+      const full = (Math.max(prev[2], cur[2]) - Math.min(prev[1], cur[1])) * S;
+      const h = full * k;
+      const sx = t0 * tex.width;
+      const sw = Math.max(1, (t1 - t0) * tex.width);
+      ctx.drawImage(tex, sx, tex.height * (1 - k), sw, tex.height * k, Math.min(x0, x1), top, Math.abs(x1 - x0) + 0.8, h);
+      const far = Math.abs(t0 - near);
+      ctx.fillStyle = `rgba(0,0,0,${0.18 + 0.42 * far})`;
+      ctx.fillRect(Math.min(x0, x1), top, Math.abs(x1 - x0) + 0.8, h);
+      prev = cur;
+    }
+    // światło lampy z sufitu: góra rolety w cieniu, niżej ciepły odblask
+    const P = (p) => [ox + p[0] * S, oy + p[1] * S];
+    const q = [P(TL), P(TR), P([BR[0], TR[1] + (BR[1] - TR[1]) * k]), P([BL[0], TL[1] + (BL[1] - TL[1]) * k])];
+    ctx.beginPath();
+    q.forEach(([px, py], i) => (i ? ctx.lineTo(px, py) : ctx.moveTo(px, py)));
+    ctx.closePath();
+    ctx.clip();
+    const yTop = Math.min(q[0][1], q[1][1]);
+    const yBot = oy + Math.max(BL[1], BR[1]) * S;
+    const sh = ctx.createLinearGradient(0, yTop, 0, yBot);
+    sh.addColorStop(0, 'rgba(0,0,0,.55)');
+    sh.addColorStop(0.25, 'rgba(0,0,0,.15)');
+    sh.addColorStop(0.6, 'rgba(0,0,0,0)');
+    sh.addColorStop(1, 'rgba(0,0,0,.3)');
+    ctx.fillStyle = sh;
+    ctx.fillRect(Math.min(q[0][0], q[3][0]) - 2, yTop, Math.abs(q[1][0] - q[0][0]) + 4, yBot - yTop);
+    ctx.globalCompositeOperation = 'soft-light';
+    ctx.fillStyle = 'rgba(255,160,80,.28)';
+    ctx.fillRect(Math.min(q[0][0], q[3][0]) - 2, yTop, Math.abs(q[1][0] - q[0][0]) + 4, yBot - yTop);
     ctx.restore();
   }
 

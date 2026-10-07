@@ -490,6 +490,12 @@ body.fn-body {
   background: #d8261c;
 }
 
+/* ponad 5 kresek (np. oba drzwi i jeszcze coś): ciemniejsza czerwień */
+.fn-usage i:nth-child(n + 6) {
+  background: #9e140c;
+  box-shadow: inset 0 0 0 1px #ff5a4a;
+}
+
 .fn-usage i.on {
   visibility: visible;
 }
