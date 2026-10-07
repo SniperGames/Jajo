@@ -182,10 +182,11 @@ function shutterTexture(W, H, slat, bar) {
   }
   // brud: ciemniej u góry (cień futryny) i przy samym dole
   const dirt = x.createLinearGradient(0, 0, 0, body);
-  dirt.addColorStop(0, 'rgba(0,0,0,.55)');
-  dirt.addColorStop(0.12, 'rgba(0,0,0,.12)');
-  dirt.addColorStop(0.7, 'rgba(0,0,0,0)');
-  dirt.addColorStop(1, 'rgba(30,18,8,.4)');
+  dirt.addColorStop(0, 'rgba(0,0,0,.72)');
+  dirt.addColorStop(0.06, 'rgba(0,0,0,.45)');
+  dirt.addColorStop(0.22, 'rgba(0,0,0,.12)');
+  dirt.addColorStop(0.6, 'rgba(0,0,0,0)');
+  dirt.addColorStop(1, 'rgba(30,18,8,.45)');
   x.fillStyle = dirt;
   x.fillRect(0, 0, W, body);
   // boczne prowadnice
@@ -1236,20 +1237,25 @@ export class Night {
       const t0 = i / n;
       const t1 = (i + 1) / n;
       const cur = at(t1);
+      // pasek jako równoległobok: góra pochylona dokładnie jak lamele, więc linie są gładkie, bez schodków
       const x0 = ox + prev[0] * S;
       const x1 = ox + cur[0] * S;
-      const top = oy + Math.min(prev[1], cur[1]) * S;
-      const full = (Math.max(prev[2], cur[2]) - Math.min(prev[1], cur[1])) * S;
-      const h = full * k;
+      const y0 = oy + prev[1] * S;
+      const y1 = oy + cur[1] * S;
+      const h = ((prev[2] - prev[1] + cur[2] - cur[1]) / 2) * S * k;
       const sx = t0 * tex.width;
-      const sw = Math.max(1, (t1 - t0) * tex.width);
-      ctx.drawImage(tex, sx, tex.height * (1 - k), sw, tex.height * k, Math.min(x0, x1), top, Math.abs(x1 - x0) + 0.8, h);
+      const sw = (t1 - t0) * tex.width;
+      const sh = tex.height * k;
+      ctx.save();
+      ctx.transform((x1 - x0 + (x1 > x0 ? 0.6 : -0.6)) / sw, (y1 - y0) / sw, 0, h / sh, x0, y0);
+      ctx.drawImage(tex, sx, tex.height - sh, sw, sh, 0, 0, sw, sh);
       const far = Math.abs(t0 - near);
       ctx.fillStyle = `rgba(0,0,0,${0.18 + 0.42 * far})`;
-      ctx.fillRect(Math.min(x0, x1), top, Math.abs(x1 - x0) + 0.8, h);
+      ctx.fillRect(0, 0, sw, sh);
+      ctx.restore();
       prev = cur;
     }
-    // światło lampy z sufitu: góra rolety w cieniu, niżej ciepły odblask
+    // ciepłe światło lampy z sufitu (cień u góry jest w samej teksturze, więc idzie z perspektywą)
     const P = (p) => [ox + p[0] * S, oy + p[1] * S];
     const q = [P(TL), P(TR), P([BR[0], TR[1] + (BR[1] - TR[1]) * k]), P([BL[0], TL[1] + (BL[1] - TL[1]) * k])];
     ctx.beginPath();
@@ -1257,14 +1263,7 @@ export class Night {
     ctx.closePath();
     ctx.clip();
     const yTop = Math.min(q[0][1], q[1][1]);
-    const yBot = oy + Math.max(BL[1], BR[1]) * S;
-    const sh = ctx.createLinearGradient(0, yTop, 0, yBot);
-    sh.addColorStop(0, 'rgba(0,0,0,.55)');
-    sh.addColorStop(0.25, 'rgba(0,0,0,.15)');
-    sh.addColorStop(0.6, 'rgba(0,0,0,0)');
-    sh.addColorStop(1, 'rgba(0,0,0,.3)');
-    ctx.fillStyle = sh;
-    ctx.fillRect(Math.min(q[0][0], q[3][0]) - 2, yTop, Math.abs(q[1][0] - q[0][0]) + 4, yBot - yTop);
+    const yBot = Math.max(q[2][1], q[3][1]);
     ctx.globalCompositeOperation = 'soft-light';
     ctx.fillStyle = 'rgba(255,160,80,.28)';
     ctx.fillRect(Math.min(q[0][0], q[3][0]) - 2, yTop, Math.abs(q[1][0] - q[0][0]) + 4, yBot - yTop);
