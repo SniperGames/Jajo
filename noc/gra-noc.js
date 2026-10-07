@@ -15,6 +15,13 @@ const SIDE = {
   R: { poly: [[1390, 150], [1545, 100], [1545, 860], [1392, 795]], door: [1603, 366, 1651, 444], light: [1603, 451, 1651, 529], corridor: 'kor-p', cx: 0.6, pan: 0.75, foot: 835 },
 };
 const HONK = [[480, 276, 16], [1259, 324, 14]]; // nosy misiów na plakatach
+// Okno nad biurkiem: Makłowicz może przybiec też tutaj. Zamyka je czerwony przycisk nad oknem (bez światła).
+// Szyba bez wentylatora i monitora, które stoją przed oknem (zostają na wierzchu).
+const WIN = {
+  btn: [806, 169, 890, 231],
+  glass: [[636, 252], [996, 252], [996, 418], [918, 418], [918, 478], [694, 478], [694, 430], [660, 392], [636, 388]],
+  run: { x: 816, from: [470, 130], to: [690, 470] }, // [y stóp, wysokość] daleko i tuż przy szybie
+};
 
 /* ---------- Kamery (mapa w układzie 300 × 250) ---------- */
 
@@ -43,7 +50,12 @@ const SPOTS = {
 const STAGE_SPOT = { mateusz: 0, magda: 1, michel: 2 };
 const RUN_FROM = [0.75, 0.44, 0.26];
 const RUN_TO = [0.4, 0.98, 0.8];
-const RUN_TIME = 1.7; // tyle trwa sprint Makłowicza korytarzem
+// Sprint Makłowicza: lewym korytarzem (najpierw kamera 2A, potem lewe drzwi przy zapalonym świetle) albo do okna.
+const RUN_CAM = 3; // tyle sekund widać go na kamerze 2A
+const DASH_L = 5.5; // od startu do lewych drzwi
+const DASH_W = 3.5; // od startu do okna (widać go przez szybę)
+const WINDOW_CHANCE = 0.4; // jak często wybiera okno zamiast korytarza
+const RUN_FPS = 12;
 
 /* ---------- Trudność (jak w FNaF 1) ---------- */
 
@@ -100,6 +112,10 @@ export function prepareArt(img) {
       art.lit[n + p] = tint(im, 'rgb(232,214,186)', 'rgb(150,132,108)');
     }
   }
+  // klatki biegu Makłowicza: ciemniejsze na kamerę i w oknie, jaśniejsze w drzwiach przy zapalonym świetle
+  const run = img.get('r-robert');
+  art.runCam = tint(run, 'rgb(160,138,112)', 'rgb(122,104,84)', run.height);
+  art.runLit = tint(run, 'rgb(236,218,190)', 'rgb(206,188,160)', run.height);
   art.shutter = shutterTexture();
   return art;
 }
@@ -182,14 +198,16 @@ export class Night {
       magda: { loc: '1A', spot: 1, pose: 1 },
       mateusz: { loc: '1A', spot: 0, pose: 1 },
       michel: { loc: '1A', spot: 2, pose: 1 },
-      robert: { stage: 0, lock: 0, run: -1, knocks: 0, dash: false },
+      robert: { stage: 0, lock: 0, wait: -1, route: 'L', dash: -1, knocks: 0 },
     };
     this.out = null; // brak prądu
     this.jump = null;
     this.over = false;
     this.paused = false;
     this.flicker = 0;
-    this.next = { breath: 2, oven: 3, garble: 4, pirate: 6, halluc: 30 };
+    this.okno = false; // okno zamknięte
+    this.oknoAnim = 0;
+    this.next = { breath: 2, oven: 3, garble: 4, smiech: 6, halluc: 30 };
     this.hud = { time: '', power: -1, usage: -1, night: '' };
     this.frame = this.frame.bind(this);
     this.bind();
@@ -272,6 +290,7 @@ export class Night {
     press(ui.doorR, () => this.toggleDoor('R'));
     press(ui.lightL, () => this.toggleLight('L'));
     press(ui.lightR, () => this.toggleLight('R'));
+    press(ui.win, () => this.toggleWindow());
     // Tablet: myszką wystarczy najechać na pasek (jak w oryginale), palcem trzeba stuknąć.
     on(ui.camBar, 'pointerenter', (e) => {
       if (e.pointerType === 'mouse') this.toggleCam();
@@ -305,6 +324,7 @@ export class Night {
       else if (k === 'a') this.toggleLight('L');
       else if (k === 'e') this.toggleDoor('R');
       else if (k === 'd') this.toggleLight('R');
+      else if (k === 'w') this.toggleWindow();
       else if (this.cam && /^[1-8]$/.test(k)) this.switchCam(CAMS[Number(k) - 1].id);
       else return;
       e.preventDefault();
@@ -395,6 +415,16 @@ export class Night {
     this.sound.play('door', { gain: 0.9, pan: SIDE[side].pan });
   }
 
+  toggleWindow() {
+    if (this.over || this.cam || this.camAnim > 0) return;
+    if (this.out) {
+      this.sound.play('error', { gain: 0.7 });
+      return;
+    }
+    this.okno = !this.okno;
+    this.sound.play('door', { gain: 0.9 });
+  }
+
   toggleLight(side) {
     if (this.over || this.cam || this.camAnim > 0) return;
     if (this.broken[side] || this.out) {
@@ -465,6 +495,7 @@ export class Night {
       const d = this.doorAnim[s];
       this.doorAnim[s] = d < target ? Math.min(target, d + dt / DOOR_TIME) : Math.max(target, d - dt / DOOR_TIME);
     }
+    this.oknoAnim = this.okno ? Math.min(1, this.oknoAnim + dt / DOOR_TIME) : Math.max(0, this.oknoAnim - dt / DOOR_TIME);
     const camWas = this.camAnim;
     this.camAnim = this.cam ? Math.min(1, this.camAnim + dt / FLIP) : Math.max(0, this.camAnim - dt / FLIP);
     if (this.camAnim === 1 && camWas < 1) {
@@ -511,7 +542,7 @@ export class Night {
   usage() {
     if (this.out) return 0;
     const doors = (this.door.L ? 1 : 0) + (this.door.R ? 1 : 0);
-    return 1 + doors + (doors === 2 ? BOTH_DOORS : 0) + (this.light.L || this.light.R ? 1 : 0) + (this.cam ? 1 : 0);
+    return 1 + doors + (doors === 2 ? BOTH_DOORS : 0) + (this.okno ? 1 : 0) + (this.light.L || this.light.R ? 1 : 0) + (this.cam ? 1 : 0);
   }
 
   updatePan(dt) {
@@ -638,7 +669,7 @@ export class Night {
       c.pose = Math.random() < 0.5 ? 1 : 2;
     }
     const side = n === 'mateusz' ? 'L' : 'R';
-    if (n === 'magda') this.sound.play(pick(['laugh1', 'laugh2', 'laugh3', 'laugh4']), { gain: 0.6 });
+    if (n === 'magda') this.sound.play('smiech-magda', { gain: 0.32, rate: rand(0.94, 1.06) });
     if (to === 'DL' || to === 'DR') {
       this.steps(side, 0.55);
       if (this.light[side]) this.checkWindow(side);
@@ -678,8 +709,10 @@ export class Night {
     if (lvl <= 0 || 1 + Math.floor(Math.random() * 20) > lvl) return;
     r.stage += 1;
     if (r.stage === 3) {
-      r.run = 25; // wybiegł zza kurtyny, za chwilę będzie przy lewych drzwiach
-      r.dash = false;
+      // wybiegł zza kurtyny: za chwilę będzie przy lewych drzwiach albo przy oknie
+      r.wait = 25;
+      r.route = Math.random() < WINDOW_CHANCE ? 'W' : 'L';
+      r.dash = -1;
     }
   }
 
@@ -687,30 +720,53 @@ export class Night {
     const r = this.ch.robert;
     if (r.lock > 0) r.lock -= dt;
     if (r.stage < 3) return;
-    const watching2A = this.cam && this.camAnim === 1 && this.camId === '2A';
-    if (watching2A && r.run > RUN_TIME) {
-      r.run = RUN_TIME; // patrzysz na korytarz: biegnie od razu
-      this.sound.play('runfast', { gain: 0.9 });
-      r.dash = true;
+    if (r.dash < 0) {
+      // czeka poza sceną; gdy patrzysz na lewy korytarz, a on biegnie tamtędy, rusza od razu
+      const watching2A = this.cam && this.camAnim === 1 && this.camId === '2A';
+      r.wait -= watching2A && r.route === 'L' ? r.wait : dt;
+      if (r.wait > 0) return;
+      r.dash = 0;
+      r.atDoor = false;
+      this.sound.play('runfast', { gain: 0.95, pan: r.route === 'L' ? -0.6 : 0 });
+      return;
     }
-    r.run -= dt;
-    if (r.run <= RUN_TIME && !r.dash) {
-      r.dash = true;
-      this.sound.play('run', { gain: 0.8, pan: -0.6 });
+    r.dash += dt;
+    if (r.route === 'L' && r.dash >= RUN_CAM && !r.atDoor) {
+      r.atDoor = true; // już przy lewych drzwiach: tupot tuż obok
+      this.sound.play('run', { gain: 0.9, pan: -0.8 });
     }
-    if (r.run > 0) return;
-    if (this.door.L) {
-      // walenie w drzwi zabiera prąd (za każdym razem więcej)
-      this.sound.play('knock', { gain: 1, pan: -0.7 });
-      this.sound.play('pound', { gain: 0.6, pan: -0.7 });
+    if (r.dash < (r.route === 'L' ? DASH_L : DASH_W)) return;
+    if (r.route === 'L' ? this.door.L : this.okno) {
+      // walenie w drzwi albo w roletę okna zabiera prąd (za każdym razem więcej)
+      const pan = r.route === 'L' ? -0.7 : 0;
+      this.sound.play('knock', { gain: 1, pan });
+      this.sound.play('pound', { gain: 0.6, pan });
       this.power = Math.max(0.01, this.power - (1 + KNOCK * r.knocks));
       r.knocks += 1;
       r.stage = Math.random() < 0.5 ? 0 : 1;
-      r.run = -1;
-      r.dash = false;
+      r.wait = -1;
+      r.dash = -1;
     } else {
       this.attack('robert');
     }
+  }
+
+  // Klatka biegu Makłowicza: [arkusz, x, y, szer., wys., wysokość względem całej postaci]
+  runFrame(t, lit) {
+    const m = this.meta['r-robert'];
+    const fr = m.frames[1 + (Math.floor(t * RUN_FPS) % (m.frames.length - 1))]; // pierwsza klatka to start w miejscu
+    return [lit ? this.art.runLit : this.art.runCam, fr[0], fr[1], fr[2], fr[3], fr[3] / m.ref];
+  }
+
+  // Rysuje biegnącego Makłowicza: stopy w (x, y), h = wysokość całej postaci.
+  drawRun(t, lit, x, y, h, alpha = 1) {
+    const [sheet, sx, sy, sw, sh, k] = this.runFrame(t, lit);
+    const fh = h * k;
+    const fw = (sw * fh) / sh;
+    const ctx = this.ctx;
+    ctx.globalAlpha = alpha;
+    ctx.drawImage(sheet, sx, sy, sw, sh, x - fw / 2, y - fh, fw, fh);
+    ctx.globalAlpha = 1;
   }
 
   // Ktoś jest w biurze: atakuje po opuszczeniu tabletu (albo po chwili, gdy tablet jest opuszczony).
@@ -757,9 +813,9 @@ export class Night {
       if (view && ['mateusz', 'michel'].some((m) => this.ch[m].loc === view) && Math.random() < 0.35) s.play(pick(['garble1', 'garble2', 'garble3']), { gain: 0.35 });
     }
     // Makłowicz nuci za kurtyną
-    if (n.pirate <= 0) {
-      n.pirate = rand(8, 16);
-      if (view === '1C' && this.ch.robert.stage < 3 && Math.random() < 0.3) s.play('pirate', { gain: 0.45 });
+    if (n.smiech <= 0) {
+      n.smiech = rand(8, 16);
+      if (view === '1C' && this.ch.robert.stage < 3 && Math.random() < 0.3) s.play('smiech-robert', { gain: 0.8 });
     }
     // rzadka halucynacja (od 3. nocy)
     if (n.halluc <= 0) {
@@ -785,8 +841,9 @@ export class Night {
       this.ui.camUi.hidden = true;
     }
     this.camAnim = 0;
-    if (this.door.L || this.door.R) s.play('door', { gain: 0.8 });
+    if (this.door.L || this.door.R || this.okno) s.play('door', { gain: 0.8 });
     this.door.L = this.door.R = false;
+    this.okno = false;
     this.light.L = this.light.R = false;
     ['amb', 'fan', 'hum', 'camloop', 'eerie', 'circus'].forEach((k) => s.stopLoop(k, 0.1));
     if (this.call) this.muteCall();
@@ -803,7 +860,7 @@ export class Night {
         o.phase = 1;
         o.t = 0;
         o.tick = 0;
-        o.music = this.sound.play('musicbox', { gain: 0.9 });
+        o.music = this.sound.play('musicbox', { gain: 0.75 });
       }
     } else if (o.phase === 1) {
       if ((o.tick >= 5 && ((o.tick = 0), Math.random() < 0.2)) || o.t >= 20) {
@@ -878,13 +935,14 @@ export class Night {
     ui.camBar.hidden = !playing;
     ui.doorBtns.hidden = !showButtons;
     if (showButtons) this.placeButtons();
-    const pressed = `${this.door.L}${this.door.R}${this.light.L}${this.light.R}`;
+    const pressed = `${this.door.L}${this.door.R}${this.light.L}${this.light.R}${this.okno}`;
     if (pressed !== this.hud.pressed || force) {
       this.hud.pressed = pressed;
       ui.doorL.setAttribute('aria-pressed', String(this.door.L));
       ui.doorR.setAttribute('aria-pressed', String(this.door.R));
       ui.lightL.setAttribute('aria-pressed', String(this.light.L));
       ui.lightR.setAttribute('aria-pressed', String(this.light.R));
+      ui.win.setAttribute('aria-pressed', String(this.okno));
     }
   }
 
@@ -904,6 +962,7 @@ export class Night {
     put(this.ui.lightL, SIDE.L.light);
     put(this.ui.doorR, SIDE.R.door);
     put(this.ui.lightR, SIDE.R.light);
+    put(this.ui.win, WIN.btn);
   }
 
   /* ---------- Rysowanie ---------- */
@@ -944,6 +1003,7 @@ export class Night {
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, W, H);
     ctx.drawImage(this.img.get('biuro'), ox, oy, OW * S, OH * S);
+    this.renderWindow(S, ox, oy);
     for (const side of ['L', 'R']) {
       this.renderDoorway(side, S, ox, oy);
       this.renderShutter(side, S, ox, oy);
@@ -1001,6 +1061,15 @@ export class Night {
       const footY = oy + d.foot * S;
       ctx.drawImage(fig, bx + bw / 2 - fw / 2, footY - fh, fw, fh);
     }
+    // Makłowicz biegnie korytarzem prosto na lewe drzwi
+    const r = this.ch.robert;
+    if (side === 'L' && r.stage === 3 && r.route === 'L' && r.dash >= RUN_CAM) {
+      const t = clamp((r.dash - RUN_CAM) / (DASH_L - RUN_CAM), 0, 1);
+      const e = t * t;
+      const footY = oy + d.foot * S;
+      const farY = by + bh * 0.6;
+      this.drawRun(r.dash, true, bx + bw / 2, farY + (footY - farY) * e, bh * (0.32 + 0.62 * e));
+    }
     // brzegi drzwi giną w cieniu
     const g = ctx.createLinearGradient(bx, 0, bx + bw, 0);
     g.addColorStop(0, 'rgba(0,0,0,.55)');
@@ -1010,6 +1079,50 @@ export class Night {
     ctx.fillStyle = g;
     ctx.fillRect(bx, by, bw, bh);
     ctx.restore();
+  }
+
+  // Okno: przez szybę widać biegnącego Makłowicza; zamknięte zasłania roleta, a przycisk nad nim świeci na czerwono.
+  renderWindow(S, ox, oy) {
+    const ctx = this.ctx;
+    const r = this.ch.robert;
+    const [x0, y0, x1, y1] = this.bbox(WIN.glass);
+    if (r.stage === 3 && r.route === 'W' && r.dash >= 0 && !this.out) {
+      const t = clamp(r.dash / DASH_W, 0, 1);
+      const e = t * t;
+      const [fy0, h0] = WIN.run.from;
+      const [fy1, h1] = WIN.run.to;
+      ctx.save();
+      this.polyPath(WIN.glass, S, ox, oy);
+      ctx.clip();
+      this.drawRun(r.dash, false, ox + WIN.run.x * S, oy + (fy0 + (fy1 - fy0) * e) * S, (h0 + (h1 - h0) * e) * S, 0.92);
+      ctx.restore();
+    }
+    const k = this.oknoAnim;
+    if (k > 0) {
+      const tex = this.art.shutter;
+      const vis = tex.height * k;
+      ctx.save();
+      this.polyPath(WIN.glass, S, ox, oy);
+      ctx.clip();
+      ctx.drawImage(tex, 0, tex.height - vis, tex.width, vis, ox + x0 * S, oy + y0 * S, (x1 - x0) * S, (y1 - y0) * S * k);
+      ctx.fillStyle = 'rgba(0,0,0,.3)';
+      ctx.fillRect(ox + x0 * S, oy + y0 * S, (x1 - x0) * S, (y1 - y0) * S * k);
+      ctx.restore();
+    }
+    if (this.okno && !this.out) {
+      const b = WIN.btn;
+      const cx = ox + ((b[0] + b[2]) / 2) * S;
+      const cy = oy + ((b[1] + b[3]) / 2) * S;
+      const rad = (b[3] - b[1]) * S * 1.1;
+      const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, rad);
+      g.addColorStop(0, 'rgba(255,40,30,.8)');
+      g.addColorStop(1, 'rgba(255,40,30,0)');
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.fillStyle = g;
+      ctx.fillRect(cx - rad, cy - rad, rad * 2, rad * 2);
+      ctx.restore();
+    }
   }
 
   renderShutter(side, S, ox, oy) {
@@ -1166,14 +1279,15 @@ export class Night {
     for (const { n, c, sp } of here) this.fig(this.art.cam[n + (c.pose || 1)], x0 + sp[0] * dw, y0 + sp[1] * dh, sp[2] * dh);
     // Makłowicz biegnie korytarzem
     const r = this.ch.robert;
-    if (id === '2A' && r.stage === 3 && r.run <= RUN_TIME && r.run > 0) {
-      const t = clamp(1 - r.run / RUN_TIME, 0, 1);
+    if (id === '2A' && r.stage === 3 && r.route === 'L' && r.dash >= 0 && r.dash < RUN_CAM) {
+      const t = clamp(r.dash / RUN_CAM, 0, 1);
       const e = t * t;
       const sp = RUN_FROM.map((v, i) => v + (RUN_TO[i] - v) * e);
-      ctx.save();
-      this.fig(this.art.cam.robert2, x0 + sp[0] * dw - dw * 0.01, y0 + sp[1] * dh, sp[2] * dh, 0.35);
-      this.fig(this.art.cam.robert2, x0 + sp[0] * dw, y0 + sp[1] * dh, sp[2] * dh, 1);
-      ctx.restore();
+      ctx.fillStyle = 'rgba(0,0,0,.3)';
+      ctx.beginPath();
+      ctx.ellipse(x0 + sp[0] * dw, y0 + sp[1] * dh, sp[2] * dh * 0.14, sp[2] * dh * 0.025, 0, 0, Math.PI * 2);
+      ctx.fill();
+      this.drawRun(r.dash, false, x0 + sp[0] * dw, y0 + sp[1] * dh, sp[2] * dh);
     }
   }
 

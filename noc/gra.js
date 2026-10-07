@@ -1,8 +1,8 @@
 /* Pięć Koszmarnych Nocy u Magdy Gessler. Gra za kamerą 05: menu jak w FNaF 1, intro, noce 1–6, własna noc, gwiazdki i zapis postępu.
    Obrazki, dźwięki i film są zaszyfrowane tym samym kluczem co nagranie z kamery (odblokowuje go rozwiązanie zagadek). */
-import { get, whenSynced, game, setGame, resetGame, advance, onChange, savedOnAccount } from './rdzen.js?v=20261008';
-import { Dzwiek } from './gra-dzwiek.js?v=20261008';
-import { Night, prepareArt, CAMS, LEVELS, NAMES } from './gra-noc.js?v=20261008';
+import { get, whenSynced, game, setGame, resetGame, advance, onChange, savedOnAccount } from './rdzen.js?v=20261009';
+import { Dzwiek } from './gra-dzwiek.js?v=20261009';
+import { Night, prepareArt, CAMS, LEVELS, NAMES } from './gra-noc.js?v=20261009';
 
 const V = '20261005';
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -38,6 +38,7 @@ const ui = {
   lightL: $('#fnLightL'),
   doorR: $('#fnDoorR'),
   lightR: $('#fnLightR'),
+  win: $('#fnWin'),
 };
 
 $('#fnMapBox').insertAdjacentHTML('beforeend', CAMS.map((c) => `
@@ -270,8 +271,8 @@ function showMenu() {
   noise.menu = true;
   sound.ready(['menu', 'static', 'blip']).then(() => {
     if (mode !== 'menu') return;
-    sound.loop('menu', 'menu', { gain: 0.7, fadeIn: 1 });
-    sound.loop('mstatic', 'static', { gain: 0.12, fadeIn: 1 });
+    sound.loop('menu', 'menu', { gain: 0.45, fadeIn: 1 });
+    sound.loop('mstatic', 'static', { gain: 0.08, fadeIn: 1 });
   });
   // twarz Magdy migocze i co jakiś czas „drga” w inną, straszniejszą
   clearInterval(faceTimer);
@@ -662,7 +663,7 @@ async function showCustom() {
   $('#fnCustom').hidden = false;
   noise.menu = true;
   document.body.classList.add('fn-in-menu');
-  sound.loop('menu', 'menu', { gain: 0.5, fadeIn: 0.6 });
+  sound.loop('menu', 'menu', { gain: 0.32, fadeIn: 0.6 });
   grid.querySelector('.fn-cn-btn').focus({ preventScroll: true });
 }
 
