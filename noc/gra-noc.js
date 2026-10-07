@@ -303,7 +303,7 @@ export class Night {
   start() {
     const s = this.sound;
     s.loop('amb', 'amb', { gain: 0.55, fadeIn: 1.5 });
-    s.loop('fan', 'fan', { gain: 0.3, fadeIn: 1.5 });
+    s.loop('fan', 'fan', { gain: 0.1, fadeIn: 1.5 }); // wentylator: cicho w tle (był 0.3, przeszkadzał)
     this.ui.hud.hidden = false;
     this.ui.nightLbl.textContent = `Noc ${this.night}`;
     this.updateHud(true);
