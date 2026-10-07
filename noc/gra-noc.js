@@ -10,9 +10,10 @@ const DOOR_TIME = 0.26;
 const OW = 1672;
 const OH = 941;
 const ZOOM = 1.2; // biuro jest szersze niż ekran, więc można się rozglądać
+// poly: otwór drzwi (korytarz przy świetle); shut: roleta - górą równo z dolną krawędzią belki framugi
 const SIDE = {
-  L: { poly: [[158, 95], [352, 148], [355, 795], [158, 880]], door: [38, 366, 82, 444], light: [38, 451, 82, 529], corridor: 'kor-l', cx: 0.56, pan: -0.75, foot: 845 },
-  R: { poly: [[1390, 150], [1545, 100], [1545, 860], [1392, 795]], door: [1603, 366, 1651, 444], light: [1603, 451, 1651, 529], corridor: 'kor-p', cx: 0.6, pan: 0.75, foot: 835 },
+  L: { poly: [[158, 95], [352, 148], [355, 795], [158, 880]], shut: [[158, 72], [352, 147], [355, 795], [158, 880]], door: [38, 366, 82, 444], light: [38, 451, 82, 529], corridor: 'kor-l', cx: 0.56, pan: -0.75, foot: 845 },
+  R: { poly: [[1390, 150], [1545, 100], [1545, 860], [1392, 795]], shut: [[1390, 146], [1545, 76], [1545, 860], [1392, 795]], door: [1603, 366, 1651, 444], light: [1603, 451, 1651, 529], corridor: 'kor-p', cx: 0.6, pan: 0.75, foot: 835 },
 };
 const HONK = [[480, 276, 16], [1259, 324, 14]]; // nosy misiów na plakatach
 // Okno nad biurkiem: Makłowicz może przybiec też tutaj. Zamyka je czerwony przycisk nad oknem (bez światła).
@@ -1215,7 +1216,7 @@ export class Night {
     const k = this.doorAnim[side];
     if (k <= 0) return;
     const ctx = this.ctx;
-    const [TL, TR, BR, BL] = SIDE[side].poly;
+    const [TL, TR, BR, BL] = SIDE[side].shut;
     const hL = BL[1] - TL[1];
     const hR = BR[1] - TR[1];
     const at = (t) => {
@@ -1228,7 +1229,7 @@ export class Night {
     const n = Math.max(24, Math.ceil((Math.abs(TR[0] - TL[0]) * S) / 3));
     const near = hL > hR ? 0 : 1; // bliższa krawędź jest wyższa
     ctx.save();
-    this.polyPath(SIDE[side].poly, S, ox, oy);
+    this.polyPath(SIDE[side].shut, S, ox, oy);
     ctx.clip();
     let prev = at(0);
     for (let i = 0; i < n; i++) {
