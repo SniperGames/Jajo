@@ -6,7 +6,7 @@ import { Night, prepareArt, CAMS, LEVELS, NAMES } from './gra-noc.js?v=20261009'
 
 const V = '20261005';
 // Paczki zmienione później dostają własną wersję (reszta, np. 11 MB intra, zostaje w pamięci przeglądarki)
-const PV = { m: '20261013', o: '20261010', s: '20261010', t1: '20261010', t2: '20261010', t3: '20261010', t4: '20261010', t5: '20261012' };
+const PV = { m: '20261014', o: '20261010', s: '20261010', t1: '20261010', t2: '20261010', t3: '20261010', t4: '20261010', t5: '20261012' };
 const $ = (sel, root = document) => root.querySelector(sel);
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
